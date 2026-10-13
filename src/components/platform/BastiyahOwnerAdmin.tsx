@@ -229,7 +229,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-colors"
           >
             <Globe className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{language === 'ar' ? '← العودة للمنصة الرئيسية (bastiyah.vercel.app)' : '← Return to Bastiyah Main Site'}</span>
+            <span>{language === 'ar' ? '← العودة للمنصة الرئيسية (bastiyah.com)' : '← Return to Bastiyah Main Site (bastiyah.com)'}</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -256,7 +256,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <Crown className="w-3.5 h-3.5" />
                 <span>{t.platformSuperAdmin}</span>
                 <span className="text-amber-500/60">•</span>
-                <span className="font-mono">bastiyah.vercel.app</span>
+                <span className="font-mono">bastiyah.com</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-3">
                 <span>{language === 'ar' ? 'لوحة مالك منصة بسطية (Bastiyah)' : 'Bastiyah Platform Owner Control Center'}</span>
@@ -302,7 +302,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               <p className="text-3xl font-black text-white mt-2">{totalPlatformStores}</p>
               <p className="text-xs text-emerald-400 mt-1 font-medium flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>*.bastiyah.vercel.app Vercel SSL Active</span>
+                <span>*.bastiyah.com SSL Active</span>
               </p>
             </div>
 
@@ -408,7 +408,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
                 {/* Custom Subdomain Input */}
                 <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 focus-within:border-indigo-500 transition-colors" dir="ltr">
-                  <span className="text-slate-400 font-mono text-xs select-none">bastiyah.vercel.app/store/</span>
+                  <span className="text-slate-400 font-mono text-xs select-none">https://</span>
                   <input
                     type="text"
                     value={customSlug}
@@ -417,9 +417,10 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 min-w-0 px-1"
                     required
                   />
+                  <span className="text-slate-400 font-mono text-xs select-none">.bastiyah.com</span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  {language === 'ar' ? 'مستقبلاً عند ربط دومين مخصص: (slug).bastiyah.com' : 'Future custom domain: (slug).bastiyah.com'}
+                <p className="text-[11px] text-emerald-400 font-mono mt-1" dir="ltr">
+                  https://{normalizedSlug || 'your-store'}.bastiyah.com
                 </p>
               </div>
 
@@ -637,7 +638,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <span>{t.launchStoreBtn}</span>
                 {normalizedSlug && (
                   <span className="font-mono text-xs bg-black/25 px-2 py-0.5 rounded-md">
-                    {normalizedSlug}.bastiyah.vercel.app
+                    {normalizedSlug}.bastiyah.com
                   </span>
                 )}
               </button>
@@ -658,8 +659,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 {language === 'ar'
-                  ? 'كل متجر يمتلك رابطه الفرعي المستقل، تصميمه الخاص، ولوحة تحكم خاصة به'
-                  : 'Every hosted store operates on its own .bastiyah.vercel.app link with independent design & admin panel'}
+                  ? 'كل متجر يمتلك رابطه الفرعي المستقل (store.bastiyah.com)، تصميمه الخاص، ولوحة تحكم خاصة به'
+                  : 'Every hosted store operates on its own .bastiyah.com link with independent design & admin panel'}
               </p>
             </div>
 
@@ -730,7 +731,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           {editingSlugStoreId === store.id ? (
                             <div className="flex items-center gap-1.5 bg-slate-950 border border-indigo-500 rounded-xl px-2.5 py-1" dir="ltr">
-                              <span className="text-xs font-mono text-slate-400">bastiyah.vercel.app/store/</span>
+                              <span className="text-xs font-mono text-slate-400">https://</span>
                               <input
                                 type="text"
                                 value={tempSlug}
@@ -738,6 +739,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 className="bg-transparent text-emerald-400 font-mono text-xs font-bold focus:outline-none w-28"
                                 autoFocus
                               />
+                              <span className="text-xs font-mono text-slate-400">.bastiyah.com</span>
                               <button
                                 onClick={() => handleSaveCustomSlug(store.id)}
                                 className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[11px] font-bold"

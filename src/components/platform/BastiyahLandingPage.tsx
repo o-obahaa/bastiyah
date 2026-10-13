@@ -62,7 +62,7 @@ export const BastiyahLandingPage: React.FC = () => {
                 </span>
               </div>
               <span className="font-mono text-[11px] text-slate-400 block" dir="ltr">
-                bastiyah.vercel.app
+                bastiyah.com
               </span>
             </div>
           </div>
@@ -134,9 +134,8 @@ export const BastiyahLandingPage: React.FC = () => {
           <div className="mt-8 flex flex-col items-center gap-2">
             <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl" dir="ltr">
               <Globe className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span className="font-mono text-sm sm:text-lg text-slate-400">bastiyah.vercel.app/store/</span>
-              <span className="font-mono text-sm sm:text-lg font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
-                (storename)
+              <span className="font-mono text-sm sm:text-lg font-black text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/30">
+                (storename).bastiyah.com
               </span>
             </div>
             <span className="text-xs text-slate-400 font-medium">
@@ -178,8 +177,8 @@ export const BastiyahLandingPage: React.FC = () => {
             </h3>
             <p className="text-sm text-slate-400 mt-2 leading-relaxed">
               {language === 'ar'
-                ? 'ينشئ مالك المنصة روابط مخصصة مثل bastiyah.vercel.app/store/(اسم-المتجر) بضغطة زر مع شهادة حماية فورية وجاهزة للمشاركة.'
-                : 'Generate dedicated working links like bastiyah.vercel.app/store/(storename) in seconds from the main Bastiyah owner dashboard.'}
+                ? 'ينشئ مالك المنصة روابط مخصصة مثل (storename).bastiyah.com بضغطة زر مع شهادة حماية فورية وجاهزة للمشاركة.'
+                : 'Generate dedicated working links like (storename).bastiyah.com in seconds from the main Bastiyah owner dashboard.'}
             </p>
           </div>
 
@@ -218,7 +217,7 @@ export const BastiyahLandingPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400 font-mono">
-              bastiyah.vercel.app/store/*
+              *.bastiyah.com
             </span>
             <h2 className="text-3xl font-black text-white mt-1">{t.hostedStoresTitle}</h2>
             <p className="text-slate-400 text-sm mt-1">{t.hostedStoresSubtitle}</p>
@@ -288,7 +287,7 @@ export const BastiyahLandingPage: React.FC = () => {
                       >
                         <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="font-mono text-xs text-slate-300 truncate">
-                          /store/<strong className="text-emerald-400 font-bold">{store.slug}</strong>
+                          {getStorePathLabel(store.slug)}
                         </span>
                       </button>
 
