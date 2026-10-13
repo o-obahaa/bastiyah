@@ -8,6 +8,7 @@ import {
   Trash2, 
   X
 } from 'lucide-react';
+import { ImageUploader } from '../common/ImageUploader';
 
 export const AdminProducts: React.FC = () => {
   const { 
@@ -462,19 +463,19 @@ export const AdminProducts: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  required
+                <ImageUploader
                   value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                  onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+                  label="Product Photo (Cloudflare R2)"
+                  labelAr="صورة المنتج (استضافة Cloudflare R2)"
+                  helperText={language === 'ar' ? 'يتم رفع وتخزين الصور على سيرفر Cloudflare R2 السريع بدون تكاليف نقل بيانات.' : 'Images are hosted on high-performance Cloudflare R2 edge storage.'}
+                  aspectRatio="square"
                 />
 
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  <span className="text-[10px] text-slate-400 self-center me-1">Presets:</span>
+                <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-semibold text-slate-400 me-1">
+                    {language === 'ar' ? 'نماذج سريعة:' : 'Quick Presets:'}
+                  </span>
                   {imagePresets.map((preset) => (
                     <button
                       key={preset.label}

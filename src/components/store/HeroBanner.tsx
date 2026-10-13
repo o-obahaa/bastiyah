@@ -29,6 +29,12 @@ export const HeroBanner: React.FC = () => {
   if (layoutStyle === 'luxury-centered') {
     return (
       <div className="relative overflow-hidden bg-slate-950 text-white py-20 sm:py-28 border-b border-slate-800">
+        {activeStore.design.heroBannerUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none mix-blend-luminosity"
+            style={{ backgroundImage: `url(${activeStore.design.heroBannerUrl})` }}
+          />
+        )}
         <div
           className="absolute inset-0 opacity-25 pointer-events-none"
           style={{
@@ -248,6 +254,12 @@ export const HeroBanner: React.FC = () => {
   // DEFAULT LAYOUT 4: MODERN SPLIT (e.g. Panda Store)
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white py-16 sm:py-24">
+      {activeStore.design.heroBannerUrl && (
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20 pointer-events-none mix-blend-luminosity"
+          style={{ backgroundImage: `url(${activeStore.design.heroBannerUrl})` }}
+        />
+      )}
       {/* Decorative background glows */}
       <div
         className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-20"

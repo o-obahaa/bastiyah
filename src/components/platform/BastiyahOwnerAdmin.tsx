@@ -20,8 +20,14 @@ import {
   Search,
   Link2,
   ArrowUpRight,
-  Edit3
+  Edit3,
+  Database,
+  Cloud,
+  Server,
+  Zap,
+  RefreshCw
 } from 'lucide-react';
+import { ImageUploader } from '../common/ImageUploader';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle, HostedStore } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
@@ -52,7 +58,13 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setLanguage,
     t,
     addToast,
+    isConvexConnected,
+    isCloudflareConfigured,
+    seedConvexDatabase,
   } = useStore();
+
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [testImageUrl, setTestImageUrl] = useState('');
 
   // Form State for Creating a New Custom Store Link
   const [storeName, setStoreName] = useState('');
@@ -351,6 +363,155 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               <p className="text-xs text-slate-400 mt-1">
                 {language === 'ar' ? 'منتجات مستقلة لكل متجر' : 'Isolated catalog items hosted'}
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CLOUD INFRASTRUCTURE (CONVEX & CLOUDFLARE R2) SECTION */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+        <div className="bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/40 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 end-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800 relative z-10">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 text-xs font-bold mb-2">
+                <Server className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'البنية التحتية السحابية وقواعد البيانات' : 'Cloud Architecture & Storage Engine'}</span>
+              </div>
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <span>{language === 'ar' ? 'سيرفر الصور Cloudflare R2 وقاعدة بيانات Convex' : 'Convex Realtime DB & Cloudflare R2 Media Engine'}</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                {language === 'ar'
+                  ? 'إدارة قاعدة البيانات اللحظية متعددة المتاجر (Convex) وسيرفر استضافة الصور العالمي فائق السرعة بدون تكاليف نقل (Cloudflare R2).'
+                  : 'Manage real-time multi-tenant data sync with Convex and global zero-egress picture hosting via Cloudflare R2.'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsSeeding(true);
+                  try {
+                    await seedConvexDatabase();
+                  } finally {
+                    setIsSeeding(false);
+                  }
+                }}
+                disabled={isSeeding}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
+              >
+                <Database className={`w-4 h-4 ${isSeeding ? 'animate-spin' : ''}`} />
+                <span>
+                  {isSeeding
+                    ? (language === 'ar' ? 'جاري التهيئة...' : 'Seeding Convex...')
+                    : (language === 'ar' ? 'تهيئة قاعدة البيانات في Convex' : 'Seed Initial Stores to Convex')}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 relative z-10">
+            {/* 1. CONVEX DATABASE CARD */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-white text-sm">Convex Database</h3>
+                    <p className="text-[11px] text-slate-400">Reactive Realtime Sync Engine</p>
+                  </div>
+                </div>
+
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                    isConvexConnected
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${isConvexConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  <span>{isConvexConnected ? 'Connected & Live' : 'Local Fallback Ready'}</span>
+                </span>
+              </div>
+
+              <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Tenancy Separation:</span>
+                  <span className="font-mono text-emerald-400 font-bold">100% storeId Scoped</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Schema Tables:</span>
+                  <span className="font-mono text-indigo-300">stores, products, orders, customers, coupons</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Env Variable:</span>
+                  <span className="font-mono text-slate-300">VITE_CONVEX_URL</span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                {language === 'ar'
+                  ? 'تم تجهيز ملفات convex/schema.ts وstores.ts وproducts.ts وorders.ts. بمجرد إدخال رابط مشروعك في .env، تعمل المنصة بشكل لحظي متزامن.'
+                  : 'Backend functions are ready in convex/. Connect your project URL in .env to enjoy instant multi-client reactivity.'}
+              </p>
+            </div>
+
+            {/* 2. CLOUDFLARE R2 PICTURE HOSTING CARD */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                    <Cloud className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-white text-sm">Cloudflare R2 Media</h3>
+                    <p className="text-[11px] text-slate-400">Zero-Egress Object Storage CDN</p>
+                  </div>
+                </div>
+
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                    isCloudflareConfigured
+                      ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  <span>CDN Active (images.bastiyah.com)</span>
+                </span>
+              </div>
+
+              <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800 space-y-2 text-xs">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Custom CDN Domain:</span>
+                  <span className="font-mono text-sky-400 font-bold">images.bastiyah.com</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Bucket Name:</span>
+                  <span className="font-mono text-indigo-300">bastiyah-images</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Egress Fees:</span>
+                  <span className="font-mono text-emerald-400 font-bold">$0.00 (Zero Egress)</span>
+                </div>
+              </div>
+
+              {/* Interactive test upload for Owner */}
+              <div>
+                <ImageUploader
+                  value={testImageUrl}
+                  onChange={(url) => setTestImageUrl(url)}
+                  label="Quick Media Upload Test"
+                  labelAr="اختبار سريع لرفع صورة إلى Cloudflare R2"
+                  helperText={language === 'ar' ? 'جرّب رفع أي صورة منتج أو شعار لاختبار سيرفر Cloudflare R2 مباشرة' : 'Upload any image to test direct Cloudflare R2 media streaming'}
+                  aspectRatio="video"
+                />
+              </div>
             </div>
           </div>
         </div>

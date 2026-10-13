@@ -25,3 +25,12 @@ dist-ssr
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Environment variables & local secrets
+.env
+.env.*
+!.env.example
+
+# Convex generated files
+convex/_generated
+

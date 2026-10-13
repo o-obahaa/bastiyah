@@ -34,6 +34,8 @@ import {
   getStorePathLabel, 
   getPlatformDisplayUrl 
 } from '../utils/urlUtils';
+import { convexClient, isConvexConfigured } from '../convexClient';
+import { api } from '../convexApi';
 
 export interface CreateStoreInput {
   name: string;
@@ -136,6 +138,11 @@ interface StoreContextType {
   // Settings (scoped to activeStore)
   settings: StoreSettings;
   updateSettings: (newSettings: Partial<StoreSettings>) => void;
+
+  // Cloud & Backend Infrastructure (Convex & Cloudflare R2)
+  isConvexConnected: boolean;
+  isCloudflareConfigured: boolean;
+  seedConvexDatabase: () => Promise<void>;
 
   // Notifications
   toasts: ToastMessage[];
@@ -352,6 +359,126 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('bastiyah_wishlists_v1', JSON.stringify(wishlistsByStore));
   }, [wishlistsByStore]);
+
+  // Cloud & Backend Infrastructure State
+  const isConvexConnected = isConvexConfigured();
+  const isCloudflareConfigured = Boolean(
+    import.meta.env.VITE_R2_PUBLIC_URL || import.meta.env.VITE_R2_ACCOUNT_ID
+  );
+
+  // Sync Convex stores on load when Convex client is active
+  useEffect(() => {
+    if (!convexClient) return;
+
+    let isMounted = true;
+    convexClient
+      .query(api.stores.list, {})
+      .then((remoteStores: any[]) => {
+        if (!isMounted || !remoteStores || !Array.isArray(remoteStores) || remoteStores.length === 0) return;
+        setStores((prev) => {
+          const remoteSlugs = new Set(remoteStores.map((r) => r.slug));
+          const existingNotInRemote = prev.filter((p) => !remoteSlugs.has(p.slug));
+          const formattedRemote: HostedStore[] = remoteStores.map((rs) => {
+            const localMatch = prev.find((p) => p.slug === rs.slug);
+            return {
+              id: rs._id || rs.id || `store-${rs.slug}`,
+              slug: rs.slug,
+              name: rs.name,
+              nameAr: rs.nameAr || rs.name,
+              tagline: rs.tagline,
+              taglineAr: rs.taglineAr || rs.tagline,
+              description: rs.description,
+              descriptionAr: rs.descriptionAr || rs.description,
+              category: rs.category,
+              categoryAr: rs.categoryAr || rs.category,
+              ownerName: rs.ownerName,
+              ownerEmail: rs.ownerEmail,
+              status: rs.status,
+              plan: rs.plan,
+              createdAt: rs.createdAt,
+              design: rs.design,
+              settings: rs.settings,
+              products: localMatch?.products || [],
+              orders: localMatch?.orders || [],
+              customers: localMatch?.customers || [],
+              coupons: localMatch?.coupons || INITIAL_COUPONS,
+            };
+          });
+          return [...formattedRemote, ...existingNotInRemote];
+        });
+      })
+      .catch((err) => {
+        console.warn('Convex stores sync query note:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const seedConvexDatabase = async () => {
+    if (!convexClient) {
+      addToast(
+        language === 'ar'
+          ? 'يرجى تهيئة متغير VITE_CONVEX_URL في ملف .env أولاً للاتصال بـ Convex'
+          : 'Please set VITE_CONVEX_URL in your .env file first to connect to Convex',
+        'warning'
+      );
+      return;
+    }
+    try {
+      addToast(
+        language === 'ar' ? 'جاري تهيئة قاعدة بيانات Convex بالبيانات الأولية...' : 'Seeding Convex database with initial stores...',
+        'info'
+      );
+      const res: any = await convexClient.mutation(api.seed.seedInitialData, {});
+      addToast(
+        language === 'ar'
+          ? 'تمت تهيئة قاعدة بيانات Convex بنجاح!'
+          : 'Convex database successfully seeded with initial stores!',
+        'success'
+      );
+
+      // Refresh stores from Convex
+      const remoteStores: any[] = await convexClient.query(api.stores.list, {});
+      if (remoteStores && remoteStores.length > 0) {
+        setStores((prev) => {
+          const remoteSlugs = new Set(remoteStores.map((r) => r.slug));
+          const existingNotInRemote = prev.filter((p) => !remoteSlugs.has(p.slug));
+          const formattedRemote: HostedStore[] = remoteStores.map((rs) => {
+            const localMatch = prev.find((p) => p.slug === rs.slug);
+            return {
+              id: rs._id || rs.id || `store-${rs.slug}`,
+              slug: rs.slug,
+              name: rs.name,
+              nameAr: rs.nameAr || rs.name,
+              tagline: rs.tagline,
+              taglineAr: rs.taglineAr || rs.tagline,
+              description: rs.description,
+              descriptionAr: rs.descriptionAr || rs.description,
+              category: rs.category,
+              categoryAr: rs.categoryAr || rs.category,
+              ownerName: rs.ownerName,
+              ownerEmail: rs.ownerEmail,
+              status: rs.status,
+              plan: rs.plan,
+              createdAt: rs.createdAt,
+              design: rs.design,
+              settings: rs.settings,
+              products: localMatch?.products || [],
+              orders: localMatch?.orders || [],
+              customers: localMatch?.customers || [],
+              coupons: localMatch?.coupons || INITIAL_COUPONS,
+            };
+          });
+          return [...formattedRemote, ...existingNotInRemote];
+        });
+      }
+    } catch (err: any) {
+      console.error('Seed Convex failed:', err);
+      addToast(err.message || 'Failed to seed Convex', 'error');
+    }
+  };
 
   // Synchronize browser URL cleanly based on current page and store
   useEffect(() => {
@@ -981,6 +1108,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         customers,
         settings,
         updateSettings,
+        isConvexConnected,
+        isCloudflareConfigured,
+        seedConvexDatabase,
         toasts,
         addToast,
         removeToast,

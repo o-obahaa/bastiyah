@@ -8,8 +8,10 @@ import {
   ExternalLink,
   Copy,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Cloud
 } from 'lucide-react';
+import { ImageUploader } from '../common/ImageUploader';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
@@ -295,6 +297,36 @@ export const AdminStoreDesign: React.FC = () => {
               {t.saveSettings}
             </button>
           </form>
+
+          {/* Cloudflare R2 Banner Upload Card */}
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-sky-500" />
+                <span>
+                  {language === 'ar' ? 'صورة الغلاف / البانر (Cloudflare R2)' : 'Store Hero Banner (Cloudflare R2)'}
+                </span>
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500">
+              {language === 'ar'
+                ? 'ارفع صورة الغلاف الرئيسية لمتجرك لتظهر في أعلى الواجهة بحجم كامل عبر سيرفر الصور الفائق Cloudflare R2.'
+                : 'Upload a high-resolution hero background image hosted globally on Cloudflare R2 edge storage.'}
+            </p>
+
+            <ImageUploader
+              value={activeStore.design.heroBannerUrl || ''}
+              onChange={(url) => updateStoreDesign({ heroBannerUrl: url })}
+              label="Store Hero Banner"
+              labelAr="صورة غلاف المتجر الرئيسية"
+              aspectRatio="banner"
+              helperText={
+                language === 'ar'
+                  ? 'يُنصح باستخدام صورة ذات أبعاد عريضة 16:9 أو 3:1 للحصول على أفضل مظهر.'
+                  : 'Recommended aspect ratio 16:9 or 3:1 for optimal high-resolution display.'
+              }
+            />
+          </div>
         </div>
 
         {/* Right 6 Cols: Theme Palette & Hero Layout Style */}

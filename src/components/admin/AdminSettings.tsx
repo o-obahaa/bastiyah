@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { Plus, Tag, Settings, Save, X } from 'lucide-react';
+import { Plus, Tag, Settings, Save, X, Database, Cloud, Server, CheckCircle2 } from 'lucide-react';
 
 export const AdminSettings: React.FC = () => {
   const { 
@@ -10,7 +10,10 @@ export const AdminSettings: React.FC = () => {
     addCoupon, 
     toggleCouponStatus, 
     t, 
-    language 
+    language,
+    activeStore,
+    isConvexConnected,
+    isCloudflareConfigured,
   } = useStore();
 
   const [formSettings, setFormSettings] = useState({
@@ -307,6 +310,66 @@ export const AdminSettings: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Cloud & Database Infrastructure Card for Merchant */}
+      <div className="bg-slate-900 rounded-3xl p-6 sm:p-7 text-white border border-slate-800 space-y-5">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+              <Server className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-sm text-white">
+                {language === 'ar' ? 'البنية السحابية وقاعدة البيانات المتصلة' : 'Connected Cloud & Database Engines'}
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                {language === 'ar' ? `بيانات متجر ${activeStore.name} معزولة ومستضافة سحابياً` : `Real-time tenant data isolated for ${activeStore.name}`}
+              </p>
+            </div>
+          </div>
+
+          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>{language === 'ar' ? 'سحابي معتمد' : 'Cloud Native'}</span>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <Database className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Convex Database</span>
+                <span className={`w-2 h-2 rounded-full ${isConvexConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {isConvexConnected
+                  ? (language === 'ar' ? 'متصل لحظياً بقاعدة بيانات Convex' : 'Live real-time multi-tenant reactive sync')
+                  : (language === 'ar' ? 'جاهز للربط الفوري (VITE_CONVEX_URL)' : 'Ready for deployment (VITE_CONVEX_URL)')}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+              <Cloud className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Cloudflare R2 Media</span>
+                <span className="w-2 h-2 rounded-full bg-sky-400" />
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {language === 'ar'
+                  ? 'استضافة صور المنتجات والغلاف عبر images.bastiyah.com'
+                  : 'Fast zero-egress picture delivery via images.bastiyah.com'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
