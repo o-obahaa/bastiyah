@@ -165,14 +165,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const params = new URLSearchParams(window.location.search);
       const storeSlug = params.get('store');
       if (storeSlug) {
-        const found = INITIAL_HOSTED_STORES.find(
+        const found = stores.find(
           (s) => s.slug.toLowerCase() === storeSlug.toLowerCase()
         );
         if (found) return found.id;
       }
+
+      // Check hostname subdomain (e.g. panda.bastiyah.com or panda.localhost)
+      const hostParts = window.location.hostname.split('.');
+      if (hostParts.length >= 2 && hostParts[0] !== 'www' && hostParts[0] !== 'localhost') {
+        const sub = hostParts[0].toLowerCase();
+        const found = stores.find((s) => s.slug.toLowerCase() === sub);
+        if (found) return found.id;
+      }
     }
     const saved = localStorage.getItem('bastiyah_active_store_id');
-    return saved || INITIAL_HOSTED_STORES[0].id;
+    const existing = stores.find((s) => s.id === saved);
+    return existing ? existing.id : stores[0]?.id || INITIAL_HOSTED_STORES[0].id;
   });
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
