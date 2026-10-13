@@ -215,18 +215,20 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     }
   }
 
-  // 5. Subdomain specifies store (panda.bastiyah.com - for custom domains in future)
+  // 5. Subdomain specifies store (e.g. panda.bastiyah.com, panda.yourdomain.com, owner.yourdomain.com)
   const hostParts = hostname.split('.');
-  if (
-    hostParts.length >= 2 &&
-    hostParts[0] !== 'www' &&
-    hostParts[0] !== 'bastiyah' &&
-    hostParts[0] !== 'localhost'
-  ) {
+  const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
+  if (!isLocalOrVercel && hostParts.length >= 3 && hostParts[0] !== 'www') {
     const sub = hostParts[0];
+    if (sub === 'owner') {
+      return {
+        storeId: allStores[0]?.id || 'store-panda',
+        page: 'bastiyah-admin',
+      };
+    }
     const found = allStores.find((s) => s.slug.toLowerCase() === sub);
     if (found) {
-      const isStoreAdmin = pathname.includes('/admin') || searchParams.get('admin') === 'true';
+      const isStoreAdmin = pathname === '/admin' || pathname.startsWith('/admin') || searchParams.get('admin') === 'true';
       return {
         storeId: found.id,
         page: isStoreAdmin ? 'admin' : 'home',
@@ -349,19 +351,38 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const hostname = window.location.hostname.toLowerCase();
+    const hostParts = hostname.split('.');
+    const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
+    const isStoreSubdomain = !isLocalOrVercel && hostParts.length >= 3 && hostParts[0] === activeStore.slug;
+    const isOwnerSubdomain = !isLocalOrVercel && hostParts.length >= 3 && hostParts[0] === 'owner';
+
     let targetPath = '/';
 
-    if (currentPage === 'bastiyah-landing') {
+    if (isOwnerSubdomain) {
       targetPath = '/';
-    } else if (currentPage === 'bastiyah-admin') {
-      targetPath = '/owner';
-    } else if (currentPage === 'admin') {
-      targetPath = `/store/${activeStore.slug}/admin`;
-    } else if (currentPage === 'home') {
-      targetPath = `/store/${activeStore.slug}`;
+    } else if (isStoreSubdomain) {
+      if (currentPage === 'admin') {
+        targetPath = '/admin';
+      } else if (currentPage === 'home') {
+        targetPath = '/';
+      } else {
+        targetPath = `/?page=${currentPage}`;
+      }
     } else {
-      // e.g. shop, wishlist, orders, checkout
-      targetPath = `/store/${activeStore.slug}?page=${currentPage}`;
+      // Path-based routing (Vercel or apex custom domain)
+      if (currentPage === 'bastiyah-landing') {
+        targetPath = '/';
+      } else if (currentPage === 'bastiyah-admin') {
+        targetPath = '/owner';
+      } else if (currentPage === 'admin') {
+        targetPath = `/store/${activeStore.slug}/admin`;
+      } else if (currentPage === 'home') {
+        targetPath = `/store/${activeStore.slug}`;
+      } else {
+        // e.g. shop, wishlist, orders, checkout
+        targetPath = `/store/${activeStore.slug}?page=${currentPage}`;
+      }
     }
 
     if (window.location.pathname + window.location.search !== targetPath) {
