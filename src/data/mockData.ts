@@ -2,7 +2,7 @@ import { Product, Order, Customer, Coupon, StoreSettings, HostedStore } from '..
 
 export const INITIAL_SETTINGS: StoreSettings = {
   storeName: 'Panda Store',
-  supportEmail: 'contact@pandastore.bastiyah.vercel.app',
+  supportEmail: 'contact@pandastore.com',
   currency: '$',
   freeShippingThreshold: 99,
   standardShippingFee: 9.99,
@@ -728,7 +728,7 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     category: 'Electronics & Tech',
     categoryAr: 'إلكترونيات وتقنية',
     ownerName: 'Tariq Al-Mansoor',
-    ownerEmail: 'tariq@panda.bastiyah.vercel.app',
+    ownerEmail: 'tariq@pandastore.com',
     status: 'active',
     plan: 'Enterprise',
     createdAt: '2026-01-10T09:00:00Z',
@@ -741,7 +741,7 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     },
     settings: {
       storeName: 'Panda Store',
-      supportEmail: 'support@panda.bastiyah.vercel.app',
+      supportEmail: 'support@pandastore.com',
       currency: '$',
       freeShippingThreshold: 99,
       standardShippingFee: 9.99,
@@ -764,7 +764,7 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     category: 'Perfumes & Oud',
     categoryAr: 'عطور وعود فاخر',
     ownerName: 'Sheikha Al-Sabah',
-    ownerEmail: 'concierge@royal-oud.bastiyah.vercel.app',
+    ownerEmail: 'concierge@royaloud.com',
     status: 'active',
     plan: 'Growth',
     createdAt: '2026-02-01T12:00:00Z',
@@ -777,7 +777,7 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     },
     settings: {
       storeName: 'Royal Oud Maison',
-      supportEmail: 'concierge@royal-oud.bastiyah.vercel.app',
+      supportEmail: 'concierge@royaloud.com',
       currency: '$',
       freeShippingThreshold: 150,
       standardShippingFee: 14.99,
@@ -860,7 +860,7 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     category: 'Fashion & Luxury',
     categoryAr: 'أزياء وفخامة',
     ownerName: 'Nouran El-Masri',
-    ownerEmail: 'studio@velvet.bastiyah.vercel.app',
+    ownerEmail: 'studio@velvetatelier.com',
     status: 'active',
     plan: 'Enterprise',
     createdAt: '2026-02-14T15:00:00Z',
@@ -873,7 +873,7 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     },
     settings: {
       storeName: 'Velvet Atelier',
-      supportEmail: 'studio@velvet.bastiyah.vercel.app',
+      supportEmail: 'studio@velvetatelier.com',
       currency: '$',
       freeShippingThreshold: 200,
       standardShippingFee: 12.0,

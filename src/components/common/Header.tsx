@@ -117,7 +117,7 @@ export const Header: React.FC = () => {
                   style={{ color: theme.hex }}
                   dir="ltr"
                 >
-                  {activeStore.slug}.bastiyah.vercel.app
+                  bastiyah.vercel.app/store/{activeStore.slug}
                 </span>
               </div>
             </button>

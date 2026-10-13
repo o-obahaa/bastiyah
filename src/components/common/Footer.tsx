@@ -82,7 +82,7 @@ export const Footer: React.FC = () => {
                   {displayStoreName}
                 </span>
                 <span className="font-mono text-xs" style={{ color: theme.hex }} dir="ltr">
-                  https://{activeStore.slug}.bastiyah.vercel.app
+                  bastiyah.vercel.app/store/{activeStore.slug}
                 </span>
               </div>
             </div>
@@ -197,7 +197,7 @@ export const Footer: React.FC = () => {
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>
-            © 2026 {displayStoreName} (<span className="font-mono text-slate-300">{activeStore.slug}.bastiyah.vercel.app</span>) • Powered by <strong className="text-white">Bastiyah | بسطية</strong>
+            © 2026 {displayStoreName} (<span className="font-mono text-slate-300">bastiyah.vercel.app/store/{activeStore.slug}</span>) • Powered by <strong className="text-white">Bastiyah | بسطية</strong>
           </p>
           <div className="flex items-center gap-1">
             <span>Bastiyah Multi-Store Cloud • EN / AR</span>

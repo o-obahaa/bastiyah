@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Globe,
   Crown,
@@ -9,10 +9,13 @@ import {
   ShieldCheck,
   Zap,
   Store,
-  Layers
+  Layers,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
+import { getStoreDisplayUrl, getStorePathLabel, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 
 export const BastiyahLandingPage: React.FC = () => {
   const {
@@ -23,7 +26,19 @@ export const BastiyahLandingPage: React.FC = () => {
     language,
     setLanguage,
     t,
+    addToast,
   } = useStore();
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyStoreUrl = (e: React.MouseEvent, storeSlug: string, storeId: string) => {
+    e.stopPropagation();
+    const liveUrl = getStoreDisplayUrl(storeSlug);
+    navigator.clipboard?.writeText(liveUrl);
+    setCopiedId(storeId);
+    addToast(`${t.linkCopied}: ${liveUrl}`, 'info');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -115,14 +130,20 @@ export const BastiyahLandingPage: React.FC = () => {
             {t.bastiyahHeroSubtitle}
           </p>
 
-          {/* Interactive Subdomain Example Pill */}
-          <div className="mt-8 inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl" dir="ltr">
-            <Globe className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span className="font-mono text-sm sm:text-lg text-slate-400">https://</span>
-            <span className="font-mono text-sm sm:text-lg font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
-              (storename)
+          {/* Interactive Live Store Link Example Pill */}
+          <div className="mt-8 flex flex-col items-center gap-2">
+            <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl" dir="ltr">
+              <Globe className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span className="font-mono text-sm sm:text-lg text-slate-400">bastiyah.vercel.app/store/</span>
+              <span className="font-mono text-sm sm:text-lg font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
+                (storename)
+              </span>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">
+              {language === 'ar' 
+                ? '🔗 روابط مباشرة لكل متجر تعمل فوراً على Vercel • وتتحول تلقائياً إلى (storename).bastiyah.com عند ربط دومين' 
+                : '🔗 Dedicated live links working on Vercel • Transitions to (storename).bastiyah.com on custom domains'}
             </span>
-            <span className="font-mono text-sm sm:text-lg font-bold text-white">.bastiyah.vercel.app</span>
           </div>
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
@@ -153,12 +174,12 @@ export const BastiyahLandingPage: React.FC = () => {
               <Globe className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-black text-white">
-              {language === 'ar' ? 'روابط فرعية مخصصة فورية' : 'Instant Custom Subdomain Links'}
+              {language === 'ar' ? 'روابط مخصصة ومستقلة فورية' : 'Instant Dedicated Store Links'}
             </h3>
             <p className="text-sm text-slate-400 mt-2 leading-relaxed">
               {language === 'ar'
-                ? 'ينشئ مالك المنصة روابط مخصصة مثل (storename).bastiyah.vercel.app بضغطة زر مع شهادة حماية فورية.'
-                : 'Generate dedicated custom links like (storename).bastiyah.vercel.app in seconds from the main Bastiyah owner dashboard.'}
+                ? 'ينشئ مالك المنصة روابط مخصصة مثل bastiyah.vercel.app/store/(اسم-المتجر) بضغطة زر مع شهادة حماية فورية وجاهزة للمشاركة.'
+                : 'Generate dedicated working links like bastiyah.vercel.app/store/(storename) in seconds from the main Bastiyah owner dashboard.'}
             </p>
           </div>
 
@@ -196,8 +217,8 @@ export const BastiyahLandingPage: React.FC = () => {
       <section id="hosted-stores-directory" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">
-              *.bastiyah.vercel.app
+            <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400 font-mono">
+              bastiyah.vercel.app/store/*
             </span>
             <h2 className="text-3xl font-black text-white mt-1">{t.hostedStoresTitle}</h2>
             <p className="text-slate-400 text-sm mt-1">{t.hostedStoresSubtitle}</p>
@@ -255,19 +276,42 @@ export const BastiyahLandingPage: React.FC = () => {
 
                   {/* Body */}
                   <div className="p-6">
-                    {/* Custom Link Pill */}
+                    {/* Dedicated Store Link Pill */}
                     <div
-                      onClick={() => switchStore(store.id, 'home')}
-                      className="cursor-pointer flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-colors mb-4"
+                      className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-colors mb-4 group"
                       dir="ltr"
                     >
-                      <div className="flex items-center gap-2 truncate">
+                      <button
+                        onClick={() => switchStore(store.id, 'home')}
+                        className="flex items-center gap-2 truncate text-start hover:opacity-90"
+                        title={language === 'ar' ? `زيارة متجر ${store.name}` : `Visit ${store.name}`}
+                      >
                         <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="font-mono text-xs text-slate-400 truncate">
-                          https://<strong className="text-emerald-400 font-bold">{store.slug}</strong>.bastiyah.vercel.app
+                        <span className="font-mono text-xs text-slate-300 truncate">
+                          /store/<strong className="text-emerald-400 font-bold">{store.slug}</strong>
                         </span>
+                      </button>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={(e) => handleCopyStoreUrl(e, store.slug, store.id)}
+                          className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                          title="Copy Full Store Link"
+                        >
+                          {copiedId === store.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 text-slate-400" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => switchStore(store.id, 'home')}
+                          className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                          title="Open Store"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0" />
                     </div>
 
                     <p className="text-sm text-slate-300 font-medium line-clamp-2 min-h-[2.5rem]">

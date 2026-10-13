@@ -83,7 +83,7 @@ export const AdminLayout: React.FC = () => {
                     </span>
                   </div>
                   <p className="font-mono text-[11px] text-slate-400 hidden sm:block" dir="ltr">
-                    https://{activeStore.slug}.bastiyah.vercel.app/admin
+                    bastiyah.vercel.app/store/{activeStore.slug}/admin
                   </p>
                 </div>
               </div>

@@ -25,6 +25,7 @@ import {
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle, HostedStore } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
+import { getStoreDisplayUrl, getStorePathLabel, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 
 const EMOJI_OPTIONS = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️'];
 
@@ -142,14 +143,14 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       slug: normalizedSlug,
       tagline:
         tagline ||
-        `Curated ${chosenCat.en} hosted on ${normalizedSlug}.bastiyah.vercel.app`,
+        `Curated ${chosenCat.en} hosted on Bastiyah`,
       taglineAr:
         taglineAr ||
         `أفضل منتجات ${chosenCat.ar} عبر منصة بسطية`,
       category: chosenCat.en,
       categoryAr: chosenCat.ar,
       ownerName: ownerName || 'Store Merchant',
-      ownerEmail: ownerEmail || `owner@${normalizedSlug}.bastiyah.vercel.app`,
+      ownerEmail: ownerEmail || `merchant@${normalizedSlug}.bastiyah.com`,
       plan,
       themeColor,
       layoutStyle,
@@ -171,7 +172,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   };
 
   const handleCopyStoreLink = (store: HostedStore) => {
-    const link = `https://${store.slug}.bastiyah.vercel.app`;
+    const link = getStoreDisplayUrl(store.slug);
     navigator.clipboard?.writeText(link);
     setCopiedId(store.id);
     addToast(`${t.linkCopied}: ${link}`, 'info');
@@ -273,8 +274,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <ExternalLink className="w-4 h-4 text-emerald-400" />
                 <span>
                   {language === 'ar'
-                    ? `معاينة ${activeStore.slug}.bastiyah.vercel.app`
-                    : `Preview ${activeStore.slug}.bastiyah.vercel.app`}
+                    ? `معاينة /store/${activeStore.slug}`
+                    : `Preview /store/${activeStore.slug}`}
                 </span>
               </button>
               <a
@@ -407,7 +408,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
                 {/* Custom Subdomain Input */}
                 <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 focus-within:border-indigo-500 transition-colors" dir="ltr">
-                  <span className="text-slate-500 font-mono text-xs select-none">https://</span>
+                  <span className="text-slate-400 font-mono text-xs select-none">bastiyah.vercel.app/store/</span>
                   <input
                     type="text"
                     value={customSlug}
@@ -416,8 +417,10 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 min-w-0 px-1"
                     required
                   />
-                  <span className="text-indigo-300 font-mono font-bold text-sm select-none">.bastiyah.vercel.app</span>
                 </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {language === 'ar' ? 'مستقبلاً عند ربط دومين مخصص: (slug).bastiyah.com' : 'Future custom domain: (slug).bastiyah.com'}
+                </p>
               </div>
 
               {/* Store Names (EN & AR) */}
@@ -523,7 +526,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     type="email"
                     value={ownerEmail}
                     onChange={(e) => setOwnerEmail(e.target.value)}
-                    placeholder={`owner@${normalizedSlug || 'store'}.bastiyah.vercel.app`}
+                    placeholder={`merchant@${normalizedSlug || 'store'}.com`}
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
                   />
                 </div>
@@ -727,7 +730,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           {editingSlugStoreId === store.id ? (
                             <div className="flex items-center gap-1.5 bg-slate-950 border border-indigo-500 rounded-xl px-2.5 py-1" dir="ltr">
-                              <span className="text-xs font-mono text-slate-500">https://</span>
+                              <span className="text-xs font-mono text-slate-400">bastiyah.vercel.app/store/</span>
                               <input
                                 type="text"
                                 value={tempSlug}
@@ -735,7 +738,6 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 className="bg-transparent text-emerald-400 font-mono text-xs font-bold focus:outline-none w-28"
                                 autoFocus
                               />
-                              <span className="text-xs font-mono text-slate-400">.bastiyah.vercel.app</span>
                               <button
                                 onClick={() => handleSaveCustomSlug(store.id)}
                                 className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[11px] font-bold"
@@ -757,7 +759,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 className="font-mono text-xs text-slate-300 hover:text-white transition-colors"
                                 dir="ltr"
                               >
-                                https://<strong className="text-emerald-400 font-bold">{store.slug}</strong>.bastiyah.vercel.app
+                                /store/<strong className="text-emerald-400 font-bold">{store.slug}</strong>
                               </button>
                               <button
                                 onClick={() => handleCopyStoreLink(store)}

@@ -104,7 +104,7 @@ export const PlatformSwitcherPill: React.FC = () => {
                       <span>{s.design.logoEmoji}</span>
                       <span className="truncate">{language === 'ar' ? s.nameAr || s.name : s.name}</span>
                     </div>
-                    <span className="font-mono text-[10px] text-emerald-400">.{s.slug}</span>
+                    <span className="font-mono text-[10px] text-emerald-400">/store/{s.slug}</span>
                   </button>
                 ))}
               </div>

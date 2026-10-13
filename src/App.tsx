@@ -189,10 +189,10 @@ export function App() {
               <div className="rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 p-8 sm:p-12 text-white relative overflow-hidden shadow-xl border border-slate-800">
                 <div className="relative z-10 max-w-xl space-y-4">
                   <span
-                    className="px-3 py-1 rounded-full text-white text-xs font-bold uppercase tracking-wider"
+                    className="px-3 py-1 rounded-full text-white text-xs font-bold uppercase tracking-wider font-mono"
                     style={{ backgroundColor: theme.hex }}
                   >
-                    {activeStore.slug}.bastiyah.vercel.app
+                    bastiyah.vercel.app/store/{activeStore.slug}
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black leading-tight">
                     {language === 'ar'

@@ -13,6 +13,7 @@ import {
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
+import { getStoreDisplayUrl } from '../../utils/urlUtils';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮'];
 
@@ -185,25 +186,29 @@ export const AdminStoreDesign: React.FC = () => {
               </div>
 
               <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5" dir="ltr">
-                <span className="text-slate-500 font-mono text-sm">https://</span>
+                <span className="text-slate-400 font-mono text-sm">bastiyah.vercel.app/store/</span>
                 <input
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 px-1"
                 />
-                <span className="text-indigo-300 font-mono font-bold text-sm">.bastiyah.vercel.app</span>
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard?.writeText(`https://${normalizedSlug}.bastiyah.vercel.app`);
-                    addToast(t.linkCopied, 'info');
+                    const fullUrl = getStoreDisplayUrl(normalizedSlug);
+                    navigator.clipboard?.writeText(fullUrl);
+                    addToast(`${t.linkCopied}: ${fullUrl}`, 'info');
                   }}
                   className="ms-2 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  title="Copy Working Link"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
+              <p className="text-[11px] text-slate-400">
+                {language === 'ar' ? 'مستقبلاً عند ربط دومين مخصص: (slug).bastiyah.com' : 'Future custom domain: (slug).bastiyah.com'}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

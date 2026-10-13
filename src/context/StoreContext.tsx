@@ -149,10 +149,13 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
 
   const hostname = window.location.hostname.toLowerCase();
   const searchParams = new URLSearchParams(window.location.search);
-  const pathname = window.location.pathname.toLowerCase();
+  const pathname = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
 
-  // 1. Platform Super Admin (owner.bastiyah.vercel.app or ?platform=admin)
+  // 1. Platform Super Admin (/owner or /owner/admin or /platform-admin or owner.subdomain or ?platform=admin)
   if (
+    pathname === '/owner' ||
+    pathname === '/owner/admin' ||
+    pathname === '/platform-admin' ||
     hostname.startsWith('owner.') ||
     searchParams.get('platform') === 'admin' ||
     searchParams.get('page') === 'bastiyah-admin'
@@ -163,7 +166,40 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     };
   }
 
-  // 2. Query param specifies store (?store=panda)
+  // 2. Path-based Store Routing: /store/:slug or /store/:slug/admin
+  // e.g. /store/panda, /store/panda/admin, /store/royal-oud, /store/velvet
+  const storePathMatch = pathname.match(/^\/store\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?/i);
+  if (storePathMatch) {
+    const slug = storePathMatch[1].toLowerCase();
+    const subRoute = storePathMatch[2]?.toLowerCase();
+    const found = allStores.find((s) => s.slug.toLowerCase() === slug || s.id === slug);
+    if (found) {
+      const isStoreAdmin = subRoute === 'admin' || searchParams.get('admin') === 'true';
+      const targetPage: ActivePage = isStoreAdmin 
+        ? 'admin' 
+        : ((subRoute as ActivePage) || (searchParams.get('page') as ActivePage) || 'home');
+      return {
+        storeId: found.id,
+        page: targetPage,
+      };
+    }
+  }
+
+  // 3. Direct short path: /:slug (e.g. /panda, /royal-oud, /velvet)
+  const segments = pathname.replace(/^\//, '').split('/');
+  const directSlug = segments[0]?.toLowerCase();
+  if (directSlug && directSlug !== 'store' && directSlug !== 'owner' && directSlug !== '') {
+    const found = allStores.find((s) => s.slug.toLowerCase() === directSlug || s.id === directSlug);
+    if (found) {
+      const isStoreAdmin = segments[1] === 'admin' || searchParams.get('admin') === 'true';
+      return {
+        storeId: found.id,
+        page: isStoreAdmin ? 'admin' : 'home',
+      };
+    }
+  }
+
+  // 4. Query param specifies store (?store=panda)
   const storeQuery = searchParams.get('store');
   if (storeQuery) {
     const found = allStores.find(
@@ -179,7 +215,7 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     }
   }
 
-  // 3. Subdomain specifies store (panda.bastiyah.vercel.app)
+  // 5. Subdomain specifies store (panda.bastiyah.com - for custom domains in future)
   const hostParts = hostname.split('.');
   if (
     hostParts.length >= 2 &&
@@ -198,7 +234,7 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     }
   }
 
-  // 4. Default: Bastiyah Platform Landing Page!
+  // 6. Default: Bastiyah Platform Landing Page!
   return {
     storeId: allStores[0]?.id || 'store-panda',
     page: 'bastiyah-landing',
@@ -313,37 +349,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const url = new URL(window.location.href);
+    let targetPath = '/';
 
     if (currentPage === 'bastiyah-landing') {
-      url.searchParams.delete('store');
-      url.searchParams.delete('admin');
-      url.searchParams.delete('platform');
-      url.searchParams.delete('page');
-      const cleanUrl = url.pathname + (url.search ? url.search : '');
-      window.history.replaceState({}, '', cleanUrl);
+      targetPath = '/';
     } else if (currentPage === 'bastiyah-admin') {
-      url.searchParams.delete('store');
-      url.searchParams.delete('admin');
-      url.searchParams.delete('page');
-      url.searchParams.set('platform', 'admin');
-      window.history.replaceState({}, '', url.pathname + url.search);
+      targetPath = '/owner';
     } else if (currentPage === 'admin') {
-      url.searchParams.delete('platform');
-      url.searchParams.delete('page');
-      url.searchParams.set('store', activeStore.slug);
-      url.searchParams.set('admin', 'true');
-      window.history.replaceState({}, '', url.pathname + url.search);
+      targetPath = `/store/${activeStore.slug}/admin`;
+    } else if (currentPage === 'home') {
+      targetPath = `/store/${activeStore.slug}`;
     } else {
-      url.searchParams.delete('platform');
-      url.searchParams.delete('admin');
-      url.searchParams.set('store', activeStore.slug);
-      if (currentPage !== 'home') {
-        url.searchParams.set('page', currentPage);
-      } else {
-        url.searchParams.delete('page');
-      }
-      window.history.replaceState({}, '', url.pathname + url.search);
+      // e.g. shop, wishlist, orders, checkout
+      targetPath = `/store/${activeStore.slug}?page=${currentPage}`;
+    }
+
+    if (window.location.pathname + window.location.search !== targetPath) {
+      window.history.replaceState({}, '', targetPath);
     }
   }, [currentPage, activeStore.id, activeStore.slug]);
 
@@ -435,8 +457,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     window.scrollTo({ top: 0, behavior: 'smooth' });
     addToast(
       language === 'ar'
-        ? `تم الانتقال إلى ${found.nameAr || found.name} (${found.slug}.bastiyah.vercel.app)`
-        : `Switched to ${found.name} (${found.slug}.bastiyah.vercel.app)`,
+        ? `تم الانتقال إلى ${found.nameAr || found.name} (/store/${found.slug})`
+        : `Switched to ${found.name} (/store/${found.slug})`,
       'info'
     );
   };
@@ -473,12 +495,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       nameAr: input.nameAr?.trim() || input.name.trim(),
       tagline: input.tagline.trim() || `Welcome to ${input.name}`,
       taglineAr: input.taglineAr?.trim() || input.tagline.trim() || `أهلاً بكم في ${input.nameAr || input.name}`,
-      description: `Official Bastiyah web-store hosted at ${cleanSlug}.bastiyah.vercel.app.`,
-      descriptionAr: `متجر إلكتروني رسمي مستضاف عبر منصة بسطية على الرابط ${cleanSlug}.bastiyah.vercel.app.`,
+      description: `Official Bastiyah web-store hosted at /store/${cleanSlug}.`,
+      descriptionAr: `متجر إلكتروني رسمي مستضاف عبر منصة بسطية على الرابط /store/${cleanSlug}.`,
       category: input.category,
       categoryAr: input.categoryAr || input.category,
       ownerName: input.ownerName.trim() || 'Store Owner',
-      ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.bastiyah.vercel.app`,
+      ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.com`,
       status: 'active',
       plan: input.plan,
       createdAt: new Date().toISOString(),
@@ -491,7 +513,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
       settings: {
         storeName: input.name.trim(),
-        supportEmail: input.ownerEmail.trim() || `support@${cleanSlug}.bastiyah.vercel.app`,
+        supportEmail: input.ownerEmail.trim() || `support@${cleanSlug}.com`,
         currency: input.currency || '$',
         freeShippingThreshold: 100,
         standardShippingFee: 9.99,
@@ -509,8 +531,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setStores((prev) => [newStore, ...prev]);
     addToast(
       language === 'ar'
-        ? `🎉 تم إطلاق المتجر بنجاح على ${cleanSlug}.bastiyah.vercel.app!`
-        : `🎉 Store launched live at ${cleanSlug}.bastiyah.vercel.app!`,
+        ? `🎉 تم إطلاق المتجر بنجاح على /store/${cleanSlug}!`
+        : `🎉 Store launched live at /store/${cleanSlug}!`,
       'success'
     );
     return newStore;
@@ -563,8 +585,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     addToast(
       language === 'ar'
-        ? `تم حذف المتجر ${target?.slug}.bastiyah.vercel.app`
-        : `Removed store ${target?.slug}.bastiyah.vercel.app`,
+        ? `تم حذف المتجر /store/${target?.slug}`
+        : `Removed store /store/${target?.slug}`,
       'info'
     );
   };

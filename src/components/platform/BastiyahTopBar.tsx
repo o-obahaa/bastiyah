@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
+import { getPlatformOrigin, getStoreDisplayUrl } from '../../utils/urlUtils';
 
 export const BastiyahTopBar: React.FC = () => {
   const { 
@@ -32,10 +33,10 @@ export const BastiyahTopBar: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const getSimulatedUrl = () => {
-    if (currentPage === 'bastiyah-admin') return 'https://owner.bastiyah.vercel.app';
-    if (currentPage === 'bastiyah-landing') return 'https://bastiyah.vercel.app';
-    if (currentPage === 'admin') return `https://${activeStore.slug}.bastiyah.vercel.app/admin`;
-    return `https://${activeStore.slug}.bastiyah.vercel.app`;
+    if (currentPage === 'bastiyah-admin') return `${getPlatformOrigin()}/owner`;
+    if (currentPage === 'bastiyah-landing') return `${getPlatformOrigin()}/`;
+    if (currentPage === 'admin') return getStoreDisplayUrl(activeStore.slug, true);
+    return getStoreDisplayUrl(activeStore.slug, false);
   };
 
   const handleCopyUrl = () => {
@@ -77,13 +78,13 @@ export const BastiyahTopBar: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="font-mono text-[11px] text-slate-400 hidden sm:inline">https://</span>
                 {currentPage === 'bastiyah-admin' ? (
-                  <span className="font-mono text-[11px] font-bold text-amber-400">owner.bastiyah.vercel.app</span>
+                  <span className="font-mono text-[11px] font-bold text-amber-400">bastiyah.vercel.app/owner</span>
                 ) : currentPage === 'bastiyah-landing' ? (
                   <span className="font-mono text-[11px] font-bold text-indigo-400">bastiyah.vercel.app</span>
                 ) : (
                   <span className="font-mono text-[11px] truncate">
+                    <span className="text-slate-400">bastiyah.vercel.app/store/</span>
                     <strong className="text-emerald-400 font-bold">{activeStore.slug}</strong>
-                    <span className="text-slate-300">.bastiyah.vercel.app</span>
                     {currentPage === 'admin' && <span className="text-amber-400">/admin</span>}
                   </span>
                 )}
@@ -93,7 +94,7 @@ export const BastiyahTopBar: React.FC = () => {
               <button
                 onClick={handleCopyUrl}
                 className="px-2 py-1 border-s border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                title="Copy Custom Link"
+                title="Copy Store Link"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
@@ -153,7 +154,7 @@ export const BastiyahTopBar: React.FC = () => {
                                 />
                               </div>
                               <p className="font-mono text-[11px] text-emerald-400 truncate">
-                                {st.slug}.bastiyah.vercel.app
+                                bastiyah.vercel.app/store/{st.slug}
                               </p>
                             </div>
                           </button>
@@ -236,7 +237,7 @@ export const BastiyahTopBar: React.FC = () => {
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'bg-slate-800/90 text-slate-200 hover:bg-slate-700'
             }`}
-            title={`${activeStore.slug}.bastiyah.vercel.app/admin`}
+            title={`bastiyah.vercel.app/store/${activeStore.slug}/admin`}
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
             <span className="hidden sm:inline">
