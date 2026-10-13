@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ArrowRight, Sparkles, Star, Globe, Palette } from 'lucide-react';
+import { getStorePathLabel } from '../../utils/urlUtils';
 
 export const HeroBanner: React.FC = () => {
   const { 
@@ -37,7 +38,7 @@ export const HeroBanner: React.FC = () => {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/15 text-xs font-bold tracking-widest uppercase">
             <span>{activeStore.design.logoEmoji}</span>
-            <span style={{ color: theme.hex }}>bastiyah.vercel.app/store/{activeStore.slug}</span>
+            <span style={{ color: theme.hex }}>{getStorePathLabel(activeStore.slug)}</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
@@ -121,7 +122,7 @@ export const HeroBanner: React.FC = () => {
             <div className="lg:col-span-6 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 border border-slate-900 text-slate-900 text-xs font-bold uppercase tracking-widest">
                 <span>{activeStore.design.logoEmoji}</span>
-                <span>bastiyah.vercel.app/store/{activeStore.slug}</span>
+                <span>{getStorePathLabel(activeStore.slug)}</span>
               </div>
 
               <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-950 leading-[1.08]">
@@ -211,7 +212,7 @@ export const HeroBanner: React.FC = () => {
           <div className="max-w-3xl space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/30 backdrop-blur-md text-white text-xs font-bold">
               <Globe className="w-3.5 h-3.5" />
-              <span className="font-mono">bastiyah.vercel.app/store/{activeStore.slug}</span>
+              <span className="font-mono">{getStorePathLabel(activeStore.slug)}</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
@@ -261,7 +262,7 @@ export const HeroBanner: React.FC = () => {
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>{displayStoreName}</span>
               <span className="opacity-50">•</span>
-              <span className="font-mono text-emerald-300" dir="ltr">bastiyah.vercel.app/store/{activeStore.slug}</span>
+              <span className="font-mono text-emerald-300" dir="ltr">{getStorePathLabel(activeStore.slug)}</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">

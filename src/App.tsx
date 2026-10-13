@@ -18,6 +18,7 @@ import { CustomerOrdersPage } from './components/store/CustomerOrdersPage';
 import { WishlistPage } from './components/store/WishlistPage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { getStorePathLabel } from './utils/urlUtils';
 
 export function App() {
   const { 
@@ -192,7 +193,7 @@ export function App() {
                     className="px-3 py-1 rounded-full text-white text-xs font-bold uppercase tracking-wider font-mono"
                     style={{ backgroundColor: theme.hex }}
                   >
-                    bastiyah.vercel.app/store/{activeStore.slug}
+                    {getStorePathLabel(activeStore.slug)}
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black leading-tight">
                     {language === 'ar'

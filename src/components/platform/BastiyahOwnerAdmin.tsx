@@ -274,8 +274,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <ExternalLink className="w-4 h-4 text-emerald-400" />
                 <span>
                   {language === 'ar'
-                    ? `معاينة /store/${activeStore.slug}`
-                    : `Preview /store/${activeStore.slug}`}
+                    ? `معاينة ${getStorePathLabel(activeStore.slug)}`
+                    : `Preview ${getStorePathLabel(activeStore.slug)}`}
                 </span>
               </button>
               <a
@@ -759,7 +759,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 className="font-mono text-xs text-slate-300 hover:text-white transition-colors"
                                 dir="ltr"
                               >
-                                /store/<strong className="text-emerald-400 font-bold">{store.slug}</strong>
+                                {getStorePathLabel(store.slug)}
                               </button>
                               <button
                                 onClick={() => handleCopyStoreLink(store)}

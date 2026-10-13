@@ -30,6 +30,19 @@ export const PlatformSwitcherPill: React.FC = () => {
     return null;
   }
 
+  // When browsing on a dedicated store subdomain (e.g. panda.domain.com),
+  // this is a 100% standalone store — never display platform switchers or competitor stores!
+  const isDedicatedSubdomain = typeof window !== 'undefined' && (() => {
+    const hostname = window.location.hostname.toLowerCase();
+    const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
+    const parts = hostname.split('.');
+    return !isLocalOrVercel && parts.length >= 3 && parts[0] !== 'www';
+  })();
+
+  if (isDedicatedSubdomain) {
+    return null;
+  }
+
   if (isDismissed) {
     return (
       <button

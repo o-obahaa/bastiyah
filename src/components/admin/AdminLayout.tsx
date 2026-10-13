@@ -18,6 +18,7 @@ import {
   Crown,
   Globe
 } from 'lucide-react';
+import { getStorePathLabel } from '../../utils/urlUtils';
 
 export const AdminLayout: React.FC = () => {
   const { 
@@ -83,7 +84,7 @@ export const AdminLayout: React.FC = () => {
                     </span>
                   </div>
                   <p className="font-mono text-[11px] text-slate-400 hidden sm:block" dir="ltr">
-                    bastiyah.vercel.app/store/{activeStore.slug}/admin
+                    {getStorePathLabel(activeStore.slug, true)}
                   </p>
                 </div>
               </div>

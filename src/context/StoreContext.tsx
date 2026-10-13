@@ -28,6 +28,12 @@ import {
 } from '../data/mockData';
 import { translations, PRODUCT_ARABIC_TRANSLATIONS } from '../i18n/translations';
 import { getThemeClasses, ThemeClasses } from '../utils/themeUtils';
+import { 
+  getCustomDomainRoot, 
+  getStoreDisplayUrl, 
+  getStorePathLabel, 
+  getPlatformDisplayUrl 
+} from '../utils/urlUtils';
 
 export interface CreateStoreInput {
   name: string;
@@ -469,6 +475,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       (s) => s.id === storeIdOrSlug || s.slug.toLowerCase() === storeIdOrSlug.toLowerCase()
     );
     if (!found) return;
+
+    const customRoot = getCustomDomainRoot();
+    if (customRoot) {
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+      const targetHost = `${found.slug}.${customRoot}`;
+      const isTargetAdmin = targetPage === 'admin';
+      const targetUrl = getStoreDisplayUrl(found.slug, isTargetAdmin);
+
+      // If we are navigating to another subdomain (e.g. from bastiyah.com to panda.bastiyah.com, or between subdomains)
+      if (currentHost !== targetHost || (isTargetAdmin && !window.location.pathname.includes('/admin'))) {
+        window.location.href = targetUrl;
+        return;
+      }
+    }
+
     setActiveStoreId(found.id);
     setSelectedCategory('All');
     setSearchQuery('');
@@ -478,13 +499,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     window.scrollTo({ top: 0, behavior: 'smooth' });
     addToast(
       language === 'ar'
-        ? `تم الانتقال إلى ${found.nameAr || found.name} (/store/${found.slug})`
-        : `Switched to ${found.name} (/store/${found.slug})`,
+        ? `تم الانتقال إلى ${found.nameAr || found.name} (${getStorePathLabel(found.slug)})`
+        : `Switched to ${found.name} (${getStorePathLabel(found.slug)})`,
       'info'
     );
   };
 
   const goToPlatform = (targetPage: 'landing' | 'admin' = 'landing') => {
+    const customRoot = getCustomDomainRoot();
+    if (customRoot) {
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+      if (currentHost !== customRoot && currentHost !== `www.${customRoot}`) {
+        window.location.href = getPlatformDisplayUrl(targetPage === 'admin' ? 'owner-admin' : 'landing');
+        return;
+      }
+    }
     setSelectedCategory('All');
     setSearchQuery('');
     setSelectedProductId(null);

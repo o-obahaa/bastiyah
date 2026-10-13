@@ -13,7 +13,7 @@ import {
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
-import { getStoreDisplayUrl } from '../../utils/urlUtils';
+import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮'];
 
@@ -154,8 +154,8 @@ export const AdminStoreDesign: React.FC = () => {
                 <Globe className="w-5 h-5 text-indigo-600" />
                 <span>
                   {language === 'ar'
-                    ? 'الرابط المخصص والهوية (.bastiyah.vercel.app)'
-                    : 'Custom Subdomain Link & Brand Identity'}
+                    ? 'الرابط المخصص وهوية المتجر المستقلة'
+                    : 'Dedicated Store Link & Brand Identity'}
                 </span>
               </h2>
             </div>
@@ -186,13 +186,18 @@ export const AdminStoreDesign: React.FC = () => {
               </div>
 
               <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5" dir="ltr">
-                <span className="text-slate-400 font-mono text-sm">bastiyah.vercel.app/store/</span>
+                <span className="text-slate-400 font-mono text-sm">
+                  {getCustomDomainRoot() ? 'https://' : 'bastiyah.vercel.app/store/'}
+                </span>
                 <input
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 px-1"
                 />
+                {getCustomDomainRoot() && (
+                  <span className="text-slate-400 font-mono text-sm">.{getCustomDomainRoot()}</span>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -206,8 +211,8 @@ export const AdminStoreDesign: React.FC = () => {
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400">
-                {language === 'ar' ? 'مستقبلاً عند ربط دومين مخصص: (slug).bastiyah.com' : 'Future custom domain: (slug).bastiyah.com'}
+              <p className="text-[11px] text-emerald-400/90 font-mono" dir="ltr">
+                {getStoreDisplayUrl(normalizedSlug)}
               </p>
             </div>
 

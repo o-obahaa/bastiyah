@@ -13,6 +13,7 @@ import {
   Palette,
   Globe
 } from 'lucide-react';
+import { getStorePathLabel } from '../../utils/urlUtils';
 
 export const Header: React.FC = () => {
   const { 
@@ -117,7 +118,7 @@ export const Header: React.FC = () => {
                   style={{ color: theme.hex }}
                   dir="ltr"
                 >
-                  bastiyah.vercel.app/store/{activeStore.slug}
+                  {getStorePathLabel(activeStore.slug)}
                 </span>
               </div>
             </button>
