@@ -21,11 +21,82 @@ export const BastiyahLandingPage: React.FC = () => {
     setCurrentPage,
     setAdminTab,
     language,
+    setLanguage,
     t,
   } = useStore();
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      {/* Bastiyah Platform Master Header */}
+      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+          {/* Platform Brand */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-600 to-emerald-500 p-0.5 shadow-lg shadow-indigo-500/20">
+              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-black text-white text-lg">
+                B
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-lg sm:text-xl tracking-tight text-white">
+                  {language === 'ar' ? 'بسطية' : 'Bastiyah'}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
+                  Cloud Platform
+                </span>
+              </div>
+              <span className="font-mono text-[11px] text-slate-400 block" dir="ltr">
+                bastiyah.vercel.app
+              </span>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6 text-xs sm:text-sm font-semibold text-slate-300">
+            <a href="#hosted-stores-directory" className="hover:text-white transition-colors">
+              {t.hostedStoresTitle}
+            </a>
+            <a href="#features" className="hover:text-white transition-colors">
+              {language === 'ar' ? 'المميزات' : 'Architecture'}
+            </a>
+          </nav>
+
+          {/* Platform Actions */}
+          <div className="flex items-center gap-2.5">
+            {/* Language Switcher */}
+            <button
+              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 border border-slate-700/80 hover:bg-slate-800 text-slate-200 transition-colors"
+              title={language === 'en' ? 'التحويل للغة العربية' : 'Switch to English'}
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{language === 'en' ? 'العربية' : 'EN'}</span>
+            </button>
+
+            {/* Platform Owner Super Admin */}
+            <button
+              onClick={() => setCurrentPage('bastiyah-admin')}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all shadow-sm"
+              title={t.bastiyahOwnerAdmin}
+            >
+              <Crown className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">{t.bastiyahOwnerAdmin}</span>
+              <span className="sm:hidden">{language === 'ar' ? 'الإدارة' : 'Admin'}</span>
+            </button>
+
+            {/* Create New Store Link */}
+            <button
+              onClick={() => setCurrentPage('bastiyah-admin')}
+              className="hidden lg:flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 transition-all"
+            >
+              <Zap className="w-4 h-4 text-amber-300" />
+              <span>{t.createNewStore}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 sm:py-28 border-b border-slate-800">
         <div className="absolute -top-40 start-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-gradient-to-tr from-indigo-600/25 via-violet-600/20 to-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -75,7 +146,7 @@ export const BastiyahLandingPage: React.FC = () => {
       </section>
 
       {/* Platform Architecture Highlights */}
-      <section className="py-14 border-b border-slate-900 bg-slate-950/60">
+      <section id="features" className="py-14 border-b border-slate-900 bg-slate-950/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800/90">
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
@@ -248,6 +319,41 @@ export const BastiyahLandingPage: React.FC = () => {
           })}
         </div>
       </section>
+
+      {/* Bastiyah Platform Footer */}
+      <footer className="border-t border-slate-900 bg-slate-950 py-12 text-slate-400 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-black text-white text-xs">
+              B
+            </div>
+            <div>
+              <span className="font-bold text-white text-sm block">
+                {language === 'ar' ? 'منصة بسطية (Bastiyah)' : 'Bastiyah Multi-Store Platform'}
+              </span>
+              <span className="text-[11px] text-slate-500 font-mono">
+                *.bastiyah.vercel.app
+              </span>
+            </div>
+          </div>
+
+          <p className="text-center md:text-start text-slate-400 max-w-md">
+            {language === 'ar'
+              ? 'منصة سحابية رائدة لاستضافة المتاجر الإلكترونية المستقلة بروابط مخصصّة وهوية بصرية متكاملة.'
+              : 'Leading cloud platform for hosting independent web-stores with dedicated subdomains and isolated administration.'}
+          </p>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setCurrentPage('bastiyah-admin')}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold transition-colors"
+            >
+              <Crown className="w-3.5 h-3.5 inline-block me-1.5" />
+              <span>{t.bastiyahOwnerAdmin}</span>
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

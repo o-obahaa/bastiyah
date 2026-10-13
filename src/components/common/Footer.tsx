@@ -3,9 +3,21 @@ import { useStore } from '../../context/StoreContext';
 import { ShieldCheck, Truck, RotateCcw, Headphones, Crown, Globe } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { activeStore, theme, setCurrentPage, setSelectedCategory, t, language } = useStore();
+  const { 
+    activeStore, 
+    theme, 
+    setCurrentPage, 
+    setSelectedCategory, 
+    t, 
+    language,
+    goToPlatform,
+    getCategoryName
+  } = useStore();
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
   const displayDesc = language === 'ar' ? activeStore.descriptionAr || activeStore.description : activeStore.description;
+
+  // Dynamically derive unique categories from this store's products
+  const storeCategories = Array.from(new Set(activeStore.products.map((p) => p.category)));
 
   return (
     <footer className="bg-slate-950 text-slate-300 pt-16 pb-12 border-t border-slate-800">
@@ -79,25 +91,19 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex flex-wrap items-center gap-2 pt-2">
               <button
-                onClick={() => setCurrentPage('bastiyah-landing')}
+                onClick={() => goToPlatform('landing')}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-950/90 text-indigo-300 border border-indigo-700/50 hover:bg-indigo-900 transition-colors"
+                title={language === 'ar' ? 'الذهاب لموقع المنصة الرئيسي' : 'Visit Bastiyah Platform'}
               >
                 <Globe className="w-3.5 h-3.5 text-indigo-400" />
                 <span>
                   {language === 'ar' ? 'مستضاف عبر منصة بسطية (Bastiyah)' : 'Hosted on Bastiyah Platform'}
                 </span>
               </button>
-              <button
-                onClick={() => setCurrentPage('bastiyah-admin')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-colors"
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span>{t.bastiyahOwnerAdmin}</span>
-              </button>
             </div>
           </div>
 
-          {/* Catalog Categories */}
+          {/* Catalog Categories (Scoped to this store) */}
           <div>
             <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4">
               {language === 'ar' ? 'أقسام المتجر' : 'Explore Collections'}
@@ -111,34 +117,20 @@ export const Footer: React.FC = () => {
                   {t.catAll}
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => { setCurrentPage('shop'); setSelectedCategory('Audio & Sound'); }}
-                  className="hover:text-white transition-colors"
-                >
-                  {t.catAudio}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => { setCurrentPage('shop'); setSelectedCategory('Perfumes & Oud'); }}
-                  className="hover:text-white transition-colors"
-                >
-                  {t.catPerfumes}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => { setCurrentPage('shop'); setSelectedCategory('Fashion & Luxury'); }}
-                  className="hover:text-white transition-colors"
-                >
-                  {t.catFashion}
-                </button>
-              </li>
+              {storeCategories.map((cat) => (
+                <li key={cat}>
+                  <button
+                    onClick={() => { setCurrentPage('shop'); setSelectedCategory(cat); }}
+                    className="hover:text-white transition-colors"
+                  >
+                    {getCategoryName(cat)}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Customer Service & Store Merchant Portal */}
           <div>
             <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4">
               {language === 'ar' ? 'إدارة وخدمة المتجر' : 'Store & Admin Hub'}
@@ -163,18 +155,12 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   onClick={() => setCurrentPage('admin')}
-                  className="font-bold transition-colors"
+                  className="font-bold transition-colors flex items-center gap-1"
                   style={{ color: theme.hex }}
                 >
-                  {t.adminPanel} ({activeStore.slug}) →
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setCurrentPage('bastiyah-admin')}
-                  className="text-amber-400 font-bold hover:text-amber-300 transition-colors"
-                >
-                  {t.bastiyahOwnerAdmin} →
+                  <span>{t.adminPanel}</span>
+                  <span className="font-mono text-[10px] opacity-75">({activeStore.slug})</span>
+                  <span>→</span>
                 </button>
               </li>
             </ul>

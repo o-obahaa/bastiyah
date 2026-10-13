@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from './context/StoreContext';
-import { BastiyahTopBar } from './components/platform/BastiyahTopBar';
+import { PlatformSwitcherPill } from './components/common/PlatformSwitcherPill';
 import { BastiyahOwnerAdmin } from './components/platform/BastiyahOwnerAdmin';
 import { BastiyahLandingPage } from './components/platform/BastiyahLandingPage';
 import { Header } from './components/common/Header';
@@ -85,40 +85,38 @@ export function App() {
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
   const displayDesc = language === 'ar' ? activeStore.descriptionAr || activeStore.description : activeStore.description;
 
-  // 1. Main Bastiyah Platform Owner Admin Panel (owner.bastiyah.com/admin)
+  // 1. Main Bastiyah Platform Owner Admin Panel (owner.bastiyah.vercel.app or ?platform=admin)
   if (currentPage === 'bastiyah-admin') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <ToastContainer />
-        <BastiyahTopBar />
         <BastiyahOwnerAdmin />
       </div>
     );
   }
 
-  // 2. Bastiyah Public Directory & Hosting Landing Page (bastiyah.com)
+  // 2. Bastiyah Public Platform Landing Page (bastiyah.vercel.app)
   if (currentPage === 'bastiyah-landing') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <ToastContainer />
-        <BastiyahTopBar />
         <BastiyahLandingPage />
       </div>
     );
   }
 
-  // 3. Per-Store Isolated Admin Portal ((storename).bastiyah.com/admin)
+  // 3. Per-Store Isolated Merchant Admin Portal ((storename).bastiyah.vercel.app/admin)
   if (currentPage === 'admin') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <ToastContainer />
-        <BastiyahTopBar />
         <AdminLayout />
+        <PlatformSwitcherPill />
       </div>
     );
   }
 
-  // 4. Hosted Storefront ((storename).bastiyah.com)
+  // 4. Hosted Storefront ((storename).bastiyah.vercel.app)
   return (
     <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-800 ${language === 'ar' ? 'font-arabic' : ''}`}>
       {/* Notifications and Modals */}
@@ -126,8 +124,8 @@ export function App() {
       <ProductQuickViewModal />
       <CartDrawer />
 
-      {/* Bastiyah Platform Subdomain Bar & Store Switcher */}
-      <BastiyahTopBar />
+      {/* Discrete Floating Platform Switcher for preview & testing */}
+      <PlatformSwitcherPill />
 
       {/* Hosted Store Header */}
       <Header />

@@ -10,7 +10,8 @@ import {
   X, 
   Sparkles,
   ArrowRight,
-  Palette
+  Palette,
+  Globe
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -19,6 +20,7 @@ export const Header: React.FC = () => {
     theme,
     products,
     language,
+    setLanguage,
     t,
     currentPage, 
     setCurrentPage, 
@@ -205,6 +207,20 @@ export const Header: React.FC = () => {
 
           {/* Actions: Store Design, Store Admin, Wishlist, Cart */}
           <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Language Switcher */}
+            <button
+              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+                isDarkHeader
+                  ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+              }`}
+              title={language === 'en' ? 'التحويل للغة العربية' : 'Switch to English'}
+            >
+              <Globe className="w-3.5 h-3.5" style={{ color: theme.hex }} />
+              <span>{language === 'en' ? 'العربية' : 'EN'}</span>
+            </button>
+
             {/* Customize Store Design Shortcut */}
             <button
               onClick={() => {

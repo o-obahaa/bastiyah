@@ -6,18 +6,24 @@ The platform enables hosting multiple independent web-stores through custom subd
 
 ---
 
-## 🌟 Key Architecture & Features
+## 🌟 Complete Multi-Store Separation Architecture
 
-### 👑 Bastiyah Super Admin (Website Owner Control Center)
-- Accessible via the **Bastiyah Owner Admin** button (`owner.bastiyah.vercel.app/admin`).
-- **Custom Link Generator**: Provision new web-stores on custom links (`(storename).bastiyah.vercel.app`) with instant availability verification.
-- **Platform-wide KPIs**: Aggregated Gross Merchandise Value (GMV), total orders, and product count across all hosted merchants.
-- **Merchant Management**: 1-click access to any store's public storefront or private administrative dashboard.
+### 1. 🏢 Bastiyah Main Platform (`bastiyah.vercel.app`)
+- The central portal and public directory of all hosted web-stores.
+- Platform landing page explaining custom link provisioning, hosting tiers, and platform features.
+- Public directory linking to each hosted store's live storefront and merchant admin.
 
-### 🌐 Live Subdomain Bar & Store Switcher
-- Persistent top platform bar showing the active custom link (`https://(storename).bastiyah.vercel.app`).
-- One-click copy link action and instant store switcher dropdown.
-- Browser URL query synchronization (`?store=<slug>`).
+### 2. 🛍️ Fully Isolated Storefronts (`(storename).bastiyah.vercel.app` or `?store=<slug>`)
+- **Visual & Brand Separation**: Each store displays its own custom identity, logo icon, color palette, hero banners, and collections.
+- **Cart & Wishlist Isolation**: Carts and wishlists are strictly partitioned per store (an item added in Panda Store will never appear in Royal Oud).
+- **No Shared Platform Bar**: Storefronts operate as pure standalone websites without intrusive platform switchers.
+- **Discreet Floating Badge**: A collapsible bottom pill (`⚡ Bastiyah`) is provided during testing to hop back to the platform or switch stores.
+
+### 3. 🛡️ Isolated Store Merchant Admin (`(storename).bastiyah.vercel.app/admin` or `?store=<slug>&admin=true`)
+- Dedicated portal for the store's merchant to manage inventory, fulfill orders, review customers, and customize the store's design.
+
+### 4. 👑 Platform Owner Control Center (`owner.bastiyah.vercel.app` or `?platform=admin`)
+- Master control center for the platform owner to provision new custom links, track platform GMV and orders, and manage all tenants.
 
 ### 🎨 Independent Design Studio per Store
 - **Color Theme Palettes**: Emerald Forest, Royal Indigo, Luxury Gold & Amber, Velvet Rose, Oceanic Cyan, Cyber Violet.

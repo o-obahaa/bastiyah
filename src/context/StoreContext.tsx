@@ -61,6 +61,7 @@ interface StoreContextType {
   activeStore: HostedStore;
   theme: ThemeClasses;
   switchStore: (storeIdOrSlug: string, targetPage?: ActivePage) => void;
+  goToPlatform: (targetPage?: 'landing' | 'admin') => void;
   createHostedStore: (input: CreateStoreInput) => HostedStore;
   updateHostedStore: (storeId: string, updates: Partial<HostedStore>) => void;
   updateStoreDesign: (designUpdates: Partial<StoreDesign>, storeId?: string) => void;
@@ -138,6 +139,72 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
+export const detectInitialRouting = (allStores: HostedStore[]): { storeId: string; page: ActivePage } => {
+  if (typeof window === 'undefined') {
+    return {
+      storeId: allStores[0]?.id || 'store-panda',
+      page: 'bastiyah-landing',
+    };
+  }
+
+  const hostname = window.location.hostname.toLowerCase();
+  const searchParams = new URLSearchParams(window.location.search);
+  const pathname = window.location.pathname.toLowerCase();
+
+  // 1. Platform Super Admin (owner.bastiyah.vercel.app or ?platform=admin)
+  if (
+    hostname.startsWith('owner.') ||
+    searchParams.get('platform') === 'admin' ||
+    searchParams.get('page') === 'bastiyah-admin'
+  ) {
+    return {
+      storeId: allStores[0]?.id || 'store-panda',
+      page: 'bastiyah-admin',
+    };
+  }
+
+  // 2. Query param specifies store (?store=panda)
+  const storeQuery = searchParams.get('store');
+  if (storeQuery) {
+    const found = allStores.find(
+      (s) => s.slug.toLowerCase() === storeQuery.toLowerCase() || s.id === storeQuery
+    );
+    if (found) {
+      const isStoreAdmin = searchParams.get('admin') === 'true' || searchParams.get('page') === 'admin';
+      const targetPage: ActivePage = isStoreAdmin ? 'admin' : ((searchParams.get('page') as ActivePage) || 'home');
+      return {
+        storeId: found.id,
+        page: targetPage,
+      };
+    }
+  }
+
+  // 3. Subdomain specifies store (panda.bastiyah.vercel.app)
+  const hostParts = hostname.split('.');
+  if (
+    hostParts.length >= 2 &&
+    hostParts[0] !== 'www' &&
+    hostParts[0] !== 'bastiyah' &&
+    hostParts[0] !== 'localhost'
+  ) {
+    const sub = hostParts[0];
+    const found = allStores.find((s) => s.slug.toLowerCase() === sub);
+    if (found) {
+      const isStoreAdmin = pathname.includes('/admin') || searchParams.get('admin') === 'true';
+      return {
+        storeId: found.id,
+        page: isStoreAdmin ? 'admin' : 'home',
+      };
+    }
+  }
+
+  // 4. Default: Bastiyah Platform Landing Page!
+  return {
+    storeId: allStores[0]?.id || 'store-panda',
+    page: 'bastiyah-landing',
+  };
+};
+
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Language State
   const [language, setLanguage] = useState<Language>(() => {
@@ -159,30 +226,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return INITIAL_HOSTED_STORES;
   });
 
-  // Active Store ID
-  const [activeStoreId, setActiveStoreId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const storeSlug = params.get('store');
-      if (storeSlug) {
-        const found = stores.find(
-          (s) => s.slug.toLowerCase() === storeSlug.toLowerCase()
-        );
-        if (found) return found.id;
-      }
-
-      // Check hostname subdomain (e.g. panda.bastiyah.com or panda.localhost)
-      const hostParts = window.location.hostname.split('.');
-      if (hostParts.length >= 2 && hostParts[0] !== 'www' && hostParts[0] !== 'localhost') {
-        const sub = hostParts[0].toLowerCase();
-        const found = stores.find((s) => s.slug.toLowerCase() === sub);
-        if (found) return found.id;
-      }
-    }
-    const saved = localStorage.getItem('bastiyah_active_store_id');
-    const existing = stores.find((s) => s.id === saved);
-    return existing ? existing.id : stores[0]?.id || INITIAL_HOSTED_STORES[0].id;
-  });
+  // Initial Routing
+  const initialRouting = detectInitialRouting(stores);
+  const [activeStoreId, setActiveStoreId] = useState<string>(initialRouting.storeId);
+  const [currentPage, setCurrentPage] = useState<ActivePage>(initialRouting.page);
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
   const theme = getThemeClasses(activeStore.design.themeColor);
@@ -202,13 +249,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    const saved = localStorage.getItem('bastiyah_wishlist');
-    return saved ? JSON.parse(saved) : [];
+  // Per-store wishlists stored by store ID
+  const [wishlistsByStore, setWishlistsByStore] = useState<Record<string, string[]>>(() => {
+    const saved = localStorage.getItem('bastiyah_wishlists_v1');
+    return saved ? JSON.parse(saved) : {};
   });
 
+  const wishlist = wishlistsByStore[activeStore.id] || [];
+  const toggleWishlist = (productId: string) => {
+    setWishlistsByStore((prevMap) => {
+      const currentList = prevMap[activeStore.id] || [];
+      const exists = currentList.includes(productId);
+      let updated: string[];
+      if (exists) {
+        addToast(language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist', 'info');
+        updated = currentList.filter((id) => id !== productId);
+      } else {
+        addToast(language === 'ar' ? 'تم الحفظ في المفضلة!' : 'Saved to wishlist!', 'success');
+        updated = [...currentList, productId];
+      }
+      return { ...prevMap, [activeStore.id]: updated };
+    });
+  };
+
+  const isInWishlist = (productId: string) => (wishlistsByStore[activeStore.id] || []).includes(productId);
+
   // UI state
-  const [currentPage, setCurrentPage] = useState<ActivePage>('home');
   const [adminTab, setAdminTab] = useState<AdminTab>('dashboard');
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -233,20 +299,64 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     localStorage.setItem('bastiyah_active_store_id', activeStore.id);
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('store', activeStore.slug);
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [activeStore.id, activeStore.slug]);
+  }, [activeStore.id]);
 
   useEffect(() => {
     localStorage.setItem('bastiyah_carts_v1', JSON.stringify(cartsByStore));
   }, [cartsByStore]);
 
   useEffect(() => {
-    localStorage.setItem('bastiyah_wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
+    localStorage.setItem('bastiyah_wishlists_v1', JSON.stringify(wishlistsByStore));
+  }, [wishlistsByStore]);
+
+  // Synchronize browser URL cleanly based on current page and store
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const url = new URL(window.location.href);
+
+    if (currentPage === 'bastiyah-landing') {
+      url.searchParams.delete('store');
+      url.searchParams.delete('admin');
+      url.searchParams.delete('platform');
+      url.searchParams.delete('page');
+      const cleanUrl = url.pathname + (url.search ? url.search : '');
+      window.history.replaceState({}, '', cleanUrl);
+    } else if (currentPage === 'bastiyah-admin') {
+      url.searchParams.delete('store');
+      url.searchParams.delete('admin');
+      url.searchParams.delete('page');
+      url.searchParams.set('platform', 'admin');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    } else if (currentPage === 'admin') {
+      url.searchParams.delete('platform');
+      url.searchParams.delete('page');
+      url.searchParams.set('store', activeStore.slug);
+      url.searchParams.set('admin', 'true');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    } else {
+      url.searchParams.delete('platform');
+      url.searchParams.delete('admin');
+      url.searchParams.set('store', activeStore.slug);
+      if (currentPage !== 'home') {
+        url.searchParams.set('page', currentPage);
+      } else {
+        url.searchParams.delete('page');
+      }
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  }, [currentPage, activeStore.id, activeStore.slug]);
+
+  // Support browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const routing = detectInitialRouting(stores);
+      setActiveStoreId(routing.storeId);
+      setCurrentPage(routing.page);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [stores]);
 
   // Helper to update a specific store inside `stores`
   const mutateActiveStore = (updater: (store: HostedStore) => HostedStore, targetStoreId?: string) => {
@@ -329,6 +439,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         : `Switched to ${found.name} (${found.slug}.bastiyah.vercel.app)`,
       'info'
     );
+  };
+
+  const goToPlatform = (targetPage: 'landing' | 'admin' = 'landing') => {
+    setSelectedCategory('All');
+    setSearchQuery('');
+    setSelectedProductId(null);
+    setAppliedCoupon(null);
+    setCurrentPage(targetPage === 'admin' ? 'bastiyah-admin' : 'bastiyah-landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const createHostedStore = (input: CreateStoreInput): HostedStore => {
@@ -524,21 +643,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCart([]);
   };
 
-  // Wishlist Management
-  const toggleWishlist = (productId: string) => {
-    setWishlist((prev) => {
-      const exists = prev.includes(productId);
-      if (exists) {
-        addToast(language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from wishlist', 'info');
-        return prev.filter((id) => id !== productId);
-      } else {
-        addToast(language === 'ar' ? 'تم الحفظ في المفضلة!' : 'Saved to wishlist!', 'success');
-        return [...prev, productId];
-      }
-    });
-  };
-
-  const isInWishlist = (productId: string) => wishlist.includes(productId);
 
   // Cart Calculations
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -755,6 +859,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         activeStore,
         theme,
         switchStore,
+        goToPlatform,
         createHostedStore,
         updateHostedStore,
         updateStoreDesign,

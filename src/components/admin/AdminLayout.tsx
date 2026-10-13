@@ -15,7 +15,8 @@ import {
   Palette,
   ArrowLeft, 
   ArrowRight,
-  Crown
+  Crown,
+  Globe
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -28,7 +29,9 @@ export const AdminLayout: React.FC = () => {
     orders, 
     products, 
     t, 
-    language, 
+    language,
+    setLanguage,
+    goToPlatform,
   } = useStore();
 
   const tabs = [
@@ -86,8 +89,26 @@ export const AdminLayout: React.FC = () => {
               </div>
             </div>
 
-            {/* Right: Link to Bastiyah Super Admin & Owner info */}
+            {/* Right: Language, Link to Platform, and Super Admin */}
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-colors"
+                title={language === 'en' ? 'التحويل للعربية' : 'Switch to English'}
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{language === 'en' ? 'العربية' : 'EN'}</span>
+              </button>
+
+              <button
+                onClick={() => goToPlatform('landing')}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold transition-colors"
+                title={language === 'ar' ? 'الذهاب للموقع الرئيسي (بسطية)' : 'Visit Bastiyah Platform'}
+              >
+                <Globe className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{language === 'ar' ? 'موقع المنصة' : 'Bastiyah Platform'}</span>
+              </button>
+
               <button
                 onClick={() => setCurrentPage('bastiyah-admin')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-colors"
