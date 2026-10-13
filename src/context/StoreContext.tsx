@@ -325,8 +325,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     window.scrollTo({ top: 0, behavior: 'smooth' });
     addToast(
       language === 'ar'
-        ? `تم الانتقال إلى ${found.nameAr || found.name} (${found.slug}.bastiyah.com)`
-        : `Switched to ${found.name} (${found.slug}.bastiyah.com)`,
+        ? `تم الانتقال إلى ${found.nameAr || found.name} (${found.slug}.bastiyah.vercel.app)`
+        : `Switched to ${found.name} (${found.slug}.bastiyah.vercel.app)`,
       'info'
     );
   };
@@ -354,12 +354,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       nameAr: input.nameAr?.trim() || input.name.trim(),
       tagline: input.tagline.trim() || `Welcome to ${input.name}`,
       taglineAr: input.taglineAr?.trim() || input.tagline.trim() || `أهلاً بكم في ${input.nameAr || input.name}`,
-      description: `Official Bastiyah web-store hosted at ${cleanSlug}.bastiyah.com.`,
-      descriptionAr: `متجر إلكتروني رسمي مستضاف عبر منصة بسطية على الرابط ${cleanSlug}.bastiyah.com.`,
+      description: `Official Bastiyah web-store hosted at ${cleanSlug}.bastiyah.vercel.app.`,
+      descriptionAr: `متجر إلكتروني رسمي مستضاف عبر منصة بسطية على الرابط ${cleanSlug}.bastiyah.vercel.app.`,
       category: input.category,
       categoryAr: input.categoryAr || input.category,
       ownerName: input.ownerName.trim() || 'Store Owner',
-      ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.bastiyah.com`,
+      ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.bastiyah.vercel.app`,
       status: 'active',
       plan: input.plan,
       createdAt: new Date().toISOString(),
@@ -372,7 +372,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
       settings: {
         storeName: input.name.trim(),
-        supportEmail: input.ownerEmail.trim() || `support@${cleanSlug}.bastiyah.com`,
+        supportEmail: input.ownerEmail.trim() || `support@${cleanSlug}.bastiyah.vercel.app`,
         currency: input.currency || '$',
         freeShippingThreshold: 100,
         standardShippingFee: 9.99,
@@ -390,8 +390,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setStores((prev) => [newStore, ...prev]);
     addToast(
       language === 'ar'
-        ? `🎉 تم إطلاق المتجر بنجاح على ${cleanSlug}.bastiyah.com!`
-        : `🎉 Store launched live at ${cleanSlug}.bastiyah.com!`,
+        ? `🎉 تم إطلاق المتجر بنجاح على ${cleanSlug}.bastiyah.vercel.app!`
+        : `🎉 Store launched live at ${cleanSlug}.bastiyah.vercel.app!`,
       'success'
     );
     return newStore;
@@ -444,8 +444,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     addToast(
       language === 'ar'
-        ? `تم حذف المتجر ${target?.slug}.bastiyah.com`
-        : `Removed store ${target?.slug}.bastiyah.com`,
+        ? `تم حذف المتجر ${target?.slug}.bastiyah.vercel.app`
+        : `Removed store ${target?.slug}.bastiyah.vercel.app`,
       'info'
     );
   };

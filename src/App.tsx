@@ -194,7 +194,7 @@ export function App() {
                     className="px-3 py-1 rounded-full text-white text-xs font-bold uppercase tracking-wider"
                     style={{ backgroundColor: theme.hex }}
                   >
-                    {activeStore.slug}.bastiyah.com
+                    {activeStore.slug}.bastiyah.vercel.app
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black leading-tight">
                     {language === 'ar'

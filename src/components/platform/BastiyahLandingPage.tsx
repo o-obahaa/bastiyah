@@ -51,7 +51,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <span className="font-mono text-sm sm:text-lg font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
               (storename)
             </span>
-            <span className="font-mono text-sm sm:text-lg font-bold text-white">.bastiyah.com</span>
+            <span className="font-mono text-sm sm:text-lg font-bold text-white">.bastiyah.vercel.app</span>
           </div>
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
@@ -86,8 +86,8 @@ export const BastiyahLandingPage: React.FC = () => {
             </h3>
             <p className="text-sm text-slate-400 mt-2 leading-relaxed">
               {language === 'ar'
-                ? 'ينشئ مالك المنصة روابط مخصصة مثل (storename).bastiyah.com بضغطة زر مع شهادة حماية فورية.'
-                : 'Generate dedicated custom links like (storename).bastiyah.com in seconds from the main Bastiyah owner dashboard.'}
+                ? 'ينشئ مالك المنصة روابط مخصصة مثل (storename).bastiyah.vercel.app بضغطة زر مع شهادة حماية فورية.'
+                : 'Generate dedicated custom links like (storename).bastiyah.vercel.app in seconds from the main Bastiyah owner dashboard.'}
             </p>
           </div>
 
@@ -126,7 +126,7 @@ export const BastiyahLandingPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">
-              *.bastiyah.com
+              *.bastiyah.vercel.app
             </span>
             <h2 className="text-3xl font-black text-white mt-1">{t.hostedStoresTitle}</h2>
             <p className="text-slate-400 text-sm mt-1">{t.hostedStoresSubtitle}</p>
@@ -193,7 +193,7 @@ export const BastiyahLandingPage: React.FC = () => {
                       <div className="flex items-center gap-2 truncate">
                         <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="font-mono text-xs text-slate-400 truncate">
-                          https://<strong className="text-emerald-400 font-bold">{store.slug}</strong>.bastiyah.com
+                          https://<strong className="text-emerald-400 font-bold">{store.slug}</strong>.bastiyah.vercel.app
                         </span>
                       </div>
                       <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0" />

@@ -153,7 +153,7 @@ export const AdminStoreDesign: React.FC = () => {
                 <Globe className="w-5 h-5 text-indigo-600" />
                 <span>
                   {language === 'ar'
-                    ? 'الرابط المخصص والهوية (.bastiyah.com)'
+                    ? 'الرابط المخصص والهوية (.bastiyah.vercel.app)'
                     : 'Custom Subdomain Link & Brand Identity'}
                 </span>
               </h2>
@@ -192,11 +192,11 @@ export const AdminStoreDesign: React.FC = () => {
                   onChange={(e) => setSlug(e.target.value)}
                   className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 px-1"
                 />
-                <span className="text-indigo-300 font-mono font-bold text-sm">.bastiyah.com</span>
+                <span className="text-indigo-300 font-mono font-bold text-sm">.bastiyah.vercel.app</span>
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard?.writeText(`https://${normalizedSlug}.bastiyah.com`);
+                    navigator.clipboard?.writeText(`https://${normalizedSlug}.bastiyah.vercel.app`);
                     addToast(t.linkCopied, 'info');
                   }}
                   className="ms-2 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"

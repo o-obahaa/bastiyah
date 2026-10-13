@@ -32,10 +32,10 @@ export const BastiyahTopBar: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const getSimulatedUrl = () => {
-    if (currentPage === 'bastiyah-admin') return 'https://owner.bastiyah.com/admin';
-    if (currentPage === 'bastiyah-landing') return 'https://bastiyah.com';
-    if (currentPage === 'admin') return `https://${activeStore.slug}.bastiyah.com/admin`;
-    return `https://${activeStore.slug}.bastiyah.com`;
+    if (currentPage === 'bastiyah-admin') return 'https://owner.bastiyah.vercel.app';
+    if (currentPage === 'bastiyah-landing') return 'https://bastiyah.vercel.app';
+    if (currentPage === 'admin') return `https://${activeStore.slug}.bastiyah.vercel.app/admin`;
+    return `https://${activeStore.slug}.bastiyah.vercel.app`;
   };
 
   const handleCopyUrl = () => {
@@ -63,7 +63,7 @@ export const BastiyahTopBar: React.FC = () => {
               {language === 'ar' ? 'بسطية' : 'Bastiyah'}
             </span>
             <span className="hidden md:inline-block text-[10px] font-semibold text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded">
-              HOSTING
+              VERCEL
             </span>
           </button>
 
@@ -72,18 +72,18 @@ export const BastiyahTopBar: React.FC = () => {
             <div className="flex items-center bg-slate-900 border border-slate-700/80 rounded-lg overflow-hidden shadow-inner">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-slate-800/80 transition-colors text-slate-200 max-w-[200px] sm:max-w-xs truncate"
+                className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-slate-800/80 transition-colors text-slate-200 max-w-[240px] sm:max-w-md truncate"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="font-mono text-[11px] text-slate-400 hidden sm:inline">https://</span>
                 {currentPage === 'bastiyah-admin' ? (
-                  <span className="font-mono text-[11px] font-bold text-amber-400">owner.bastiyah.com</span>
+                  <span className="font-mono text-[11px] font-bold text-amber-400">owner.bastiyah.vercel.app</span>
                 ) : currentPage === 'bastiyah-landing' ? (
-                  <span className="font-mono text-[11px] font-bold text-indigo-400">bastiyah.com</span>
+                  <span className="font-mono text-[11px] font-bold text-indigo-400">bastiyah.vercel.app</span>
                 ) : (
                   <span className="font-mono text-[11px] truncate">
                     <strong className="text-emerald-400 font-bold">{activeStore.slug}</strong>
-                    <span className="text-slate-300">.bastiyah.com</span>
+                    <span className="text-slate-300">.bastiyah.vercel.app</span>
                     {currentPage === 'admin' && <span className="text-amber-400">/admin</span>}
                   </span>
                 )}
@@ -153,7 +153,7 @@ export const BastiyahTopBar: React.FC = () => {
                                 />
                               </div>
                               <p className="font-mono text-[11px] text-emerald-400 truncate">
-                                {st.slug}.bastiyah.com
+                                {st.slug}.bastiyah.vercel.app
                               </p>
                             </div>
                           </button>
@@ -236,7 +236,7 @@ export const BastiyahTopBar: React.FC = () => {
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'bg-slate-800/90 text-slate-200 hover:bg-slate-700'
             }`}
-            title={`${activeStore.slug}.bastiyah.com/admin`}
+            title={`${activeStore.slug}.bastiyah.vercel.app/admin`}
           >
             <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
             <span className="hidden sm:inline">

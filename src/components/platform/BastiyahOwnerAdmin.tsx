@@ -140,14 +140,14 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       slug: normalizedSlug,
       tagline:
         tagline ||
-        `Curated ${chosenCat.en} hosted on ${normalizedSlug}.bastiyah.com`,
+        `Curated ${chosenCat.en} hosted on ${normalizedSlug}.bastiyah.vercel.app`,
       taglineAr:
         taglineAr ||
         `أفضل منتجات ${chosenCat.ar} عبر منصة بسطية`,
       category: chosenCat.en,
       categoryAr: chosenCat.ar,
       ownerName: ownerName || 'Store Merchant',
-      ownerEmail: ownerEmail || `owner@${normalizedSlug}.bastiyah.com`,
+      ownerEmail: ownerEmail || `owner@${normalizedSlug}.bastiyah.vercel.app`,
       plan,
       themeColor,
       layoutStyle,
@@ -169,7 +169,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   };
 
   const handleCopyStoreLink = (store: HostedStore) => {
-    const link = `https://${store.slug}.bastiyah.com`;
+    const link = `https://${store.slug}.bastiyah.vercel.app`;
     navigator.clipboard?.writeText(link);
     setCopiedId(store.id);
     addToast(`${t.linkCopied}: ${link}`, 'info');
@@ -230,7 +230,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <Crown className="w-3.5 h-3.5" />
                 <span>{t.platformSuperAdmin}</span>
                 <span className="text-amber-500/60">•</span>
-                <span className="font-mono">bastiyah.com</span>
+                <span className="font-mono">bastiyah.vercel.app</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-3">
                 <span>{language === 'ar' ? 'لوحة مالك منصة بسطية (Bastiyah)' : 'Bastiyah Platform Owner Control Center'}</span>
@@ -248,8 +248,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <ExternalLink className="w-4 h-4 text-emerald-400" />
                 <span>
                   {language === 'ar'
-                    ? `معاينة ${activeStore.slug}.bastiyah.com`
-                    : `Preview ${activeStore.slug}.bastiyah.com`}
+                    ? `معاينة ${activeStore.slug}.bastiyah.vercel.app`
+                    : `Preview ${activeStore.slug}.bastiyah.vercel.app`}
                 </span>
               </button>
               <a
@@ -276,7 +276,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               <p className="text-3xl font-black text-white mt-2">{totalPlatformStores}</p>
               <p className="text-xs text-emerald-400 mt-1 font-medium flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>*.bastiyah.com Wildcard SSL Active</span>
+                <span>*.bastiyah.vercel.app Vercel SSL Active</span>
               </p>
             </div>
 
@@ -391,7 +391,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 min-w-0 px-1"
                     required
                   />
-                  <span className="text-indigo-300 font-mono font-bold text-sm select-none">.bastiyah.com</span>
+                  <span className="text-indigo-300 font-mono font-bold text-sm select-none">.bastiyah.vercel.app</span>
                 </div>
               </div>
 
@@ -498,7 +498,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     type="email"
                     value={ownerEmail}
                     onChange={(e) => setOwnerEmail(e.target.value)}
-                    placeholder={`owner@${normalizedSlug || 'store'}.bastiyah.com`}
+                    placeholder={`owner@${normalizedSlug || 'store'}.bastiyah.vercel.app`}
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
                   />
                 </div>
@@ -609,7 +609,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <span>{t.launchStoreBtn}</span>
                 {normalizedSlug && (
                   <span className="font-mono text-xs bg-black/25 px-2 py-0.5 rounded-md">
-                    {normalizedSlug}.bastiyah.com
+                    {normalizedSlug}.bastiyah.vercel.app
                   </span>
                 )}
               </button>
@@ -631,7 +631,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               <p className="text-xs text-slate-400 mt-0.5">
                 {language === 'ar'
                   ? 'كل متجر يمتلك رابطه الفرعي المستقل، تصميمه الخاص، ولوحة تحكم خاصة به'
-                  : 'Every hosted store operates on its own .bastiyah.com link with independent design & admin panel'}
+                  : 'Every hosted store operates on its own .bastiyah.vercel.app link with independent design & admin panel'}
               </p>
             </div>
 
@@ -710,7 +710,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 className="bg-transparent text-emerald-400 font-mono text-xs font-bold focus:outline-none w-28"
                                 autoFocus
                               />
-                              <span className="text-xs font-mono text-slate-400">.bastiyah.com</span>
+                              <span className="text-xs font-mono text-slate-400">.bastiyah.vercel.app</span>
                               <button
                                 onClick={() => handleSaveCustomSlug(store.id)}
                                 className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[11px] font-bold"
@@ -732,7 +732,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 className="font-mono text-xs text-slate-300 hover:text-white transition-colors"
                                 dir="ltr"
                               >
-                                https://<strong className="text-emerald-400 font-bold">{store.slug}</strong>.bastiyah.com
+                                https://<strong className="text-emerald-400 font-bold">{store.slug}</strong>.bastiyah.vercel.app
                               </button>
                               <button
                                 onClick={() => handleCopyStoreLink(store)}
