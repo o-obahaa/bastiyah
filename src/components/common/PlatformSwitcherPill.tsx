@@ -62,12 +62,21 @@ export const PlatformSwitcherPill: React.FC = () => {
       {isExpanded && (
         <div className="mb-2 bg-slate-950/95 backdrop-blur-md text-white border border-slate-800 rounded-2xl shadow-2xl p-3 w-72 space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-150">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-            <div className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-black text-[10px] text-white">
-                B
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md overflow-hidden bg-white p-0.5 shrink-0">
+                <video
+                  src="/bastiyah-logo.mp4"
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover rounded-xs"
+                />
+              </div>
+              <span className="font-brand font-black text-white text-sm">
+                بسطية
               </span>
-              <span className="font-bold text-white">
-                {language === 'ar' ? 'منصة بسطية (Bastiyah)' : 'Bastiyah Platform'}
+              <span className="text-[10px] text-slate-400 font-mono">
+                (Bastiyah)
               </span>
             </div>
             <button
@@ -131,12 +140,20 @@ export const PlatformSwitcherPill: React.FC = () => {
         <button
           onClick={() => goToPlatform('landing')}
           className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-900 transition-colors text-slate-200 hover:text-white font-medium"
-          title={language === 'ar' ? 'العودة للمنصة الرئيسية' : 'Return to Bastiyah platform'}
+          title={language === 'ar' ? 'العودة للمنصة الرئيسية (بسطية)' : 'Return to Bastiyah platform'}
         >
-          <span className="text-amber-400">⚡</span>
-          <span className="font-bold">Bastiyah</span>
+          <div className="w-4 h-4 rounded overflow-hidden bg-white shrink-0">
+            <video
+              src="/bastiyah-logo.mp4"
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="font-brand font-black text-xs text-white">بسطية</span>
           <span className="text-slate-500">•</span>
-          <span className="text-[11px] text-indigo-300">
+          <span className="text-[11px] text-stone-300">
             {language === 'ar' ? 'المنصة الرئيسية' : 'Main Site'}
           </span>
         </button>

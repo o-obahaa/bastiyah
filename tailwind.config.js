@@ -23,8 +23,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Cairo', 'Inter', 'system-ui', 'sans-serif'],
-        arabic: ['Cairo', 'Plus Jakarta Sans', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'Readex Pro', 'Cairo', 'Inter', 'system-ui', 'sans-serif'],
+        arabic: ['Readex Pro', 'Alexandria', 'Cairo', 'sans-serif'],
+        brand: ['Alexandria', 'Readex Pro', 'Cairo', 'sans-serif'],
       },
     },
   },

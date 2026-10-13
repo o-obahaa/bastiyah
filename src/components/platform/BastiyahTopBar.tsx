@@ -15,6 +15,7 @@ import {
 import { useStore } from '../../context/StoreContext';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getPlatformOrigin, getStoreDisplayUrl } from '../../utils/urlUtils';
+import { DynamicLogo } from '../common/DynamicLogo';
 
 export const BastiyahTopBar: React.FC = () => {
   const { 
@@ -48,23 +49,29 @@ export const BastiyahTopBar: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-950 text-white border-b border-slate-800/80 relative z-50 select-none">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-11 flex items-center justify-between gap-2 text-xs">
+    <div className="bg-stone-950 text-white border-b border-stone-800/80 relative z-50 select-none">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-12 flex items-center justify-between gap-2 text-xs">
         {/* Left: Bastiyah Brand + Store Switcher */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setCurrentPage('bastiyah-landing')}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-indigo-600/20 to-violet-600/20 border border-indigo-500/30 hover:border-indigo-400 transition-all shrink-0"
+            className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-stone-900/90 border border-stone-700/80 hover:border-stone-500 hover:bg-stone-800/90 transition-all shrink-0 group"
             title={t.bastiyahTagline}
           >
-            <span className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-black text-[11px] text-white shadow-sm">
-              B
+            <div className="w-6 h-6 rounded-lg overflow-hidden bg-white flex items-center justify-center p-0.5 shadow-sm">
+              <video
+                src="/bastiyah-logo.mp4"
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover rounded-md"
+              />
+            </div>
+            <span className="font-brand font-black text-sm tracking-tight text-white group-hover:text-amber-300 transition-colors">
+              بسطية
             </span>
-            <span className="font-extrabold tracking-tight text-white">
-              {language === 'ar' ? 'بسطية' : 'Bastiyah'}
-            </span>
-            <span className="hidden md:inline-block text-[10px] font-semibold text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded">
-              VERCEL
+            <span className="hidden md:inline-block text-[9px] font-bold tracking-wider text-stone-400 bg-stone-800 px-1.5 py-0.5 rounded uppercase">
+              BASTIYAH
             </span>
           </button>
 

@@ -198,7 +198,7 @@ export const Footer: React.FC = () => {
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>
-            © 2026 {displayStoreName} (<span className="font-mono text-slate-300">{getStorePathLabel(activeStore.slug)}</span>) • Powered by <strong className="text-white">Bastiyah | بسطية</strong>
+            © 2026 {displayStoreName} (<span className="font-mono text-slate-300">{getStorePathLabel(activeStore.slug)}</span>) • Powered by <span className="font-brand font-bold text-white">بسطية</span> <span className="text-slate-400">(Bastiyah)</span>
           </p>
           <div className="flex items-center gap-1">
             <span>Bastiyah Multi-Store Cloud • EN / AR</span>
