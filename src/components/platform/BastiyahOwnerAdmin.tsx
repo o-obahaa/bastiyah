@@ -38,7 +38,9 @@ import {
   User,
   Activity,
   AlertTriangle,
-  ArrowUpDown
+  ArrowUpDown,
+  LogOut,
+  KeyRound
 } from 'lucide-react';
 import { ImageUploader } from '../common/ImageUploader';
 import { useStore } from '../../context/StoreContext';
@@ -76,6 +78,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     isConvexConnected,
     isCloudflareConfigured,
     seedConvexDatabase,
+    logoutPlatformAdmin,
+    platformAdminEmail,
   } = useStore();
 
   const [isSeeding, setIsSeeding] = useState(false);
@@ -106,6 +110,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [editCategory, setEditCategory] = useState('');
   const [editOwnerName, setEditOwnerName] = useState('');
   const [editOwnerEmail, setEditOwnerEmail] = useState('');
+  const [editAdminPassword, setEditAdminPassword] = useState('');
   const [editPlan, setEditPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
   const [editStatus, setEditStatus] = useState<'active' | 'maintenance' | 'suspended'>('active');
   const [editThemeColor, setEditThemeColor] = useState<StoreThemeColor>('emerald');
@@ -122,6 +127,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [newCategoryIndex, setNewCategoryIndex] = useState(0);
   const [newOwnerName, setNewOwnerName] = useState('');
   const [newOwnerEmail, setNewOwnerEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('merchant123');
   const [newPlan, setNewPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
   const [newThemeColor, setNewThemeColor] = useState<StoreThemeColor>('emerald');
   const [newLayoutStyle, setNewLayoutStyle] = useState<StoreLayoutStyle>('modern-split');
@@ -138,6 +144,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setEditCategory(store.category);
     setEditOwnerName(store.ownerName);
     setEditOwnerEmail(store.ownerEmail);
+    setEditAdminPassword(store.adminPassword || 'merchant123');
     setEditPlan(store.plan);
     setEditStatus(store.status);
     setEditThemeColor(store.design.themeColor);
@@ -179,6 +186,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       category: editCategory,
       ownerName: editOwnerName.trim() || 'Store Merchant',
       ownerEmail: editOwnerEmail.trim(),
+      adminPassword: editAdminPassword.trim() || 'merchant123',
       plan: editPlan,
       status: editStatus,
     });
@@ -257,6 +265,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       categoryAr: chosenCat.ar,
       ownerName: newOwnerName || 'Store Merchant',
       ownerEmail: newOwnerEmail || `merchant@${normalizedNewSlug}.bastiyah.com`,
+      adminPassword: newAdminPassword.trim() || 'merchant123',
       plan: newPlan,
       themeColor: newThemeColor,
       layoutStyle: newLayoutStyle,
@@ -272,6 +281,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setNewTaglineAr('');
     setNewOwnerName('');
     setNewOwnerEmail('');
+    setNewAdminPassword('merchant123');
     setShowCreateModal(false);
 
     // Switch active store
@@ -487,6 +497,23 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             >
               <span>{language === 'en' ? 'العربية' : 'EN'}</span>
             </button>
+
+            {/* Authenticated Platform Admin Pill & Logout */}
+            <div className="flex items-center gap-2 ps-2 border-s border-slate-800">
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[11px] font-mono text-slate-300" dir="ltr">{platformAdminEmail}</span>
+              </div>
+
+              <button
+                onClick={logoutPlatformAdmin}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 transition-colors"
+                title={language === 'ar' ? 'تسجيل الخروج من لوحة تحكم المنصة' : 'Log Out of Platform Admin'}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{language === 'ar' ? 'تسجيل الخروج' : 'Log Out'}</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -1311,7 +1338,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
 
               {/* Owner Info & Plan & Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1.5">
                     {language === 'ar' ? 'اسم صاحب المتجر' : 'Owner / Merchant Name'}
@@ -1332,6 +1359,19 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     value={editOwnerEmail}
                     onChange={(e) => setEditOwnerEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
+                    <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{language === 'ar' ? 'كلمة مرور المشرف' : 'Admin Password'}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editAdminPassword}
+                    onChange={(e) => setEditAdminPassword(e.target.value)}
+                    placeholder="merchant123"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white font-mono focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -1562,7 +1602,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1.5">
                     {t.storeOwnerNameLabel}
@@ -1586,6 +1626,20 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     onChange={(e) => setNewOwnerEmail(e.target.value)}
                     placeholder="merchant@domain.com"
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
+                    <KeyRound className="w-3 h-3 text-amber-400" />
+                    <span>{language === 'ar' ? 'كلمة المرور' : 'Admin Password'}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newAdminPassword}
+                    onChange={(e) => setNewAdminPassword(e.target.value)}
+                    placeholder="merchant123"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>

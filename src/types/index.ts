@@ -131,6 +131,7 @@ export interface HostedStore {
   categoryAr: string;
   ownerName: string;
   ownerEmail: string;
+  adminPassword?: string;
   status: 'active' | 'maintenance' | 'suspended';
   plan: 'Starter' | 'Growth' | 'Enterprise';
   createdAt: string;

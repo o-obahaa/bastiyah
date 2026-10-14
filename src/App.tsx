@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from './context/StoreContext';
 import { PlatformSwitcherPill } from './components/common/PlatformSwitcherPill';
 import { BastiyahOwnerAdmin } from './components/platform/BastiyahOwnerAdmin';
+import { BastiyahPlatformAdminLogin } from './components/platform/BastiyahPlatformAdminLogin';
+import { StoreMerchantLogin } from './components/admin/StoreMerchantLogin';
 import { BastiyahLandingPage } from './components/platform/BastiyahLandingPage';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
@@ -32,7 +34,9 @@ export function App() {
     searchQuery,
     t,
     language,
-    getProductName
+    getProductName,
+    isPlatformAdminAuthenticated,
+    isStoreAdminAuthenticated
   } = useStore();
 
   const [sortBy, setSortBy] = useState('featured');
@@ -86,17 +90,18 @@ export function App() {
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
   const displayDesc = language === 'ar' ? activeStore.descriptionAr || activeStore.description : activeStore.description;
 
-  // 1. Main Bastiyah Platform Owner Admin Panel (owner.bastiyah.vercel.app or ?platform=admin)
+  // 1. Main Bastiyah Platform Owner Admin Panel (owner.bastiyah.com or /owner or ?platform=admin)
+  // Protected strictly behind Platform Admin Authentication
   if (currentPage === 'bastiyah-admin') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <ToastContainer />
-        <BastiyahOwnerAdmin />
+        {isPlatformAdminAuthenticated ? <BastiyahOwnerAdmin /> : <BastiyahPlatformAdminLogin />}
       </div>
     );
   }
 
-  // 2. Bastiyah Public Platform Landing Page (bastiyah.vercel.app)
+  // 2. Bastiyah Public Platform Landing Page (bastiyah.com)
   if (currentPage === 'bastiyah-landing') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
@@ -106,12 +111,14 @@ export function App() {
     );
   }
 
-  // 3. Per-Store Isolated Merchant Admin Portal ((storename).bastiyah.vercel.app/admin)
+  // 3. Per-Store Isolated Merchant Admin Portal ((slug).bastiyah.com/admin or /store/(slug)/admin)
+  // Protected strictly behind that Store's Merchant Authentication
   if (currentPage === 'admin') {
+    const isAuthorized = isStoreAdminAuthenticated(activeStore.id);
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <ToastContainer />
-        <AdminLayout />
+        {isAuthorized ? <AdminLayout /> : <StoreMerchantLogin />}
         <PlatformSwitcherPill />
       </div>
     );

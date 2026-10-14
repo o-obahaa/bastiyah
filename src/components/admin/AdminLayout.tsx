@@ -16,7 +16,8 @@ import {
   ArrowLeft, 
   ArrowRight,
   Crown,
-  Globe
+  Globe,
+  LogOut
 } from 'lucide-react';
 import { getStorePathLabel } from '../../utils/urlUtils';
 
@@ -33,6 +34,7 @@ export const AdminLayout: React.FC = () => {
     language,
     setLanguage,
     goToPlatform,
+    logoutStoreAdmin,
   } = useStore();
 
   const tabs = [
@@ -129,9 +131,22 @@ export const AdminLayout: React.FC = () => {
                   alt="Admin Avatar"
                   className="w-8 h-8 rounded-full border border-slate-700 object-cover"
                 />
-                <span className="text-xs font-bold text-slate-300 hidden lg:inline-block">
-                  {activeStore.ownerName}
-                </span>
+                <div className="hidden lg:block text-start">
+                  <span className="text-xs font-bold text-slate-200 block leading-tight">
+                    {activeStore.ownerName}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-mono" dir="ltr">
+                    {activeStore.ownerEmail}
+                  </span>
+                </div>
+                <button
+                  onClick={() => logoutStoreAdmin(activeStore.id)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-colors"
+                  title={language === 'ar' ? 'تسجيل الخروج من إدارة المتجر' : 'Log Out of Store Admin'}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'خروج' : 'Log Out'}</span>
+                </button>
               </div>
             </div>
           </div>

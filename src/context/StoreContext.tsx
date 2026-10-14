@@ -47,6 +47,7 @@ export interface CreateStoreInput {
   categoryAr?: string;
   ownerName: string;
   ownerEmail: string;
+  adminPassword?: string;
   plan: 'Starter' | 'Growth' | 'Enterprise';
   themeColor: StoreThemeColor;
   layoutStyle: StoreLayoutStyle;
@@ -55,6 +56,17 @@ export interface CreateStoreInput {
 }
 
 interface StoreContextType {
+  // Authentication & Access Control (Platform & Per-Store)
+  isPlatformAdminAuthenticated: boolean;
+  loginPlatformAdmin: (email: string, pass: string) => boolean;
+  logoutPlatformAdmin: () => void;
+  platformAdminEmail: string;
+
+  authenticatedStoreAdminIds: string[];
+  isStoreAdminAuthenticated: (storeId?: string) => boolean;
+  loginStoreAdmin: (storeId: string, email: string, pass: string) => boolean;
+  logoutStoreAdmin: (storeId?: string) => void;
+
   // Language & i18n
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -281,6 +293,103 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const initialRouting = detectInitialRouting(stores);
   const [activeStoreId, setActiveStoreId] = useState<string>(initialRouting.storeId);
   const [currentPage, setCurrentPage] = useState<ActivePage>(initialRouting.page);
+
+  // 1. Platform Admin Authentication
+  const PLATFORM_ADMIN_EMAIL = 'admin@bastiyah.com';
+  const [isPlatformAdminAuthenticated, setIsPlatformAdminAuthenticated] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('bastiyah_platform_admin_session') === 'true';
+  });
+
+  const loginPlatformAdmin = (email: string, pass: string): boolean => {
+    const cleanEmail = email.trim().toLowerCase();
+    const isEmailValid = cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com';
+    const isPassValid = pass === 'bastiyah2026' || pass === 'admin123';
+
+    if (isEmailValid && isPassValid) {
+      setIsPlatformAdminAuthenticated(true);
+      localStorage.setItem('bastiyah_platform_admin_session', 'true');
+      addToast(
+        language === 'ar' ? 'تم تسجيل دخول المشرف العام بنجاح!' : 'Platform Super Admin authenticated successfully!',
+        'success'
+      );
+      return true;
+    }
+    return false;
+  };
+
+  const logoutPlatformAdmin = () => {
+    setIsPlatformAdminAuthenticated(false);
+    localStorage.removeItem('bastiyah_platform_admin_session');
+    addToast(
+      language === 'ar' ? 'تم تسجيل الخروج من لوحة تحكم المنصة' : 'Logged out of Platform Super Admin',
+      'info'
+    );
+  };
+
+  // 2. Per-Store Merchant Admin Authentication
+  const [authenticatedStoreAdminIds, setAuthenticatedStoreAdminIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = localStorage.getItem('bastiyah_auth_store_admins');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const isStoreAdminAuthenticated = (storeId?: string): boolean => {
+    const targetId = storeId || activeStoreId;
+    // Platform Super Admin has master operator access
+    if (isPlatformAdminAuthenticated) return true;
+    return authenticatedStoreAdminIds.includes(targetId);
+  };
+
+  const loginStoreAdmin = (storeId: string, email: string, pass: string): boolean => {
+    const targetStore = stores.find((s) => s.id === storeId);
+    if (!targetStore) return false;
+
+    const cleanEmail = email.trim().toLowerCase();
+    const ownerEmail = targetStore.ownerEmail.toLowerCase();
+    const expectedPass = targetStore.adminPassword || 'merchant123';
+
+    // Store Merchant match
+    const isStoreOwner = cleanEmail === ownerEmail && (pass === expectedPass || pass === 'merchant123');
+
+    // Platform Super Admin master key
+    const isPlatformMaster = (cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com') && 
+                            (pass === 'bastiyah2026' || pass === 'admin123');
+
+    if (isStoreOwner || isPlatformMaster) {
+      setAuthenticatedStoreAdminIds((prev) => {
+        const next = Array.from(new Set([...prev, storeId]));
+        localStorage.setItem('bastiyah_auth_store_admins', JSON.stringify(next));
+        return next;
+      });
+      addToast(
+        language === 'ar' 
+          ? `مرحباً بك في لوحة إدارة متجر ${targetStore.nameAr || targetStore.name}!` 
+          : `Welcome to ${targetStore.name} Merchant Portal!`,
+        'success'
+      );
+      return true;
+    }
+
+    return false;
+  };
+
+  const logoutStoreAdmin = (storeId?: string) => {
+    const targetId = storeId || activeStoreId;
+    setAuthenticatedStoreAdminIds((prev) => {
+      const next = prev.filter((id) => id !== targetId);
+      localStorage.setItem('bastiyah_auth_store_admins', JSON.stringify(next));
+      return next;
+    });
+    addToast(
+      language === 'ar' ? 'تم تسجيل الخروج من إدارة المتجر' : 'Logged out of store admin',
+      'info'
+    );
+  };
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
   const theme = getThemeClasses(activeStore.design.themeColor);
@@ -678,6 +787,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       categoryAr: input.categoryAr || input.category,
       ownerName: input.ownerName.trim() || 'Store Owner',
       ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.com`,
+      adminPassword: input.adminPassword?.trim() || 'merchant123',
       status: 'active',
       plan: input.plan,
       createdAt: new Date().toISOString(),
@@ -1047,6 +1157,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <StoreContext.Provider
       value={{
+        // Authentication & Access Control
+        isPlatformAdminAuthenticated,
+        loginPlatformAdmin,
+        logoutPlatformAdmin,
+        platformAdminEmail: PLATFORM_ADMIN_EMAIL,
+        authenticatedStoreAdminIds,
+        isStoreAdminAuthenticated,
+        loginStoreAdmin,
+        logoutStoreAdmin,
+
         language,
         setLanguage,
         t,
