@@ -59,16 +59,14 @@ export const BastiyahLandingPage: React.FC = () => {
             onClick={() => setCurrentPage('bastiyah-landing')}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            {/* Compact Dynamic Video Logo */}
-            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl overflow-hidden bg-white shadow-sm border border-stone-200/90 p-0.5 group-hover:border-stone-400 group-hover:shadow transition-all">
-              <video
-                src="/bastiyah-logo.mp4"
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-cover rounded-[10px]"
-              />
-            </div>
+            {/* Borderless Moving Logo Artwork */}
+            <video
+              src="/bastiyah-logo.mp4"
+              autoPlay
+              muted
+              playsInline
+              className="w-10 h-10 sm:w-11 sm:h-11 object-contain mix-blend-multiply shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
+            />
 
             <div>
               <div className="flex items-center gap-2">
@@ -458,15 +456,13 @@ export const BastiyahLandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white border border-stone-200 p-0.5 shadow-sm">
-              <video
-                src="/bastiyah-logo.mp4"
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-cover rounded-lg"
-              />
-            </div>
+            <video
+              src="/bastiyah-logo.mp4"
+              autoPlay
+              muted
+              playsInline
+              className="w-10 h-10 object-contain mix-blend-multiply shrink-0 pointer-events-none"
+            />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-brand font-black text-stone-900 text-base">

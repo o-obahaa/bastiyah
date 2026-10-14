@@ -1,5 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { RotateCcw } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
 
 export interface DynamicLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'hero';
@@ -21,68 +20,58 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
   interactive = true,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isEnded, setIsEnded] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Ensure autoplay starts cleanly
+    // Autoplay video cleanly without default browser controls
     const playPromise = video.play();
     if (playPromise !== undefined) {
-      playPromise
-        .then(() => setIsPlaying(true))
-        .catch(() => {
-          // Fallback if browser requires user interaction for autoplay
-          setIsPlaying(false);
-        });
+      playPromise.catch(() => {
+        // Fallback if browser enforces interaction
+      });
     }
   }, []);
 
-  const handleVideoEnded = () => {
-    setIsEnded(true);
-    setIsPlaying(false);
-    // Explicitly pause at the final colored frame
+  const handleEnded = () => {
+    // Explicitly pause on the final colored frame (no looping)
     if (videoRef.current) {
       videoRef.current.pause();
     }
   };
 
-  const handleReplay = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (videoRef.current) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    // Replay smoothly on click like an interactive logo
+    if (interactive && videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play();
-      setIsEnded(false);
-      setIsPlaying(true);
     }
   };
 
-  // Size mappings
+  // Borderless, natural dimensions matching standard brand logos
   const dimensions = {
     sm: {
       video: 'w-10 h-10',
-      container: 'p-0.5',
-      title: 'text-sm font-black',
-      sub: 'text-[9px]',
+      title: 'text-base font-black',
+      sub: 'text-[10px]',
     },
     md: {
       video: 'w-16 h-16',
-      container: 'p-1',
-      title: 'text-lg font-black',
-      sub: 'text-[10px]',
-    },
-    lg: {
-      video: 'w-28 h-28',
-      container: 'p-1.5',
-      title: 'text-2xl font-black',
+      title: 'text-xl font-black',
       sub: 'text-xs',
     },
+    lg: {
+      video: 'w-32 h-32 sm:w-40 sm:h-40',
+      title: 'text-3xl font-black',
+      sub: 'text-xs sm:text-sm',
+    },
     hero: {
-      video: 'w-48 h-48 sm:w-56 sm:h-56',
-      container: 'p-2',
+      video: 'w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72',
       title: 'text-4xl sm:text-5xl font-black',
       sub: 'text-xs sm:text-sm',
     },
@@ -92,58 +81,34 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
 
   return (
     <div
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
       className={`inline-flex items-center ${
         isVertical ? 'flex-col justify-center text-center' : 'flex-row items-center gap-3 text-start'
-      } select-none group ${className}`}
+      } select-none cursor-pointer group ${className}`}
+      title="بسطية • انقر لإعادة الحركة"
     >
-      {/* Video Container with Minimalist Artisan Frame */}
+      {/* 
+        Moving Logo Artwork:
+        - 100% borderless: no box frame, no borders, no TV container, no shadow box.
+        - mix-blend-multiply: white background of video dissolves seamlessly into the page.
+        - Just like a normal SVG/PNG logo setting, the only difference is that it moves!
+      */}
       <div className="relative inline-flex items-center justify-center">
-        <div
-          className={`relative rounded-3xl overflow-hidden bg-white shadow-xl shadow-stone-200/60 border border-stone-200/90 transition-all duration-300 group-hover:shadow-2xl group-hover:border-stone-300 ${dimensions.container}`}
-        >
-          {/* Subtle Ambient Halo */}
-          <div className="absolute -inset-1 bg-gradient-to-tr from-amber-200/30 via-rose-200/20 to-emerald-200/30 rounded-3xl blur-md opacity-40 group-hover:opacity-75 transition-opacity pointer-events-none" />
-
-          {/* Dynamic Video */}
-          <video
-            ref={videoRef}
-            src="/bastiyah-logo.mp4"
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            onEnded={handleVideoEnded}
-            onPlay={() => setIsPlaying(true)}
-            className={`${dimensions.video} object-cover rounded-2xl relative z-10 transition-transform duration-500 group-hover:scale-[1.02] bg-white`}
-          />
-
-          {/* Interactive Replay Badge (shown on hover or when paused at end) */}
-          {interactive && isEnded && (
-            <button
-              onClick={handleReplay}
-              title="إعادة تشغيل شعار بسطية المتحرك"
-              className={`absolute top-2.5 end-2.5 z-20 p-1.5 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/80 text-stone-700 shadow-sm transition-all duration-200 hover:bg-stone-900 hover:text-white hover:scale-110 ${
-                isHovered ? 'opacity-100 scale-100' : 'opacity-0 sm:opacity-70 scale-90'
-              }`}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          {/* Minimalist Live Pulse Status */}
-          <span
-            className="absolute bottom-2.5 start-2.5 z-20 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white shadow-sm pointer-events-none"
-            title="Active Dynamic Logo"
-          />
-        </div>
+        <video
+          ref={videoRef}
+          src="/bastiyah-logo.mp4"
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          onEnded={handleEnded}
+          className={`${dimensions.video} object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-105 pointer-events-none`}
+        />
       </div>
 
       {/* Brand Name (بسطية) Below or Beside the Logo */}
       {showText && (
-        <div className={isVertical ? 'mt-4 flex flex-col items-center' : 'flex flex-col'}>
+        <div className={isVertical ? 'mt-1 sm:mt-2 flex flex-col items-center' : 'flex flex-col'}>
           {/* Main Brand Arabic Name */}
           <div className="flex items-center gap-2">
             <span
