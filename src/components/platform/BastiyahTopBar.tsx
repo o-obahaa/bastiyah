@@ -57,9 +57,9 @@ export const BastiyahTopBar: React.FC = () => {
             className="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-stone-100 transition-colors shrink-0 group"
             title={t.bastiyahTagline}
           >
-            {/* Official Bastiyah Logo Icon */}
+            {/* Official Bastiyah Emblem (Without Text) */}
             <img
-              src="/bastiyah-logo.png"
+              src="/bastiyah-emblem.png"
               alt="بسطية"
               className="w-7 h-7 object-contain pointer-events-none transition-transform group-hover:scale-105"
             />

@@ -59,11 +59,11 @@ export const BastiyahLandingPage: React.FC = () => {
             onClick={() => setCurrentPage('bastiyah-landing')}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            {/* Official Bastiyah Logo Artwork */}
+            {/* Official Bastiyah Emblem (Without Text) */}
             <img
-              src="/bastiyah-logo.png"
+              src="/bastiyah-emblem.png"
               alt="بسطية"
-              className="w-11 h-11 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
+              className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
             />
 
             <div>
@@ -145,12 +145,12 @@ export const BastiyahLandingPage: React.FC = () => {
           <div className="absolute top-10 start-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-emerald-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            {/* Centerpiece: Official Bastiyah Logo Artwork */}
+            {/* Centerpiece: Official Bastiyah Emblem with Layout-Matched Font */}
             <div className="mb-4 animate-in fade-in zoom-in-95 duration-500">
               <DynamicLogo
                 size="hero"
                 layout="vertical"
-                showText={false}
+                showText={true}
               />
             </div>
 
@@ -450,9 +450,9 @@ export const BastiyahLandingPage: React.FC = () => {
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
             <img
-              src="/bastiyah-logo.png"
+              src="/bastiyah-emblem.png"
               alt="بسطية"
-              className="w-11 h-11 object-contain shrink-0 pointer-events-none"
+              className="w-10 h-10 object-contain shrink-0 pointer-events-none"
             />
             <div>
               <div className="flex items-center gap-1.5">

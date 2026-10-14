@@ -48,7 +48,7 @@ export const PlatformSwitcherPill: React.FC = () => {
         title={language === 'ar' ? 'إظهار شارة بسطية' : 'Show Bastiyah badge'}
       >
         <img
-          src="/bastiyah-logo.png"
+          src="/bastiyah-emblem.png"
           alt="بسطية"
           className="w-5 h-5 object-contain pointer-events-none"
         />
@@ -65,7 +65,7 @@ export const PlatformSwitcherPill: React.FC = () => {
           <div className="flex items-center justify-between pb-2 border-b border-stone-100">
             <div className="flex items-center gap-2">
               <img
-                src="/bastiyah-logo.png"
+                src="/bastiyah-emblem.png"
                 alt="بسطية"
                 className="w-6 h-6 object-contain shrink-0 pointer-events-none"
               />
@@ -140,7 +140,7 @@ export const PlatformSwitcherPill: React.FC = () => {
           title={language === 'ar' ? 'العودة للمنصة الرئيسية (بسطية)' : 'Return to Bastiyah platform'}
         >
           <img
-            src="/bastiyah-logo.png"
+            src="/bastiyah-emblem.png"
             alt="بسطية"
             className="w-5 h-5 object-contain shrink-0 pointer-events-none"
           />
