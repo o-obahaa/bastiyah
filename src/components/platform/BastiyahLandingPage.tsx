@@ -376,15 +376,15 @@ export const BastiyahLandingPage: React.FC = () => {
               />
             </div>
 
-            {/* Hero Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.18] font-brand">
+            {/* Hero Main Headline with generous line-height to prevent overlap */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-normal text-stone-900 max-w-4xl mx-auto leading-[1.35] sm:leading-[1.28] font-brand mb-4">
               {language === 'ar' 
                 ? 'احجز متجرك الإلكتروني ببساطة' 
                 : 'Book Your Online Store, Simply.'}
             </h1>
 
-            {/* Hero Subtitle */}
-            <p className="text-stone-600 text-base sm:text-xl max-w-3xl mx-auto mt-6 leading-relaxed font-normal">
+            {/* Hero Subtitle with generous line-height */}
+            <p className="text-stone-600 text-base sm:text-xl max-w-3xl mx-auto mt-4 leading-relaxed sm:leading-[1.8] font-normal">
               {language === 'ar'
                 ? 'احصل على رابط خاص بمتجرك وحوّل منتجاتك إلى متجر إلكتروني متكامل مع بسطية. أنشئ واجهتك الرقمية الخاصة، واعرض منتجاتك، وامنح عملاءك تجربة تسوق أسهل — كل ذلك برابط مخصص وعلامة تجارية مستقلة.'
                 : 'Get a specific link for your store and turn your products into an online store with Bastiyah. Create your own digital storefront, showcase your products, and give your customers a simpler way to shop — all under your own brand.'}
@@ -394,7 +394,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
               <a
                 href="#apply-store"
-                className="px-7 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                className="px-7 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
                 <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
@@ -402,7 +402,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
               <a
                 href="#how-it-works"
-                className="px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400"
+                className="px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400 leading-normal"
               >
                 <Compass className="w-4 h-4 text-stone-600" />
                 <span>{language === 'ar' ? 'اكتشف كيف يعمل' : 'Explore How It Works'}</span>
@@ -410,7 +410,7 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
 
             {/* Micro-copy */}
-            <p className="text-xs sm:text-sm text-stone-500 mt-5 font-medium">
+            <p className="text-xs sm:text-sm text-stone-500 mt-5 font-medium leading-normal">
               {language === 'ar' 
                 ? 'بدون تعقيدات تقنية. فقط طريقة أسهل للبيع عبر الإنترنت.' 
                 : 'No complicated setup. Just a simpler way to sell online.'}
@@ -431,12 +431,12 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'خدمات بسطية المتكاملة' : 'Platform Services'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
                 {language === 'ar' 
                   ? 'كل ما تحتاجه لبدء البيع عبر الإنترنت' 
                   : 'Everything You Need to Start Selling Online'}
               </h2>
-              <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed">
+              <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.75]">
                 {language === 'ar'
                   ? 'بناء متجر إلكتروني لا ينبغي أن يكون معقداً. تمنحك بسطية الأدوات لنقل تجارتك إلى الإنترنت دون البدء من الصفر.'
                   : "Building an online store shouldn't be complicated. Bastiyah gives you the tools to bring your business online without starting from scratch."}
@@ -533,19 +533,19 @@ export const BastiyahLandingPage: React.FC = () => {
               {language === 'ar' ? 'من متجرك إلى العالم الرقمي' : 'From Your Shop to the Online World'}
             </span>
 
-            <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-snug">
+            <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
               {language === 'ar' 
                 ? 'منتجاتك تستحق الوصول إلى جمهور أكبر' 
                 : 'From Your Shop to the Online World'}
             </h2>
 
-            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed max-w-2xl">
+            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
               {language === 'ar'
                 ? 'تستحق منتجاتك أن تصل إلى عدد أكبر من الناس. تساعدك بسطية على تجاوز حدود البيع التقليدي وتأسيس متجرك على الإنترنت بكل ثقة.'
                 : 'Your products deserve to reach more people. Bastiyah helps you move beyond traditional selling and establish your business online.'}
             </p>
 
-            <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed max-w-2xl">
+            <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
               {language === 'ar'
                 ? 'مع واجهتك الرقمية المستقلة، تمنح عملاءك وسيلة مريحة لاستكشاف منتجاتك والتسوق منها في أي وقت ومن أي مكان.'
                 : 'With your own digital storefront, you can give customers a convenient way to explore your products whenever they want.'}
@@ -553,7 +553,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
             {/* Punchy Brand Statement */}
             <div className="mt-8 px-6 py-4 rounded-2xl bg-stone-100 border border-stone-200/80">
-              <p className="text-sm sm:text-base font-bold text-stone-900 font-brand">
+              <p className="text-sm sm:text-base font-bold text-stone-900 font-brand leading-[1.4] tracking-normal">
                 {language === 'ar'
                   ? 'متجرك. منتجاتك. علامتك التجارية. وجهة رقمية واحدة.'
                   : 'Your shop. Your products. Your brand. One online destination.'}
@@ -863,10 +863,10 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'خطوات بسيطة' : 'Simple Steps'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
                 {language === 'ar' ? 'كيف يعمل؟' : 'How It Works'}
               </h2>
-              <p className="text-stone-500 text-sm sm:text-base mt-2">
+              <p className="text-stone-500 text-sm sm:text-base mt-2 leading-relaxed sm:leading-[1.75]">
                 {language === 'ar'
                   ? 'أربع خطوات واضحة ومباشرة تفصلك عن إطلاق متجرك الرقمي والوصول لعملائك.'
                   : 'Four straightforward steps to set up your store and introduce your business to the online world.'}
@@ -908,14 +908,14 @@ export const BastiyahLandingPage: React.FC = () => {
                   key={idx}
                   className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
                 >
-                  <div className="text-3xl sm:text-4xl font-black text-stone-300 font-mono mb-4">
+                  <div className="text-3xl sm:text-4xl font-black text-stone-300 font-mono mb-4 leading-none">
                     {item.step}.
                   </div>
                   <div>
-                    <h3 className="font-brand font-bold text-lg text-stone-900 mb-2">
+                    <h3 className="font-brand font-bold text-lg text-stone-900 mb-2 leading-[1.4] tracking-normal">
                       {language === 'ar' ? item.titleAr : item.titleEn}
                     </h3>
-                    <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                    <p className="text-sm text-stone-600 leading-relaxed sm:leading-[1.7] font-normal">
                       {language === 'ar' ? item.descAr : item.descEn}
                     </p>
                   </div>
@@ -940,12 +940,12 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'القطاعات والتصنيفات' : 'Tailored for Every Merchant'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
                 {language === 'ar' 
                   ? 'مُصمم للأنشطة التجارية مثل نشاطك' 
                   : 'Made for Businesses Like Yours'}
               </h2>
-              <p className="text-stone-600 text-sm sm:text-base mt-3">
+              <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.75]">
                 {language === 'ar'
                   ? 'مهما كان ما تبيعه، تساعدك بسطية في بناء مكانك الخاص في السوق الرقمي.'
                   : 'Whatever you sell, Bastiyah helps you build your place in the digital marketplace.'}
@@ -1001,11 +1001,11 @@ export const BastiyahLandingPage: React.FC = () => {
                   key={idx}
                   className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md transition-all flex flex-col"
                 >
-                  <div className="text-3xl mb-4">{cat.emoji}</div>
-                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2">
+                  <div className="text-3xl mb-4 leading-none">{cat.emoji}</div>
+                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2 leading-[1.4] tracking-normal">
                     {language === 'ar' ? cat.titleAr : cat.titleEn}
                   </h3>
-                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                  <p className="text-sm text-stone-600 leading-relaxed sm:leading-[1.7] font-normal">
                     {language === 'ar' ? cat.descAr : cat.descEn}
                   </p>
                 </div>
@@ -1013,7 +1013,7 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
 
             <div className="text-center mt-12">
-              <p className="text-sm sm:text-base font-semibold text-stone-700">
+              <p className="text-sm sm:text-base font-semibold text-stone-700 leading-relaxed sm:leading-[1.7]">
                 {language === 'ar'
                   ? 'مهما كان ما تبيعه، تساعدك بسطية في بناء مكانك الخاص في السوق الرقمي.'
                   : 'Whatever you sell, Bastiyah helps you build your place in the digital marketplace.'}
@@ -1035,7 +1035,7 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'مميزات المنصة' : 'Core Advantages'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
                 {language === 'ar' ? 'لماذا تختار بسطية؟' : 'Why Choose Bastiyah?'}
               </h2>
             </div>
@@ -1085,10 +1085,10 @@ export const BastiyahLandingPage: React.FC = () => {
                   <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mb-5 shrink-0">
                     {item.icon}
                   </div>
-                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2.5">
+                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2.5 leading-[1.4] tracking-normal">
                     {language === 'ar' ? item.titleAr : item.titleEn}
                   </h3>
-                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                  <p className="text-sm text-stone-600 leading-relaxed sm:leading-[1.7] font-normal">
                     {language === 'ar' ? item.descAr : item.descEn}
                   </p>
                 </div>
@@ -1113,32 +1113,32 @@ export const BastiyahLandingPage: React.FC = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-tr from-amber-500/10 via-rose-500/10 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 flex flex-col items-center">
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white font-brand tracking-tight">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white font-brand tracking-normal leading-[1.3] sm:leading-[1.28]">
               {language === 'ar'
                 ? 'خطوتك التجارية القادمة تبدأ هنا'
                 : 'Your Next Business Step Starts Here'}
             </h2>
 
-            <p className="text-stone-300 text-base sm:text-lg mt-5 leading-relaxed max-w-2xl">
+            <p className="text-stone-300 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
               {language === 'ar'
                 ? 'كل مشروع ناجح يبدأ بخطوة. اتخذ الخطوة القادمة وامنح منتجاتك مكاناً مخصصاً على الإنترنت.'
                 : 'Every successful business starts somewhere. Take the next step and give your products a place online.'}
             </p>
 
-            <p className="text-stone-400 text-sm sm:text-base mt-2 leading-relaxed max-w-2xl">
+            <p className="text-stone-400 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
               {language === 'ar'
                 ? 'سواء كنت تطلق فكرة جديدة أو توسع متجراً قائماً، تجعل بسطية بداية رحلتك الرقمية أكثر سهولة ووضوحاً.'
                 : "Whether you're launching a new idea or expanding an existing shop, Bastiyah makes starting your online journey simpler."}
             </p>
 
-            <div className="mt-6 text-amber-400 font-bold text-base sm:text-lg font-brand">
+            <div className="mt-6 text-amber-400 font-bold text-base sm:text-lg font-brand leading-[1.4] tracking-normal">
               {language === 'ar' ? 'لننقل نشاطك التجاري إلى الإنترنت معاً.' : "Let's bring your business online."}
             </div>
 
             <div className="mt-8">
               <a
                 href="#apply-store"
-                className="px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-sm sm:text-base shadow-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
+                className="px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-sm sm:text-base shadow-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2 leading-normal"
               >
                 <Zap className="w-4 h-4 text-stone-950" />
                 <span>{language === 'ar' ? 'أنشئ متجرك اليوم' : 'Create Your Store Today'}</span>
@@ -1158,7 +1158,7 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'خطط الاستضافة' : 'Pricing Plans'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
                 {language === 'ar' ? 'باقات واضحة وبسيطة تناسب حجم تجارتك' : 'Transparent Hosting Plans'}
               </h2>
             </div>
@@ -1308,7 +1308,7 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'إجابات واضحة' : 'Common Questions'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
                 {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
               </h2>
             </div>
@@ -1324,7 +1324,7 @@ export const BastiyahLandingPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setOpenFaq(isOpen ? null : idx)}
-                      className="w-full p-5 sm:p-6 text-start flex items-center justify-between gap-4 font-brand font-bold text-base sm:text-lg text-stone-900"
+                      className="w-full p-5 sm:p-6 text-start flex items-center justify-between gap-4 font-brand font-bold text-base sm:text-lg text-stone-900 leading-[1.4] tracking-normal"
                     >
                       <span>{language === 'ar' ? faq.qAr : faq.qEn}</span>
                       <ChevronDown
@@ -1334,7 +1334,7 @@ export const BastiyahLandingPage: React.FC = () => {
                       />
                     </button>
                     {isOpen && (
-                      <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-stone-600 text-sm sm:text-base leading-relaxed border-t border-stone-100 pt-3 animate-in fade-in duration-200">
+                      <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-stone-600 text-sm sm:text-base leading-relaxed sm:leading-[1.8] border-t border-stone-100 pt-3 animate-in fade-in duration-200">
                         {language === 'ar' ? faq.aAr : faq.aEn}
                       </div>
                     )}
@@ -1355,19 +1355,19 @@ export const BastiyahLandingPage: React.FC = () => {
         */}
         <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-stone-900 font-brand tracking-tight">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-stone-900 font-brand tracking-normal leading-[1.3] sm:leading-[1.28]">
               {language === 'ar'
                 ? 'جاهز لنقل مشروعك إلى الإنترنت؟'
                 : 'Ready to Take Your Business Online?'}
             </h2>
 
-            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed max-w-2xl">
+            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
               {language === 'ar'
                 ? 'منتجاتك لها قصة. ومشروعك يمتلك إمكانات حقيقية. امنح كليهما مكاناً ينموان فيه.'
                 : 'Your products have a story. Your business has potential. Give both a place to grow.'}
             </p>
 
-            <div className="mt-5 text-lg sm:text-xl font-black text-stone-900 font-brand">
+            <div className="mt-5 text-lg sm:text-xl font-black text-stone-900 font-brand leading-[1.4] tracking-normal">
               {language === 'ar'
                 ? 'بسطية — متجرك، علامتك التجارية، بطريقتك.'
                 : 'Bastiyah — Your Store, Your Brand, Your Way.'}
@@ -1376,7 +1376,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <div className="mt-8">
               <a
                 href="#apply-store"
-                className="px-9 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 inline-flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                className="px-9 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
                 <span>{language === 'ar' ? 'ابدأ الآن' : 'Get Started'}</span>
@@ -1396,10 +1396,10 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
                 {language === 'ar' ? 'تواصل معنا' : 'Contact Us'}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mt-1 font-brand">
+              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mt-1 font-brand leading-[1.35] tracking-normal">
                 {language === 'ar' ? 'فريق بسطية جاهز لمساعدتك' : 'Have a Question or Need Assistance?'}
               </h2>
-              <p className="text-stone-500 text-sm mt-2">
+              <p className="text-stone-500 text-sm mt-2 leading-relaxed sm:leading-[1.7]">
                 {language === 'ar' 
                   ? 'لديك استفسار أو تحتاج إلى مساعدة؟ تواصل مع فريقنا مباشرة.' 
                   : 'Have a question or need assistance? Get in touch with our team.'}
