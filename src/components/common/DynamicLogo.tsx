@@ -5,7 +5,7 @@ export interface DynamicLogoProps {
   layout?: 'vertical' | 'horizontal';
   showText?: boolean;
   showEnglishText?: boolean;
-  colorVariant?: 'contrast' | 'amber' | 'monochrome';
+  colorVariant?: 'vintage' | 'contrast' | 'amber' | 'monochrome';
   subtitle?: string;
   className?: string;
   onClick?: () => void;
@@ -16,7 +16,7 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
   layout = 'vertical',
   showText = true,
   showEnglishText = false,
-  colorVariant = 'contrast',
+  colorVariant = 'vintage',
   subtitle,
   className = '',
   onClick,
@@ -47,11 +47,13 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
 
   const isVertical = layout === 'vertical' || size === 'hero' || size === 'lg';
 
-  // Contrast color styles for the brand name
+  // Vintage & contrast color styles for the brand name
   const brandColorClasses = {
+    vintage:
+      'bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent drop-shadow-[0_1.5px_0px_rgba(254,243,199,0.9)] filter group-hover:from-[#a03819] group-hover:to-[#4a1607]',
     contrast:
-      'bg-gradient-to-r from-amber-600 via-stone-900 to-amber-700 bg-clip-text text-transparent group-hover:from-amber-500 group-hover:to-amber-800',
-    amber: 'text-amber-600 group-hover:text-amber-700',
+      'bg-gradient-to-r from-amber-700 via-stone-900 to-amber-800 bg-clip-text text-transparent group-hover:from-amber-600 group-hover:to-amber-900',
+    amber: 'text-amber-700 group-hover:text-amber-800',
     monochrome: 'text-stone-900 group-hover:text-stone-950',
   }[colorVariant];
 
