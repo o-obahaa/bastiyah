@@ -119,7 +119,6 @@ export function App() {
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <ToastContainer />
         {isAuthorized ? <AdminLayout /> : <StoreMerchantLogin />}
-        <PlatformSwitcherPill />
       </div>
     );
   }

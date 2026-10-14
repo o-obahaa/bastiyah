@@ -222,41 +222,6 @@ export const Header: React.FC = () => {
               <span>{language === 'en' ? 'العربية' : 'EN'}</span>
             </button>
 
-            {/* Customize Store Design Shortcut */}
-            <button
-              onClick={() => {
-                setCurrentPage('admin');
-                setAdminTab('design');
-              }}
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
-                isDarkHeader
-                  ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
-              }`}
-              title={t.storeDesignStudio}
-            >
-              <Palette className="w-3.5 h-3.5" style={{ color: theme.hex }} />
-              <span>{t.storeDesignTab}</span>
-            </button>
-
-            {/* Store Admin Panel Button */}
-            <button
-              onClick={() => {
-                setCurrentPage('admin');
-                setAdminTab('dashboard');
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all shadow-sm"
-              style={{
-                backgroundColor: `${theme.hex}15`,
-                borderColor: `${theme.hex}40`,
-                color: isDarkHeader ? '#ffffff' : theme.hex,
-              }}
-              title="Store Admin Panel"
-            >
-              <ShieldCheck className="w-4 h-4" style={{ color: theme.hex }} />
-              <span>{t.adminPanel}</span>
-            </button>
-
             {/* Wishlist Button */}
             <button
               onClick={() => setCurrentPage('wishlist')}

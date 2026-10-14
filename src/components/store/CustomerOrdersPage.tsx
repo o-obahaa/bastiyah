@@ -48,18 +48,6 @@ export const CustomerOrdersPage: React.FC = () => {
             {t.orderHistorySubtitle}
           </p>
         </div>
-
-        {/* Admin hint pill */}
-        <button
-          onClick={() => {
-            setCurrentPage('admin');
-            setAdminTab('orders');
-          }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors w-fit"
-        >
-          <span>{t.manageInAdmin}</span>
-          <ArrowIcon className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       {orders.length === 0 ? (

@@ -131,10 +131,10 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Customer Service & Store Merchant Portal */}
+          {/* Customer Service */}
           <div>
             <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4">
-              {language === 'ar' ? 'إدارة وخدمة المتجر' : 'Store & Admin Hub'}
+              {language === 'ar' ? 'خدمة العملاء' : 'Customer Care'}
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -151,17 +151,6 @@ export const Footer: React.FC = () => {
                   className="hover:text-white transition-colors"
                 >
                   {t.navWishlist}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setCurrentPage('admin')}
-                  className="font-bold transition-colors flex items-center gap-1"
-                  style={{ color: theme.hex }}
-                >
-                  <span>{t.adminPanel}</span>
-                  <span className="font-mono text-[10px] opacity-75">({activeStore.slug})</span>
-                  <span>→</span>
                 </button>
               </li>
             </ul>

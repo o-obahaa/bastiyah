@@ -112,14 +112,6 @@ export const AdminLayout: React.FC = () => {
                 <span>{language === 'ar' ? 'موقع المنصة' : 'Bastiyah Platform'}</span>
               </button>
 
-              <button
-                onClick={() => setCurrentPage('bastiyah-admin')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-colors"
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{t.bastiyahOwnerAdmin}</span>
-              </button>
-
               <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 {t.storeEngineActive}

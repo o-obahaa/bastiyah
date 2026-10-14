@@ -323,16 +323,6 @@ export const BastiyahLandingPage: React.FC = () => {
               <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
             </a>
 
-            {/* Platform Owner Super Admin */}
-            <button
-              onClick={() => setCurrentPage('bastiyah-admin')}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-bold bg-white border border-stone-200/90 hover:bg-stone-50 text-stone-800 transition-all shadow-2xs flex items-center gap-1.5"
-              title={t.bastiyahOwnerAdmin}
-            >
-              <Crown className="w-4 h-4 text-amber-500" />
-              <span className="hidden sm:inline">{language === 'ar' ? 'لوحة المالك' : 'Owner'}</span>
-            </button>
-
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
@@ -1682,16 +1672,6 @@ export const BastiyahLandingPage: React.FC = () => {
                   ? 'طريقة أسهل لنقل نشاطك التجاري إلى الإنترنت.'
                   : 'A simpler way to bring your business online.'}
               </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage('bastiyah-admin')}
-                  className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 border border-stone-300 font-bold text-xs transition-colors flex items-center gap-1.5"
-                >
-                  <Crown className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{t.bastiyahOwnerAdmin}</span>
-                </button>
-              </div>
             </div>
 
             {/* Explore Column */}

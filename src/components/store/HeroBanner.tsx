@@ -71,17 +71,6 @@ export const HeroBanner: React.FC = () => {
               <span>{t.heroBrowseCatalog}</span>
               <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
             </button>
-
-            <button
-              onClick={() => {
-                setCurrentPage('admin');
-                setAdminTab('design');
-              }}
-              className="px-6 py-4 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-sm flex items-center gap-2 backdrop-blur-md transition-all"
-            >
-              <Palette className="w-4 h-4" style={{ color: theme.hex }} />
-              <span>{t.storeDesignTab}</span>
-            </button>
           </div>
 
           {/* Featured Trio Showcase */}
@@ -153,16 +142,6 @@ export const HeroBanner: React.FC = () => {
                 >
                   <span>{t.heroBrowseCatalog}</span>
                   <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentPage('admin');
-                    setAdminTab('design');
-                  }}
-                  className="px-6 py-4 border border-slate-300 hover:border-slate-900 text-slate-800 font-bold text-sm uppercase tracking-wider transition-all"
-                >
-                  {t.storeDesignTab}
                 </button>
               </div>
             </div>
@@ -297,17 +276,6 @@ export const HeroBanner: React.FC = () => {
               >
                 <span>{t.heroBrowseCatalog}</span>
                 <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-              </button>
-
-              <button
-                onClick={() => {
-                  setCurrentPage('admin');
-                  setAdminTab('design');
-                }}
-                className="px-6 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:text-white font-semibold text-sm sm:text-base border border-slate-700 transition-all backdrop-blur-sm flex items-center gap-2"
-              >
-                <Palette className="w-4 h-4" style={{ color: theme.hex }} />
-                <span>{t.storeDesignTab}</span>
               </button>
             </div>
 
