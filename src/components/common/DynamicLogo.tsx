@@ -47,12 +47,12 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
 
   const isVertical = layout === 'vertical' || size === 'hero' || size === 'lg';
 
-  // Vintage & contrast color styles for the brand name
+  // Vintage & contrast color styles for the brand name (safely styled without clipping)
   const brandColorClasses = {
     vintage:
-      'bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent drop-shadow-[0_1.5px_0px_rgba(254,243,199,0.9)] filter group-hover:from-[#a03819] group-hover:to-[#4a1607]',
+      'text-[#842a12] bg-gradient-to-b from-[#943317] via-[#75260f] to-[#451608] bg-clip-text text-transparent group-hover:from-[#a03819] group-hover:to-[#4a1607]',
     contrast:
-      'bg-gradient-to-r from-amber-700 via-stone-900 to-amber-800 bg-clip-text text-transparent group-hover:from-amber-600 group-hover:to-amber-900',
+      'text-[#9a3412] bg-gradient-to-r from-amber-700 via-stone-900 to-amber-800 bg-clip-text text-transparent group-hover:from-amber-600 group-hover:to-amber-900',
     amber: 'text-amber-700 group-hover:text-amber-800',
     monochrome: 'text-stone-900 group-hover:text-stone-950',
   }[colorVariant];
@@ -74,15 +74,15 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
         />
       </div>
 
-      {/* Brand Name (بسطية) Centered Vertically with Contrasting Styling */}
+      {/* Brand Name (بسطية) Centered Vertically without Any Cut */}
       {(showText || subtitle) && (
         <div className="mt-3 sm:mt-4 flex flex-col items-center justify-center text-center w-full">
           {showText && (
             <div className="flex flex-col items-center justify-center text-center">
-              {/* Arabic Name Centered with Contrasting Colors */}
-              <div className="relative inline-flex items-center justify-center">
+              {/* Arabic Name Centered with Safe Vertical Clearance */}
+              <div className="relative inline-flex items-center justify-center py-2 px-4 overflow-visible">
                 <span
-                  className={`font-brand ${dimensions.title} tracking-tight ${brandColorClasses} text-center leading-tight pb-1 px-1 transition-all duration-300 inline-block`}
+                  className={`font-brand ${dimensions.title} tracking-normal ${brandColorClasses} text-center leading-[1.35] py-2 px-3 overflow-visible transition-all duration-300 inline-block`}
                 >
                   بسطية
                 </span>
@@ -90,7 +90,7 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
 
               {/* Optional English Name */}
               {showEnglishText && (
-                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-amber-700/80 uppercase mt-1 text-center">
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-[#8a2f14]/80 uppercase mt-1 text-center">
                   BASTIYAH
                 </span>
               )}

@@ -246,11 +246,11 @@ export const BastiyahLandingPage: React.FC = () => {
             />
 
             <div className="flex items-baseline gap-2">
-              <span className="font-brand font-black text-xl sm:text-2xl tracking-tight bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent drop-shadow-[0_1px_0px_rgba(254,243,199,0.85)] group-hover:from-[#a03819] group-hover:to-[#4a1607] transition-all inline-block">
+              <span className="font-brand font-black text-xl sm:text-2xl tracking-normal text-[#842a12] bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent leading-[1.3] py-1 px-1 group-hover:from-[#a03819] group-hover:to-[#4a1607] transition-all inline-block">
                 بسطية
               </span>
-              <span className="text-[#9a3412]/50 text-xs">✦</span>
-              <span className="text-xs font-bold text-[#8a2f14]/90 tracking-wider uppercase font-sans">
+              <span className="text-stone-300 font-light select-none">|</span>
+              <span className="text-xs font-bold text-[#8a2f14]/80 tracking-wider uppercase font-sans">
                 BASTIYAH
               </span>
             </div>
@@ -599,11 +599,11 @@ export const BastiyahLandingPage: React.FC = () => {
 
                 {/* Name of the Site with Vintage Artisanal Contrast */}
                 <div className="flex items-center gap-2">
-                  <h2 className="font-brand font-black text-2xl sm:text-3xl tracking-tight bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent drop-shadow-[0_1px_0px_rgba(254,243,199,0.85)] inline-block">
+                  <h2 className="font-brand font-black text-2xl sm:text-3xl tracking-normal text-[#842a12] bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent leading-[1.3] py-1 px-2 inline-block">
                     بسطية
                   </h2>
-                  <span className="text-[#9a3412]/50 text-xs">✦</span>
-                  <span className="text-xs font-bold tracking-widest text-[#8a2f14]/90 uppercase font-sans">
+                  <span className="text-stone-300 font-light select-none">|</span>
+                  <span className="text-xs font-bold tracking-widest text-[#8a2f14]/80 uppercase font-sans">
                     BASTIYAH
                   </span>
                 </div>
@@ -1667,11 +1667,11 @@ export const BastiyahLandingPage: React.FC = () => {
                   className="w-10 h-10 object-contain shrink-0 pointer-events-none"
                 />
                 <div className="flex items-baseline gap-2">
-                  <span className="font-brand font-black text-xl tracking-tight bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent drop-shadow-[0_1px_0px_rgba(254,243,199,0.85)] inline-block">
+                  <span className="font-brand font-black text-xl tracking-normal text-[#842a12] bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent leading-[1.3] py-1 px-1 inline-block">
                     بسطية
                   </span>
-                  <span className="text-[#9a3412]/50 text-xs">✦</span>
-                  <span className="text-xs font-bold text-[#8a2f14]/90 tracking-wider uppercase font-sans">
+                  <span className="text-stone-300 font-light select-none">|</span>
+                  <span className="text-xs font-bold text-[#8a2f14]/80 tracking-wider uppercase font-sans">
                     BASTIYAH
                   </span>
                 </div>
