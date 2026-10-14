@@ -246,11 +246,11 @@ export const BastiyahLandingPage: React.FC = () => {
             />
 
             <div className="flex items-baseline gap-2">
-              <span className="font-brand font-black text-xl sm:text-2xl tracking-tight text-stone-900 group-hover:text-stone-950 transition-colors">
+              <span className="font-brand font-black text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-amber-600 via-stone-900 to-amber-700 bg-clip-text text-transparent group-hover:from-amber-500 group-hover:to-amber-800 transition-all inline-block">
                 بسطية
               </span>
-              <span className="text-stone-300 font-light">|</span>
-              <span className="text-xs font-bold text-stone-500 tracking-wider uppercase font-sans">
+              <span className="text-amber-500/50 font-light">|</span>
+              <span className="text-xs font-bold text-amber-700/80 tracking-wider uppercase font-sans">
                 BASTIYAH
               </span>
             </div>
@@ -597,13 +597,13 @@ export const BastiyahLandingPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Name of the Site */}
+                {/* Name of the Site with Contrasting Colors */}
                 <div className="flex items-center gap-2">
-                  <h2 className="font-brand font-black text-2xl sm:text-3xl text-stone-900 tracking-tight">
+                  <h2 className="font-brand font-black text-2xl sm:text-3xl tracking-tight bg-gradient-to-r from-amber-600 via-stone-900 to-amber-700 bg-clip-text text-transparent inline-block">
                     بسطية
                   </h2>
-                  <span className="text-stone-300 font-light">|</span>
-                  <span className="text-xs font-bold tracking-widest text-stone-500 uppercase font-sans">
+                  <span className="text-amber-500/50 font-light">|</span>
+                  <span className="text-xs font-bold tracking-widest text-amber-700/80 uppercase font-sans">
                     BASTIYAH
                   </span>
                 </div>
@@ -1667,11 +1667,11 @@ export const BastiyahLandingPage: React.FC = () => {
                   className="w-10 h-10 object-contain shrink-0 pointer-events-none"
                 />
                 <div className="flex items-baseline gap-2">
-                  <span className="font-brand font-black text-stone-900 text-xl">
+                  <span className="font-brand font-black text-xl tracking-tight bg-gradient-to-r from-amber-600 via-stone-900 to-amber-700 bg-clip-text text-transparent inline-block">
                     بسطية
                   </span>
-                  <span className="text-stone-300 font-light">|</span>
-                  <span className="text-xs font-bold text-stone-500 tracking-wider uppercase font-sans">
+                  <span className="text-amber-500/50 font-light">|</span>
+                  <span className="text-xs font-bold text-amber-700/80 tracking-wider uppercase font-sans">
                     BASTIYAH
                   </span>
                 </div>

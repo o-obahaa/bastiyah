@@ -5,6 +5,7 @@ export interface DynamicLogoProps {
   layout?: 'vertical' | 'horizontal';
   showText?: boolean;
   showEnglishText?: boolean;
+  colorVariant?: 'contrast' | 'amber' | 'monochrome';
   subtitle?: string;
   className?: string;
   onClick?: () => void;
@@ -15,6 +16,7 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
   layout = 'vertical',
   showText = true,
   showEnglishText = false,
+  colorVariant = 'contrast',
   subtitle,
   className = '',
   onClick,
@@ -45,6 +47,14 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
 
   const isVertical = layout === 'vertical' || size === 'hero' || size === 'lg';
 
+  // Contrast color styles for the brand name
+  const brandColorClasses = {
+    contrast:
+      'bg-gradient-to-r from-amber-600 via-stone-900 to-amber-700 bg-clip-text text-transparent group-hover:from-amber-500 group-hover:to-amber-800',
+    amber: 'text-amber-600 group-hover:text-amber-700',
+    monochrome: 'text-stone-900 group-hover:text-stone-950',
+  }[colorVariant];
+
   return (
     <div
       onClick={onClick}
@@ -62,21 +72,23 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
         />
       </div>
 
-      {/* Brand Name (بسطية) Centered Vertically */}
+      {/* Brand Name (بسطية) Centered Vertically with Contrasting Styling */}
       {(showText || subtitle) && (
         <div className="mt-3 sm:mt-4 flex flex-col items-center justify-center text-center w-full">
           {showText && (
             <div className="flex flex-col items-center justify-center text-center">
-              {/* Arabic Name Centered */}
-              <span
-                className={`font-brand ${dimensions.title} tracking-tight text-stone-900 transition-colors group-hover:text-stone-950 text-center leading-tight`}
-              >
-                بسطية
-              </span>
+              {/* Arabic Name Centered with Contrasting Colors */}
+              <div className="relative inline-flex items-center justify-center">
+                <span
+                  className={`font-brand ${dimensions.title} tracking-tight ${brandColorClasses} text-center leading-tight pb-1 px-1 transition-all duration-300 inline-block`}
+                >
+                  بسطية
+                </span>
+              </div>
 
               {/* Optional English Name */}
               {showEnglishText && (
-                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-stone-400 uppercase mt-1 text-center">
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-amber-700/80 uppercase mt-1 text-center">
                   BASTIYAH
                 </span>
               )}
