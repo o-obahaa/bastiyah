@@ -366,32 +366,28 @@ export const BastiyahLandingPage: React.FC = () => {
 
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
             
-            {/* Centerpiece: Emblem with Centered Typography */}
+            {/* Centerpiece: Emblem with Centered Typography (Clean logo without English text or long description) */}
             <div className="mb-6 animate-in fade-in zoom-in-95 duration-500">
               <DynamicLogo
                 size="hero"
                 layout="vertical"
                 showText={true}
-                subtitle={
-                  language === 'ar'
-                    ? 'المنصة السحابية لإطلاق واستضافة المتاجر الإلكترونية المستقلة'
-                    : 'A simpler way to bring your business online'
-                }
+                showEnglishText={false}
               />
             </div>
 
             {/* Hero Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.18] font-brand">
               {language === 'ar' 
-                ? 'مشروعك يستحق أن يكون على الإنترنت.' 
-                : 'Your Business Deserves to Be Online.'}
+                ? 'احجز متجرك الإلكتروني ببساطة' 
+                : 'Book Your Online Store, Simply.'}
             </h1>
 
             {/* Hero Subtitle */}
             <p className="text-stone-600 text-base sm:text-xl max-w-3xl mx-auto mt-6 leading-relaxed font-normal">
               {language === 'ar'
-                ? 'حوّل منتجاتك إلى متجر إلكتروني مع بسطية. أنشئ واجهتك الرقمية الخاصة، واعرض منتجاتك، وامنح عملاءك تجربة تسوق أسهل — كل ذلك تحت علامتك التجارية.'
-                : 'Turn your products into an online store with Bastiyah. Create your own digital storefront, showcase your products, and give your customers a simpler way to shop — all under your own brand.'}
+                ? 'احصل على رابط خاص بمتجرك وحوّل منتجاتك إلى متجر إلكتروني متكامل مع بسطية. أنشئ واجهتك الرقمية الخاصة، واعرض منتجاتك، وامنح عملاءك تجربة تسوق أسهل — كل ذلك برابط مخصص وعلامة تجارية مستقلة.'
+                : 'Get a specific link for your store and turn your products into an online store with Bastiyah. Create your own digital storefront, showcase your products, and give your customers a simpler way to shop — all under your own brand.'}
             </p>
 
             {/* Hero Action Buttons */}

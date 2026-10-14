@@ -4,6 +4,7 @@ export interface DynamicLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'hero';
   layout?: 'vertical' | 'horizontal';
   showText?: boolean;
+  showEnglishText?: boolean;
   subtitle?: string;
   className?: string;
   onClick?: () => void;
@@ -13,6 +14,7 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
   size = 'hero',
   layout = 'vertical',
   showText = true,
+  showEnglishText = false,
   subtitle,
   className = '',
   onClick,
@@ -60,7 +62,7 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
         />
       </div>
 
-      {/* Brand Names (بسطية & BASTIYAH) Centered Vertically - Without Any Pill */}
+      {/* Brand Name (بسطية) Centered Vertically */}
       {(showText || subtitle) && (
         <div className="mt-3 sm:mt-4 flex flex-col items-center justify-center text-center w-full">
           {showText && (
@@ -72,10 +74,12 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
                 بسطية
               </span>
 
-              {/* English Name Centered Directly Below */}
-              <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-stone-400 uppercase mt-1 text-center">
-                BASTIYAH
-              </span>
+              {/* Optional English Name */}
+              {showEnglishText && (
+                <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-stone-400 uppercase mt-1 text-center">
+                  BASTIYAH
+                </span>
+              )}
             </div>
           )}
 
