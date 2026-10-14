@@ -47,12 +47,10 @@ export const PlatformSwitcherPill: React.FC = () => {
         className="fixed bottom-4 start-4 z-40 w-9 h-9 rounded-full bg-white text-stone-800 border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 transition-all text-xs opacity-80 hover:opacity-100"
         title={language === 'ar' ? 'إظهار شارة بسطية' : 'Show Bastiyah badge'}
       >
-        <video
-          src="/bastiyah-logo.mp4"
-          autoPlay
-          muted
-          playsInline
-          className="w-5 h-5 object-contain mix-blend-multiply pointer-events-none"
+        <img
+          src="/bastiyah-logo.png"
+          alt="بسطية"
+          className="w-5 h-5 object-contain pointer-events-none"
         />
       </button>
     );
@@ -66,12 +64,10 @@ export const PlatformSwitcherPill: React.FC = () => {
         <div className="mb-2 bg-white/95 backdrop-blur-md text-stone-800 border border-stone-200 rounded-2xl shadow-2xl p-3.5 w-72 space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-150">
           <div className="flex items-center justify-between pb-2 border-b border-stone-100">
             <div className="flex items-center gap-2">
-              <video
-                src="/bastiyah-logo.mp4"
-                autoPlay
-                muted
-                playsInline
-                className="w-6 h-6 object-contain mix-blend-multiply shrink-0 pointer-events-none"
+              <img
+                src="/bastiyah-logo.png"
+                alt="بسطية"
+                className="w-6 h-6 object-contain shrink-0 pointer-events-none"
               />
               <span className="font-brand font-black text-stone-900 text-sm">
                 بسطية
@@ -143,12 +139,10 @@ export const PlatformSwitcherPill: React.FC = () => {
           className="flex items-center gap-2 px-3 py-1.5 hover:bg-stone-50 transition-colors text-stone-800 font-medium"
           title={language === 'ar' ? 'العودة للمنصة الرئيسية (بسطية)' : 'Return to Bastiyah platform'}
         >
-          <video
-            src="/bastiyah-logo.mp4"
-            autoPlay
-            muted
-            playsInline
-            className="w-5 h-5 object-contain mix-blend-multiply shrink-0 pointer-events-none"
+          <img
+            src="/bastiyah-logo.png"
+            alt="بسطية"
+            className="w-5 h-5 object-contain shrink-0 pointer-events-none"
           />
           <span className="font-brand font-black text-xs text-stone-900">بسطية</span>
           <span className="text-stone-300">•</span>

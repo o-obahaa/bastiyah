@@ -59,13 +59,11 @@ export const BastiyahLandingPage: React.FC = () => {
             onClick={() => setCurrentPage('bastiyah-landing')}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
-            {/* Borderless Moving Logo Artwork */}
-            <video
-              src="/bastiyah-logo.mp4"
-              autoPlay
-              muted
-              playsInline
-              className="w-10 h-10 sm:w-11 sm:h-11 object-contain mix-blend-multiply shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
+            {/* Official Bastiyah Logo Artwork */}
+            <img
+              src="/bastiyah-logo.png"
+              alt="بسطية"
+              className="w-11 h-11 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
             />
 
             <div>
@@ -147,17 +145,12 @@ export const BastiyahLandingPage: React.FC = () => {
           <div className="absolute top-10 start-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-emerald-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            {/* Centerpiece: Dynamic Video Logo with "بسطية" Typography */}
-            <div className="mb-6 animate-in fade-in zoom-in-95 duration-500">
+            {/* Centerpiece: Official Bastiyah Logo Artwork */}
+            <div className="mb-4 animate-in fade-in zoom-in-95 duration-500">
               <DynamicLogo
                 size="hero"
                 layout="vertical"
-                showText={true}
-                subtitle={
-                  language === 'ar'
-                    ? 'المنصة السحابية للمتاجر الإلكترونية المستقلة'
-                    : 'Cloud Platform for Independent Web-Stores'
-                }
+                showText={false}
               />
             </div>
 
@@ -456,12 +449,10 @@ export const BastiyahLandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <video
-              src="/bastiyah-logo.mp4"
-              autoPlay
-              muted
-              playsInline
-              className="w-10 h-10 object-contain mix-blend-multiply shrink-0 pointer-events-none"
+            <img
+              src="/bastiyah-logo.png"
+              alt="بسطية"
+              className="w-11 h-11 object-contain shrink-0 pointer-events-none"
             />
             <div>
               <div className="flex items-center gap-1.5">
