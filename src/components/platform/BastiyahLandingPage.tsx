@@ -12,8 +12,7 @@ import {
   Layers,
   Copy,
   Check,
-  ExternalLink,
-  ChevronRight,
+  ChevronDown,
   CheckCircle2,
   Mail,
   Phone,
@@ -22,7 +21,15 @@ import {
   Building2,
   ArrowRight,
   Send,
-  ShoppingBag
+  ShoppingBag,
+  Share2,
+  TrendingUp,
+  Sparkle,
+  Smartphone,
+  Package,
+  Compass,
+  CheckCircle,
+  ShoppingBasket
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
@@ -50,10 +57,13 @@ export const BastiyahLandingPage: React.FC = () => {
   const [appSlug, setAppSlug] = useState('');
   const [appOwnerName, setAppOwnerName] = useState('');
   const [appContact, setAppContact] = useState('');
-  const [appCategory, setAppCategory] = useState<'fashion' | 'perfumes' | 'tech' | 'coffee' | 'decor'>('fashion');
+  const [appCategory, setAppCategory] = useState<'fashion' | 'beauty' | 'home' | 'handmade' | 'tech' | 'local'>('fashion');
   const [appPlan, setAppPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Starter');
   const [appSuccess, setAppSuccess] = useState<{ storeId: string; slug: string; name: string } | null>(null);
   const [appSubmitting, setAppSubmitting] = useState(false);
+
+  // FAQ Accordion State (open question index, default first opened)
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   // Contact Section Form State
   const [contactName, setContactName] = useState('');
@@ -102,11 +112,12 @@ export const BastiyahLandingPage: React.FC = () => {
     const finalSlug = exists ? `${cleanSlug}-${Date.now().toString().slice(-4)}` : cleanSlug;
 
     const categoryMap = {
-      fashion: { en: 'Fashion & Luxury', ar: 'أزياء وفخامة', emoji: '👗' },
-      perfumes: { en: 'Perfumes & Oud', ar: 'عطور وعود فاخر', emoji: '🏺' },
-      tech: { en: 'Electronics & Tech', ar: 'إلكترونيات وتقنية', emoji: '⚡' },
-      coffee: { en: 'Specialty Coffee & Artisan', ar: 'قهوة مختصة وحرفيات', emoji: '☕' },
-      decor: { en: 'Home & Architecture', ar: 'منزل وديكور', emoji: '🕯️' },
+      fashion: { en: 'Clothing & Fashion', ar: 'أزياء وملابس', emoji: '👗' },
+      beauty: { en: 'Beauty & Cosmetics', ar: 'تجميل ومستحضرات', emoji: '✨' },
+      home: { en: 'Home & Lifestyle', ar: 'منزل وديكور', emoji: '🕯️' },
+      handmade: { en: 'Handmade & Creative Products', ar: 'حرفيات وإبداع', emoji: '🎨' },
+      tech: { en: 'Electronics & Accessories', ar: 'إلكترونيات وإكسسوارات', emoji: '⚡' },
+      local: { en: 'Local Shops & Small Businesses', ar: 'متاجر محلية ومشاريع صغيرة', emoji: '🏪' },
     };
 
     const chosenCat = categoryMap[appCategory] || categoryMap.fashion;
@@ -137,7 +148,7 @@ export const BastiyahLandingPage: React.FC = () => {
         });
 
         addToast(
-          language === 'ar' ? 'تم إنشاء المتجر بنجاح وجاهز للانطلاق!' : 'Store launched successfully on Bastiyah!',
+          language === 'ar' ? 'تم إنشاء المتجر بنجاح وجاهز للانطلاق!' : 'Store created successfully on Bastiyah!',
           'success'
         );
       } catch (err) {
@@ -161,6 +172,52 @@ export const BastiyahLandingPage: React.FC = () => {
     );
   };
 
+  // FAQ Data from user prompt
+  const faqs = [
+    {
+      qEn: 'What is Bastiyah?',
+      aEn: 'Bastiyah is a platform designed to help businesses establish their own online stores and showcase their products on the internet.',
+      qAr: 'ما هي بسطية؟',
+      aAr: 'بسطية هي منصة مصممة لمساعدة الأنشطة التجارية على إنشاء متاجرها الإلكترونية الخاصة وعرض منتجاتها على الإنترنت بسهولة واحترافية.'
+    },
+    {
+      qEn: 'Do I need programming experience?',
+      aEn: 'No. Bastiyah is designed to simplify the process of creating an online storefront without requiring you to build a website from scratch.',
+      qAr: 'هل أحتاج إلى خبرة برمجية؟',
+      aAr: 'لا، تم تصميم بسطية لتبسيط عملية إنشاء المتجر الإلكتروني دون الحاجة إلى بناء موقع من الصفر أو كتابة أي سطر برمجي.'
+    },
+    {
+      qEn: 'Can I display my own products?',
+      aEn: 'Yes. Your store is intended to showcase your products, including their photos, descriptions, and prices.',
+      qAr: 'هل يمكنني عرض منتجاتي الخاصة؟',
+      aAr: 'نعم، متجرك مخصص لعرض منتجاتك بالكامل بما يشمل الصور والأوصاف والأسعار والمخزون.'
+    },
+    {
+      qEn: 'Can I share my store with customers?',
+      aEn: 'Yes. Your online store can be shared through its link, making it easier for customers to access your products.',
+      qAr: 'هل يمكنني مشاركة متجري مع العملاء؟',
+      aAr: 'نعم، يمكنك مشاركة رابط متجرك المباشر بسهولة عبر وسائل التواصل الاجتماعي وتطبيقات المراسلة لتسهيل وصول العملاء لمنتجاتك.'
+    },
+    {
+      qEn: 'Who can use Bastiyah?',
+      aEn: 'Bastiyah is suitable for entrepreneurs, small businesses, local shops, and established sellers who want to create an online presence.',
+      qAr: 'من يمكنه استخدام بسطية؟',
+      aAr: 'بسطية مناسبة لرواد الأعمال، وأصحاب المشاريع الصغيرة، والمتاجر المحلية، والتجار المعتمدين الراغبين في تأسيس حضور رقمي مستقل.'
+    },
+    {
+      qEn: 'Does creating a store guarantee more sales?',
+      aEn: 'Creating an online store gives your business another way to reach customers, but sales depend on factors such as product quality, pricing, marketing, and customer service.',
+      qAr: 'هل إنشاء المتجر يضمن زيادة المبيعات؟',
+      aAr: 'إنشاء متجر إلكتروني يمنح نشاطك التجاري قناة موثوقة للوصول إلى عملاء أكثر، لكن المبيعات تعتمد أيضاً على جودة المنتجات، والتسعير، والتسويق، وخدمة العملاء.'
+    },
+    {
+      qEn: 'How do I get started?',
+      aEn: 'Start by creating your store, adding your products, and sharing your storefront with potential customers.',
+      qAr: 'كيف أبدأ؟',
+      aAr: 'ابدأ بتقديم طلب متجرك، ثم إضافة منتجاتك وصورها، ومشاركة رابط متجرك مع جمهورك وعملائك المحتملين.'
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-[#fafaf9] text-stone-900 relative selection:bg-stone-900 selection:text-white">
       {/* Minimalist Background Pattern Overlay (Subtle dot grid fading radially) */}
@@ -169,13 +226,14 @@ export const BastiyahLandingPage: React.FC = () => {
       {/* 
         ========================================================================
         1. THE UPPER BANNER (Navbar)
-        Contains: Logo + Name of site, (services), (features), (pricing), (about us), (contact us)
+        Contains: Logo + Name of site (BASTIYAH | بسطية), 
+        Links: ( services ) ( features ) ( pricing ) ( about us ) ( contact us )
         ========================================================================
       */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-200/80 transition-all shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
           
-          {/* Platform Brand (Cropped Logo + بسطية) */}
+          {/* Platform Brand (Cropped Logo + BASTIYAH | بسطية) */}
           <div 
             onClick={() => setCurrentPage('bastiyah-landing')}
             className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
@@ -183,7 +241,7 @@ export const BastiyahLandingPage: React.FC = () => {
             {/* Cropped Official Bastiyah Emblem */}
             <img
               src="/bastiyah-emblem.png"
-              alt="بسطية"
+              alt="BASTIYAH | بسطية"
               className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
             />
 
@@ -191,8 +249,9 @@ export const BastiyahLandingPage: React.FC = () => {
               <span className="font-brand font-black text-xl sm:text-2xl tracking-tight text-stone-900 group-hover:text-stone-950 transition-colors">
                 بسطية
               </span>
-              <span className="text-xs font-bold text-stone-400 tracking-wider uppercase font-sans">
-                Bastiyah
+              <span className="text-stone-300 font-light">|</span>
+              <span className="text-xs font-bold text-stone-500 tracking-wider uppercase font-sans">
+                BASTIYAH
               </span>
             </div>
           </div>
@@ -212,6 +271,12 @@ export const BastiyahLandingPage: React.FC = () => {
               {language === 'ar' ? 'المميزات' : 'Features'}
             </a>
             <a 
+              href="#how-it-works" 
+              className="hover:text-stone-950 transition-colors font-medium py-1"
+            >
+              {language === 'ar' ? 'كيف يعمل' : 'How It Works'}
+            </a>
+            <a 
               href="#pricing" 
               className="hover:text-stone-950 transition-colors font-medium py-1"
             >
@@ -222,6 +287,12 @@ export const BastiyahLandingPage: React.FC = () => {
               className="hover:text-stone-950 transition-colors font-medium py-1"
             >
               {language === 'ar' ? 'من نحن' : 'About Us'}
+            </a>
+            <a 
+              href="#faq" 
+              className="hover:text-stone-950 transition-colors font-medium py-1"
+            >
+              {language === 'ar' ? 'الأسئلة الشائعة' : 'FAQ'}
             </a>
             <a 
               href="#contact" 
@@ -249,7 +320,7 @@ export const BastiyahLandingPage: React.FC = () => {
               className="px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-stone-900 hover:bg-stone-800 text-white transition-all shadow-sm hover:shadow flex items-center gap-1.5"
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>{language === 'ar' ? 'قدّم طلب متجر' : 'Apply Store'}</span>
+              <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
             </a>
 
             {/* Platform Owner Super Admin */}
@@ -280,14 +351,22 @@ export const BastiyahLandingPage: React.FC = () => {
 
         {/* 
           ========================================================================
-          2. HERO SECTION & CENTERPIECE LOGO
+          2. HERO SECTION
+          # BASTIYAH | بسطية
+          ## Your Business Deserves to Be Online.
+          Turn your products into an online store with Bastiyah. Create your own 
+          digital storefront, showcase your products, and give your customers 
+          a simpler way to shop — all under your own brand.
+          [Create Your Store]  [Explore How It Works]
+          No complicated setup. Just a simpler way to sell online.
           ========================================================================
         */}
-        <section className="relative overflow-hidden pt-12 pb-16 sm:pt-16 sm:pb-24 border-b border-stone-200/80">
+        <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-stone-200/80">
           <div className="absolute top-10 start-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-emerald-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            {/* Centerpiece: Cropped Bastiyah Emblem with Centered Typography */}
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+            
+            {/* Centerpiece: Emblem with Centered Typography */}
             <div className="mb-6 animate-in fade-in zoom-in-95 duration-500">
               <DynamicLogo
                 size="hero"
@@ -296,45 +375,203 @@ export const BastiyahLandingPage: React.FC = () => {
                 subtitle={
                   language === 'ar'
                     ? 'المنصة السحابية لإطلاق واستضافة المتاجر الإلكترونية المستقلة'
-                    : 'Cloud Platform for Hosting Independent Web-Stores'
+                    : 'A simpler way to bring your business online'
                 }
               />
             </div>
 
             {/* Hero Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.2] font-brand">
-              {language === 'ar' ? (
-                <>
-                  أطلق متجرك المستقل على <span className="font-brand text-stone-950 underline decoration-amber-400 decoration-wavy decoration-2">بسطية</span> برابط وهوية خاصة
-                </>
-              ) : (
-                t.bastiyahHeroTitle
-              )}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.18] font-brand">
+              {language === 'ar' 
+                ? 'مشروعك يستحق أن يكون على الإنترنت.' 
+                : 'Your Business Deserves to Be Online.'}
             </h1>
 
             {/* Hero Subtitle */}
-            <p className="text-stone-600 text-base sm:text-lg max-w-2xl mx-auto mt-5 leading-relaxed font-normal">
+            <p className="text-stone-600 text-base sm:text-xl max-w-3xl mx-auto mt-6 leading-relaxed font-normal">
               {language === 'ar'
-                ? 'تتيح منصة بسطية لكل تاجر وعلامة تجارية استضافة متجر مستقل برابط فرعي حصري، وهوية بصرية متكاملة، ولوحة تحكم معزولة تماماً لإدارة المنتجات والطلبات والصور.'
-                : t.bastiyahHeroSubtitle}
+                ? 'حوّل منتجاتك إلى متجر إلكتروني مع بسطية. أنشئ واجهتك الرقمية الخاصة، واعرض منتجاتك، وامنح عملاءك تجربة تسوق أسهل — كل ذلك تحت علامتك التجارية.'
+                : 'Turn your products into an online store with Bastiyah. Create your own digital storefront, showcase your products, and give your customers a simpler way to shop — all under your own brand.'}
             </p>
 
-            {/* Action Buttons */}
+            {/* Hero Action Buttons */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
               <a
                 href="#apply-store"
-                className="px-6 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                className="px-7 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
-                <span>{language === 'ar' ? 'قدّم طلب متجر جديد الآن' : 'Apply as a New Store'}</span>
+                <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
               </a>
 
               <a
-                href="#hosted-stores-directory"
-                className="px-6 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400"
+                href="#how-it-works"
+                className="px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400"
               >
-                <Store className="w-4 h-4 text-stone-600" />
-                <span>{t.hostedStoresTitle} ({stores.length})</span>
+                <Compass className="w-4 h-4 text-stone-600" />
+                <span>{language === 'ar' ? 'اكتشف كيف يعمل' : 'Explore How It Works'}</span>
+              </a>
+            </div>
+
+            {/* Micro-copy */}
+            <p className="text-xs sm:text-sm text-stone-500 mt-5 font-medium">
+              {language === 'ar' 
+                ? 'بدون تعقيدات تقنية. فقط طريقة أسهل للبيع عبر الإنترنت.' 
+                : 'No complicated setup. Just a simpler way to sell online.'}
+            </p>
+          </div>
+        </section>
+
+        {/* 
+          ========================================================================
+          3. EVERYTHING YOU NEED TO START SELLING ONLINE (#services)
+          Building an online store shouldn't be complicated. Bastiyah gives you 
+          the tools to bring your business online without starting from scratch.
+          ========================================================================
+        */}
+        <section id="services" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                {language === 'ar' ? 'خدمات بسطية المتكاملة' : 'Platform Services'}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+                {language === 'ar' 
+                  ? 'كل ما تحتاجه لبدء البيع عبر الإنترنت' 
+                  : 'Everything You Need to Start Selling Online'}
+              </h2>
+              <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed">
+                {language === 'ar'
+                  ? 'بناء متجر إلكتروني لا ينبغي أن يكون معقداً. تمنحك بسطية الأدوات لنقل تجارتك إلى الإنترنت دون البدء من الصفر.'
+                  : "Building an online store shouldn't be complicated. Bastiyah gives you the tools to bring your business online without starting from scratch."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {[
+                {
+                  icon: <Store className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Your Own Online Store',
+                  titleAr: 'متجرك الإلكتروني المستقل',
+                  descEn: 'Get a dedicated storefront for your business where customers can browse your products, discover your brand, and shop with ease.',
+                  descAr: 'احصل على واجهة متجر مخصصة لمشروعك، حيث يمكن للعملاء تصفح منتجاتك، واستكشاف علامتك التجارية، والتسوق بكل سهولة.'
+                },
+                {
+                  icon: <Package className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Showcase Your Products',
+                  titleAr: 'اعرض منتجاتك باحترافية',
+                  descEn: "Present your products with photos, descriptions, and prices to help customers find exactly what they're looking for.",
+                  descAr: 'اعرض منتجاتك مع الصور الواضحة والأوصاف الدقيقة والأسعار لمساعدة العملاء في العثور على ما يبحثون عنه تماماً.'
+                },
+                {
+                  icon: <Palette className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Your Brand, Your Identity',
+                  titleAr: 'علامتك التجارية وهويتك الخاصة',
+                  descEn: 'Create an online presence that represents your business and gives your customers a familiar place to shop.',
+                  descAr: 'أنشئ حضوراً رقمياً يعبر عن نشاطك التجاري بدقة، ويمنح عملاءك تجربة تسوق مألوفة تعزز الثقة والولاء.'
+                },
+                {
+                  icon: <LayoutDashboard className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Simple Store Management',
+                  titleAr: 'إدارة بسيطة للمتجر',
+                  descEn: 'Manage your products and keep your store organized through a straightforward experience designed for business owners.',
+                  descAr: 'أدِر منتجاتك وحافظ على تنظيم متجرك من خلال تجربة إدارة مباشرة وسلسة صُممت خصيصاً لأصحاب الأعمال.'
+                },
+                {
+                  icon: <Share2 className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Share Your Store Anywhere',
+                  titleAr: 'شارك متجرك في أي مكان',
+                  descEn: 'Make it easy for customers to find your store by sharing its link through social media, messaging apps, and other channels.',
+                  descAr: 'سهّل على العملاء الوصول لمتجرك بمشاركة رابطه المباشر عبر وسائل التواصل الاجتماعي، وتطبيقات المراسلة، وكافة القنوات.'
+                },
+                {
+                  icon: <TrendingUp className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Built for Growing Businesses',
+                  titleAr: 'مصمم للمشاريع المتنامية',
+                  descEn: "Whether you're starting a small business or bringing an established shop online, Bastiyah helps you take the next step.",
+                  descAr: 'سواء كنت تبدأ مشروعاً صغيراً أو تنقل محلاً قائماً إلى الإنترنت، تساعدك بسطية على اتخاذ الخطوة التالية بثقة.'
+                }
+              ].map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md hover:border-stone-300 transition-all flex flex-col"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mb-5 shrink-0">
+                    {item.icon}
+                  </div>
+                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2.5">
+                    {language === 'ar' ? item.titleAr : item.titleEn}
+                  </h3>
+                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                    {language === 'ar' ? item.descAr : item.descEn}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 
+          ========================================================================
+          4. FROM YOUR SHOP TO THE ONLINE WORLD (#about)
+          Your products deserve to reach more people. Bastiyah helps you move beyond 
+          traditional selling and establish your business online.
+          With your own digital storefront, you can give customers a convenient 
+          way to explore your products whenever they want.
+          Your shop. Your products. Your brand. One online destination.
+          [Get Started with Bastiyah]
+          ========================================================================
+        */}
+        <section id="about" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+            {/* Cropped Emblem */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-6">
+              <img 
+                src="/bastiyah-emblem.png" 
+                alt="BASTIYAH | بسطية" 
+                className="w-full h-full object-contain pointer-events-none" 
+              />
+            </div>
+
+            <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+              {language === 'ar' ? 'من متجرك إلى العالم الرقمي' : 'From Your Shop to the Online World'}
+            </span>
+
+            <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-snug">
+              {language === 'ar' 
+                ? 'منتجاتك تستحق الوصول إلى جمهور أكبر' 
+                : 'From Your Shop to the Online World'}
+            </h2>
+
+            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed max-w-2xl">
+              {language === 'ar'
+                ? 'تستحق منتجاتك أن تصل إلى عدد أكبر من الناس. تساعدك بسطية على تجاوز حدود البيع التقليدي وتأسيس متجرك على الإنترنت بكل ثقة.'
+                : 'Your products deserve to reach more people. Bastiyah helps you move beyond traditional selling and establish your business online.'}
+            </p>
+
+            <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed max-w-2xl">
+              {language === 'ar'
+                ? 'مع واجهتك الرقمية المستقلة، تمنح عملاءك وسيلة مريحة لاستكشاف منتجاتك والتسوق منها في أي وقت ومن أي مكان.'
+                : 'With your own digital storefront, you can give customers a convenient way to explore your products whenever they want.'}
+            </p>
+
+            {/* Punchy Brand Statement */}
+            <div className="mt-8 px-6 py-4 rounded-2xl bg-stone-100 border border-stone-200/80">
+              <p className="text-sm sm:text-base font-bold text-stone-900 font-brand">
+                {language === 'ar'
+                  ? 'متجرك. منتجاتك. علامتك التجارية. وجهة رقمية واحدة.'
+                  : 'Your shop. Your products. Your brand. One online destination.'}
+              </p>
+            </div>
+
+            {/* CTA */}
+            <div className="mt-8">
+              <a
+                href="#apply-store"
+                className="px-8 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg flex items-center gap-2 transition-all hover:-translate-y-0.5"
+              >
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>{language === 'ar' ? 'ابدأ الآن مع بسطية' : 'Get Started with Bastiyah'}</span>
               </a>
             </div>
           </div>
@@ -342,10 +579,10 @@ export const BastiyahLandingPage: React.FC = () => {
 
         {/* 
           ========================================================================
-          3. THE BOX FOR NEW STORES APPLYING (With logo and name of site)
+          5. THE BOX FOR NEW STORES APPLYING (With logo and name of site)
           ========================================================================
         */}
-        <section id="apply-store" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/70 scroll-mt-20">
+        <section id="apply-store" className="py-20 sm:py-24 border-b border-stone-200/80 bg-stone-50/50 scroll-mt-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             
             {/* The Application Box Container */}
@@ -359,7 +596,7 @@ export const BastiyahLandingPage: React.FC = () => {
                 <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex items-center justify-center mb-3">
                   <img
                     src="/bastiyah-emblem.png"
-                    alt="بسطية"
+                    alt="BASTIYAH | بسطية"
                     className="w-full h-full object-contain pointer-events-none"
                   />
                 </div>
@@ -369,19 +606,20 @@ export const BastiyahLandingPage: React.FC = () => {
                   <h2 className="font-brand font-black text-2xl sm:text-3xl text-stone-900 tracking-tight">
                     بسطية
                   </h2>
-                  <span className="text-xs font-bold tracking-widest text-stone-400 uppercase font-sans">
-                    Bastiyah
+                  <span className="text-stone-300 font-light">|</span>
+                  <span className="text-xs font-bold tracking-widest text-stone-500 uppercase font-sans">
+                    BASTIYAH
                   </span>
                 </div>
 
                 {/* Box Title & Description */}
                 <h3 className="text-lg sm:text-xl font-bold text-stone-800 mt-2 font-brand">
-                  {language === 'ar' ? 'طلب انضمام وإطلاق متجر جديد' : 'New Store Application & Onboarding'}
+                  {language === 'ar' ? 'طلب انضمام وإطلاق متجر جديد' : 'Create Your Online Store Today'}
                 </h3>
                 <p className="text-sm text-stone-500 max-w-lg mt-1 font-normal leading-relaxed">
                   {language === 'ar'
                     ? 'املأ بيانات متجرك للانضمام إلى منصة بسطية والحصول على رابط مخصص وهوية مستقلة ولوحة تحكم خاصة فوراً.'
-                    : 'Fill out your store details to join Bastiyah with a dedicated subdomain, custom visual identity, and private management dashboard.'}
+                    : 'Set up your dedicated storefront on Bastiyah with your own brand, custom subdomain, and direct management dashboard.'}
                 </p>
               </div>
 
@@ -524,15 +762,16 @@ export const BastiyahLandingPage: React.FC = () => {
                   {/* Category Selection */}
                   <div>
                     <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      {language === 'ar' ? 'مجال ونشاط المتجر' : 'Primary Store Category'}
+                      {language === 'ar' ? 'نوع النشاط التجاري' : 'Business Category'}
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
                       {[
                         { id: 'fashion', labelAr: 'أزياء وملابس', labelEn: 'Fashion', icon: '👗' },
-                        { id: 'perfumes', labelAr: 'عطور وبخور', labelEn: 'Perfumes', icon: '🏺' },
-                        { id: 'tech', labelAr: 'إلكترونيات', labelEn: 'Tech', icon: '⚡' },
-                        { id: 'coffee', labelAr: 'قهوة وحرف', labelEn: 'Coffee & Crafts', icon: '☕' },
-                        { id: 'decor', labelAr: 'منزل وديكور', labelEn: 'Home Decor', icon: '🕯️' },
+                        { id: 'beauty', labelAr: 'تجميل وعناية', labelEn: 'Beauty', icon: '✨' },
+                        { id: 'home', labelAr: 'منزل وديكور', labelEn: 'Home Decor', icon: '🕯️' },
+                        { id: 'handmade', labelAr: 'حرف وإبداع', labelEn: 'Handmade', icon: '🎨' },
+                        { id: 'tech', labelAr: 'إلكترونيات', labelEn: 'Electronics', icon: '⚡' },
+                        { id: 'local', labelAr: 'متاجر محلية', labelEn: 'Local Shops', icon: '🏪' },
                       ].map((cat) => (
                         <button
                           key={cat.id}
@@ -598,7 +837,7 @@ export const BastiyahLandingPage: React.FC = () => {
                       <span>
                         {appSubmitting
                           ? (language === 'ar' ? 'جارٍ معالجة طلبك...' : 'Processing application...')
-                          : (language === 'ar' ? 'إرسال طلب إطلاق المتجر على بسطية' : 'Submit Application & Launch Store')}
+                          : (language === 'ar' ? 'إرسال طلب إطلاق المتجر على بسطية' : 'Create Your Store Today')}
                       </span>
                     </button>
                     <p className="text-center text-[11px] text-stone-400 mt-2.5">
@@ -615,65 +854,246 @@ export const BastiyahLandingPage: React.FC = () => {
 
         {/* 
           ========================================================================
-          4. SERVICES SECTION (#services)
+          6. HOW IT WORKS (#how-it-works)
+          01. Create Your Store
+          02. Add Your Products
+          03. Share Your Store
+          04. Grow Your Business
           ========================================================================
         */}
-        <section id="services" className="py-20 border-b border-stone-200/80 scroll-mt-20">
+        <section id="how-it-works" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-14">
+            <div className="text-center max-w-2xl mx-auto mb-16">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                {language === 'ar' ? 'خدمات منصة بسطية' : 'Platform Services'}
+                {language === 'ar' ? 'خطوات بسيطة' : 'Simple Steps'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-1 font-brand">
-                {language === 'ar' ? 'كل ما تحتاجه لإطلاق وإدارة تجارتك' : 'Comprehensive Multi-Store Services'}
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+                {language === 'ar' ? 'كيف يعمل؟' : 'How It Works'}
               </h2>
-              <p className="text-stone-500 text-sm mt-2">
+              <p className="text-stone-500 text-sm sm:text-base mt-2">
                 {language === 'ar'
-                  ? 'نوفر بنية سحابية متكاملة تمنحك استقلالية تامة دون تعقيدات البرمجة أو تكاليف الخوادم الباهظة.'
-                  : 'Everything you need to host, brand, and scale independent e-commerce stores effortlessly.'}
+                  ? 'أربع خطوات واضحة ومباشرة تفصلك عن إطلاق متجرك الرقمي والوصول لعملائك.'
+                  : 'Four straightforward steps to set up your store and introduce your business to the online world.'}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
               {[
                 {
-                  icon: <Globe className="w-6 h-6 text-stone-800" />,
-                  titleAr: 'استضافة بروابط مخصصة',
-                  titleEn: 'Dedicated Subdomains',
-                  descAr: 'رابط فرعي مباشر مثل (store).bastiyah.com جاهز للمشاركة والتسويق مع شهادة حماية مجانية.',
-                  descEn: 'Instant dedicated subdomains with automatic SSL encryption and custom domain support.',
+                  step: '01',
+                  titleEn: 'Create Your Store',
+                  titleAr: 'أنشئ متجرك',
+                  descEn: 'Start your journey by setting up your store and introducing your business to the online world.',
+                  descAr: 'ابدأ رحلتك بإعداد متجرك الإلكتروني وتقديم نشاطك التجاري للعالم الرقمي.'
                 },
                 {
-                  icon: <Palette className="w-6 h-6 text-stone-800" />,
-                  titleAr: 'تخصيص الهوية البصرية',
-                  titleEn: 'Visual Identity Studio',
-                  descAr: 'تحكم في ألوان متجرك، وتخطيط صفحة البداية، وأشكال البطاقات، وشعار المتجر بدقة.',
-                  descEn: 'Complete control over your store color palette, hero layouts, card styles, and brand logo.',
+                  step: '02',
+                  titleEn: 'Add Your Products',
+                  titleAr: 'أضف منتجاتك',
+                  descEn: 'Upload product photos, write descriptions, and set your prices so customers know what you offer.',
+                  descAr: 'ارفع صور المنتجات، واكتب الأوصاف، وحدد أسعارك ليعرف العملاء ما تقدمه بدقة.'
                 },
                 {
-                  icon: <LayoutDashboard className="w-6 h-6 text-stone-800" />,
-                  titleAr: 'لوحة تحكم معزولة لكل متجر',
-                  titleEn: 'Isolated Admin Portal',
-                  descAr: 'لوحة إدارة متكاملة لإضافة المنتجات، متابعة الطلبات، إدارة العملاء، وتطبيق الكوبونات.',
-                  descEn: 'Private /admin dashboard for product inventory, customer tracking, and order fulfillment.',
+                  step: '03',
+                  titleEn: 'Share Your Store',
+                  titleAr: 'شارك متجرك',
+                  descEn: 'Share your store link with your audience and make it easier for potential customers to discover your products.',
+                  descAr: 'شارك رابط متجرك مع جمهورك واجعل من السهل على العملاء المحتملين اكتشاف منتجاتك.'
                 },
                 {
-                  icon: <ShieldCheck className="w-6 h-6 text-stone-800" />,
-                  titleAr: 'بنية سحابية آمنة وسريعة',
-                  titleEn: 'Cloud & CDN Architecture',
-                  descAr: 'استضافة سحابية عالية السرعة على Vercel وCloudflare R2 مع أداء فائق على كافة الأجهزة.',
-                  descEn: 'Lightning-fast cloud architecture powered by Vercel edge networks and Cloudflare media storage.',
-                },
-              ].map((svc, idx) => (
-                <div key={idx} className="p-7 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md hover:border-stone-300 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mb-5">
-                    {svc.icon}
+                  step: '04',
+                  titleEn: 'Grow Your Business',
+                  titleAr: 'طوّر تجارتك',
+                  descEn: 'Keep your store updated, showcase new products, and build your online presence as your business grows.',
+                  descAr: 'حافظ على تحديث متجرك، واعرض منتجات جديدة، وعزز حضورك الرقمي مع نمو أعمالك.'
+                }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
+                >
+                  <div className="text-3xl sm:text-4xl font-black text-stone-300 font-mono mb-4">
+                    {item.step}.
                   </div>
+                  <div>
+                    <h3 className="font-brand font-bold text-lg text-stone-900 mb-2">
+                      {language === 'ar' ? item.titleAr : item.titleEn}
+                    </h3>
+                    <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                      {language === 'ar' ? item.descAr : item.descEn}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 
+          ========================================================================
+          7. MADE FOR BUSINESSES LIKE YOURS
+          Clothing & Fashion / Beauty & Cosmetics / Home & Lifestyle / 
+          Handmade & Creative Products / Electronics & Accessories / 
+          Local Shops & Small Businesses
+          Whatever you sell, Bastiyah helps you build your place in the digital marketplace.
+          ========================================================================
+        */}
+        <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                {language === 'ar' ? 'القطاعات والتصنيفات' : 'Tailored for Every Merchant'}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+                {language === 'ar' 
+                  ? 'مُصمم للأنشطة التجارية مثل نشاطك' 
+                  : 'Made for Businesses Like Yours'}
+              </h2>
+              <p className="text-stone-600 text-sm sm:text-base mt-3">
+                {language === 'ar'
+                  ? 'مهما كان ما تبيعه، تساعدك بسطية في بناء مكانك الخاص في السوق الرقمي.'
+                  : 'Whatever you sell, Bastiyah helps you build your place in the digital marketplace.'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {[
+                {
+                  emoji: '👗',
+                  titleEn: 'Clothing & Fashion',
+                  titleAr: 'الملابس والأزياء',
+                  descEn: 'Showcase collections, accessories, and the latest trends in your own online store.',
+                  descAr: 'اعرض التشكيلات الحصرية، والإكسسوارات، وأحدث صيحات الموضة في متجرك الإلكتروني الخاص.'
+                },
+                {
+                  emoji: '✨',
+                  titleEn: 'Beauty & Cosmetics',
+                  titleAr: 'الجمال ومستحضرات التجميل',
+                  descEn: 'Present beauty products and skincare essentials in an organized, easy-to-browse catalog.',
+                  descAr: 'اعرض منتجات الجمال والعناية بالبشرة في كتالوج منظم وسهل التصفح لعملائك.'
+                },
+                {
+                  emoji: '🕯️',
+                  titleEn: 'Home & Lifestyle',
+                  titleAr: 'المنزل ونمط الحياة',
+                  descEn: 'Bring furniture, home accessories, decorations, and everyday essentials online.',
+                  descAr: 'انقل الأثاث، وإكسسوارات المنزل، والديكورات، والمستلزمات اليومية إلى متجرك الرقمي.'
+                },
+                {
+                  emoji: '🎨',
+                  titleEn: 'Handmade & Creative Products',
+                  titleAr: 'المنتجات اليدوية والإبداعية',
+                  descEn: 'Give your handmade creations a dedicated space where customers can discover what makes them special.',
+                  descAr: 'امنح إبداعاتك ومصنوعاتك اليدوية مساحة مخصصة يكتشف فيها العملاء سر تميزها.'
+                },
+                {
+                  emoji: '⚡',
+                  titleEn: 'Electronics & Accessories',
+                  titleAr: 'الإلكترونيات والإكسسوارات',
+                  descEn: 'Display gadgets, devices, and accessories with clear product information.',
+                  descAr: 'اعرض الأجهزة الذكية، والأدوات التقنية، والملحقات مع معلومات ومواصفات واضحة.'
+                },
+                {
+                  emoji: '🏪',
+                  titleEn: 'Local Shops & Small Businesses',
+                  titleAr: 'المتاجر المحلية والمشاريع الصغيرة',
+                  descEn: 'Take your neighborhood business online and give customers another way to discover what you offer.',
+                  descAr: 'انقل متجرك المحلي في منطقتك إلى الإنترنت وامنح عملاءك طريقة سهلة لاكتشاف ما تقدمه.'
+                }
+              ].map((cat, idx) => (
+                <div 
+                  key={idx}
+                  className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md transition-all flex flex-col"
+                >
+                  <div className="text-3xl mb-4">{cat.emoji}</div>
                   <h3 className="font-brand font-bold text-lg text-stone-900 mb-2">
-                    {language === 'ar' ? svc.titleAr : svc.titleEn}
+                    {language === 'ar' ? cat.titleAr : cat.titleEn}
                   </h3>
-                  <p className="text-xs sm:text-sm text-stone-500 leading-relaxed font-normal">
-                    {language === 'ar' ? svc.descAr : svc.descEn}
+                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                    {language === 'ar' ? cat.descAr : cat.descEn}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <p className="text-sm sm:text-base font-semibold text-stone-700">
+                {language === 'ar'
+                  ? 'مهما كان ما تبيعه، تساعدك بسطية في بناء مكانك الخاص في السوق الرقمي.'
+                  : 'Whatever you sell, Bastiyah helps you build your place in the digital marketplace.'}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 
+          ========================================================================
+          8. WHY CHOOSE BASTIYAH? (#features)
+          Simple by Design / Your Own Digital Space / A Better Shopping Experience /
+          Room to Grow / Focus on Your Business
+          ========================================================================
+        */}
+        <section id="features" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                {language === 'ar' ? 'مميزات المنصة' : 'Core Advantages'}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+                {language === 'ar' ? 'لماذا تختار بسطية؟' : 'Why Choose Bastiyah?'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
+              {[
+                {
+                  icon: <Sparkles className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Simple by Design',
+                  titleAr: 'بساطة في التصميم',
+                  descEn: "You don't need to build a website from the ground up to establish your online presence.",
+                  descAr: 'لست بحاجة لبناء موقع إلكتروني من الصفر أو الدخول في تعقيدات تقنية لتأسيس حضورك الرقمي.'
+                },
+                {
+                  icon: <Store className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Your Own Digital Space',
+                  titleAr: 'مساحتك الرقمية الخاصة',
+                  descEn: 'Give your business a dedicated storefront instead of relying entirely on social media posts and messages.',
+                  descAr: 'امنح مشروعك واجهة متجر مخصصة بدلاً من الاعتماد الكلي على منشورات ورسائل مواقع التواصل الاجتماعي.'
+                },
+                {
+                  icon: <ShoppingBag className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'A Better Shopping Experience',
+                  titleAr: 'تجربة تسوق أفضل',
+                  descEn: 'Help customers browse your products and find the information they need in one place.',
+                  descAr: 'ساعِد عملاءك على تصفح منتجاتك والوصول إلى كافة المعلومات والأسعار في مكان واحد منظم.'
+                },
+                {
+                  icon: <TrendingUp className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Room to Grow',
+                  titleAr: 'مساحة للتوسع والنمو',
+                  descEn: 'Start with your current products and continue developing your online presence as your business evolves.',
+                  descAr: 'ابدأ بمنتجاتك الحالية، وواصل تطوير حضورك الرقمي وتوسيع تشكيلاتك مع نمو وتوسع نشاطك.'
+                },
+                {
+                  icon: <ShieldCheck className="w-6 h-6 text-stone-900" />,
+                  titleEn: 'Focus on Your Business',
+                  titleAr: 'ركّز على تجارتك',
+                  descEn: 'Spend less time worrying about the technical side of creating a website and more time focusing on your products and customers.',
+                  descAr: 'اقضِ وقتاً أقل في القلق بشأن الجوانب التقنية لإنشاء المواقع، وركّز كامل جهدك على منتجاتك وعملائك.'
+                }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md transition-all flex flex-col"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mb-5 shrink-0">
+                    {item.icon}
+                  </div>
+                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2.5">
+                    {language === 'ar' ? item.titleAr : item.titleEn}
+                  </h3>
+                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                    {language === 'ar' ? item.descAr : item.descEn}
                   </p>
                 </div>
               ))}
@@ -683,79 +1103,67 @@ export const BastiyahLandingPage: React.FC = () => {
 
         {/* 
           ========================================================================
-          5. FEATURES SECTION (#features)
+          9. YOUR NEXT BUSINESS STEP STARTS HERE
+          Every successful business starts somewhere. Take the next step and give 
+          your products a place online.
+          Whether you're launching a new idea or expanding an existing shop, 
+          Bastiyah makes starting your online journey simpler.
+          Let's bring your business online.
+          [Create Your Store Today]
           ========================================================================
         */}
-        <section id="features" className="py-20 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-14">
-              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                {language === 'ar' ? 'مميزات بسطية' : 'Core Features'}
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-1 font-brand">
-                {language === 'ar' ? 'لماذا يختار التجار منصة بسطية؟' : 'Why Merchants Choose Bastiyah'}
-              </h2>
+        <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-stone-900 text-white relative overflow-hidden">
+          {/* Subtle Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-tr from-amber-500/10 via-rose-500/10 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 flex flex-col items-center">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white font-brand tracking-tight">
+              {language === 'ar'
+                ? 'خطوتك التجارية القادمة تبدأ هنا'
+                : 'Your Next Business Step Starts Here'}
+            </h2>
+
+            <p className="text-stone-300 text-base sm:text-lg mt-5 leading-relaxed max-w-2xl">
+              {language === 'ar'
+                ? 'كل مشروع ناجح يبدأ بخطوة. اتخذ الخطوة القادمة وامنح منتجاتك مكاناً مخصصاً على الإنترنت.'
+                : 'Every successful business starts somewhere. Take the next step and give your products a place online.'}
+            </p>
+
+            <p className="text-stone-400 text-sm sm:text-base mt-2 leading-relaxed max-w-2xl">
+              {language === 'ar'
+                ? 'سواء كنت تطلق فكرة جديدة أو توسع متجراً قائماً، تجعل بسطية بداية رحلتك الرقمية أكثر سهولة ووضوحاً.'
+                : "Whether you're launching a new idea or expanding an existing shop, Bastiyah makes starting your online journey simpler."}
+            </p>
+
+            <div className="mt-6 text-amber-400 font-bold text-base sm:text-lg font-brand">
+              {language === 'ar' ? 'لننقل نشاطك التجاري إلى الإنترنت معاً.' : "Let's bring your business online."}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-5">
-                  <Globe className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-black text-stone-900 font-brand">
-                  {language === 'ar' ? 'روابط مخصصة ومستقلة فورية' : 'Instant Dedicated Store Links'}
-                </h3>
-                <p className="text-sm text-stone-600 mt-2.5 leading-relaxed font-normal">
-                  {language === 'ar'
-                    ? 'ينشئ مالك منصة بسطية روابط مخصصة مثل (storename).bastiyah.com بضغطة زر مع شهادة حماية فورية وجاهزة للمشاركة للعملاء.'
-                    : 'Generate dedicated working links like (storename).bastiyah.com in seconds from the main Bastiyah owner dashboard.'}
-                </p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-5">
-                  <Palette className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-black text-stone-900 font-brand">
-                  {language === 'ar' ? 'تصميم وهوية مستقلة لكل متجر' : 'Independent Store Design & Theme'}
-                </h3>
-                <p className="text-sm text-stone-600 mt-2.5 leading-relaxed font-normal">
-                  {language === 'ar'
-                    ? 'يمتلك كل متجر على منصة بسطية نظام ألوانه الخاص، وتخطيط الواجهة الرئيسية، وشعاره، وتنسيقات البطاقات بشكل منعزل.'
-                    : 'Every hosted store has its own color palette, hero layout architecture, header theme, and brand identity.'}
-                </p>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md transition-all">
-                <div className="w-12 h-12 rounded-2xl bg-stone-100 border border-stone-300 flex items-center justify-center text-stone-800 mb-5">
-                  <LayoutDashboard className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-black text-stone-900 font-brand">
-                  {language === 'ar' ? 'إدارة متجر معزولة وسحابية' : 'Isolated Store Management'}
-                </h3>
-                <p className="text-sm text-stone-600 mt-2.5 leading-relaxed font-normal">
-                  {language === 'ar'
-                    ? 'لكل متجر لوحة تحكم خاصة به لإدارة منتجاته، طلباته، عملائه، وكوبوناته، مع ربط قاعدة بيانات Convex وخوادم صور Cloudflare.'
-                    : 'Each store has its own private /admin portal for managing its products, orders, customers, and media storage.'}
-                </p>
-              </div>
+            <div className="mt-8">
+              <a
+                href="#apply-store"
+                className="px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-sm sm:text-base shadow-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4 text-stone-950" />
+                <span>{language === 'ar' ? 'أنشئ متجرك اليوم' : 'Create Your Store Today'}</span>
+              </a>
             </div>
           </div>
         </section>
 
         {/* 
           ========================================================================
-          6. PRICING SECTION (#pricing)
+          10. PRICING SECTION (#pricing)
           ========================================================================
         */}
-        <section id="pricing" className="py-20 border-b border-stone-200/80 scroll-mt-20">
+        <section id="pricing" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                {language === 'ar' ? 'خطط وباقات الاستضافة' : 'Pricing Plans'}
+                {language === 'ar' ? 'خطط الاستضافة' : 'Pricing Plans'}
               </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-1 font-brand">
-                {language === 'ar' ? 'باقات شفافة وبسيطة تناسب حجم تجارتك' : 'Transparent Hosting Plans'}
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+                {language === 'ar' ? 'باقات واضحة وبسيطة تناسب حجم تجارتك' : 'Transparent Hosting Plans'}
               </h2>
             </div>
 
@@ -771,7 +1179,7 @@ export const BastiyahLandingPage: React.FC = () => {
                     <span className="text-xs text-stone-400">/{language === 'ar' ? 'شهرياً' : 'month'}</span>
                   </div>
                   <p className="text-xs text-stone-500 mt-2">
-                    {language === 'ar' ? 'مثالية للبدء والتجربة وإطلاق أول بسطية إلكترونية.' : 'Ideal for hobbyists and launching your very first online boutique.'}
+                    {language === 'ar' ? 'مثالية للبدء والتجربة وإطلاق أول بسطية إلكترونية.' : 'Ideal for starting out, experimenting, and launching your first digital store.'}
                   </p>
 
                   <ul className="mt-6 space-y-3 text-xs text-stone-600">
@@ -785,11 +1193,11 @@ export const BastiyahLandingPage: React.FC = () => {
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{language === 'ar' ? 'لوحة تحكم كاملة للمتجر' : 'Full private /admin panel'}</span>
+                      <span>{language === 'ar' ? 'لوحة تحكم كاملة للمتجر' : 'Full private management dashboard'}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{language === 'ar' ? 'تخصيص الألوان والشعار' : 'Custom colors & emoji logo'}</span>
+                      <span>{language === 'ar' ? 'تخصيص الألوان والشعار' : 'Custom theme colors & branding'}</span>
                     </li>
                   </ul>
                 </div>
@@ -891,44 +1299,115 @@ export const BastiyahLandingPage: React.FC = () => {
 
         {/* 
           ========================================================================
-          7. ABOUT US SECTION (#about)
+          11. FREQUENTLY ASKED QUESTIONS (#faq)
+          What is Bastiyah? / Do I need programming experience? / 
+          Can I display my own products? / Can I share my store with customers? / 
+          Who can use Bastiyah? / Does creating a store guarantee more sales? / 
+          How do I get started?
           ========================================================================
         */}
-        <section id="about" className="py-20 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            {/* Cropped Emblem */}
-            <div className="w-16 h-16 mx-auto mb-4">
-              <img src="/bastiyah-emblem.png" alt="بسطية" className="w-full h-full object-contain pointer-events-none" />
+        <section id="faq" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                {language === 'ar' ? 'إجابات واضحة' : 'Common Questions'}
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+                {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
+              </h2>
             </div>
 
-            <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-              {language === 'ar' ? 'عن المنصة' : 'About Bastiyah'}
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-1 font-brand">
-              {language === 'ar' ? 'قصة ورؤية منصة بسطية' : 'The Story & Vision Behind Bastiyah'}
-            </h2>
-            <p className="text-stone-600 text-sm sm:text-base mt-4 leading-relaxed font-normal">
-              {language === 'ar'
-                ? 'استلهمنا اسم (بسطية) من الأسواق العراقية والعربية الأصيلة، حيث كانت كل بسطية تمثل مشروعاً حقيقياً ومصدر رزق لأصحاب الحرف والتجارة. نقلنا هذه الروح إلى الفضاء السحابي الرقمي، لنمكن كل تاجر وشاب وصاحب فكرة من امتلاك بسطية إلكترونية مستقلة برابط خاص وهوية بصرية كاملة دون الحاجة إلى وسطاء.'
-                : 'Inspired by authentic marketplace merchants, Bastiyah empowers modern creators, craftspeople, and brands to host independent online storefronts with dedicated subdomains and full visual autonomy.'}
-            </p>
+            <div className="space-y-4">
+              {faqs.map((faq, idx) => {
+                const isOpen = openFaq === idx;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white border border-stone-200/90 rounded-2xl overflow-hidden transition-all shadow-2xs hover:border-stone-300"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(isOpen ? null : idx)}
+                      className="w-full p-5 sm:p-6 text-start flex items-center justify-between gap-4 font-brand font-bold text-base sm:text-lg text-stone-900"
+                    >
+                      <span>{language === 'ar' ? faq.qAr : faq.qEn}</span>
+                      <ChevronDown
+                        className={`w-5 h-5 text-stone-400 shrink-0 transition-transform duration-200 ${
+                          isOpen ? 'rotate-180 text-stone-800' : ''
+                        }`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-stone-600 text-sm sm:text-base leading-relaxed border-t border-stone-100 pt-3 animate-in fade-in duration-200">
+                        {language === 'ar' ? faq.aAr : faq.aEn}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
         {/* 
           ========================================================================
-          8. CONTACT US SECTION (#contact)
+          12. READY TO TAKE YOUR BUSINESS ONLINE?
+          Your products have a story. Your business has potential. Give both a place to grow.
+          Bastiyah — Your Store, Your Brand, Your Way.
+          [Get Started]
+          ========================================================================
+        */}
+        <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-stone-900 font-brand tracking-tight">
+              {language === 'ar'
+                ? 'جاهز لنقل مشروعك إلى الإنترنت؟'
+                : 'Ready to Take Your Business Online?'}
+            </h2>
+
+            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed max-w-2xl">
+              {language === 'ar'
+                ? 'منتجاتك لها قصة. ومشروعك يمتلك إمكانات حقيقية. امنح كليهما مكاناً ينموان فيه.'
+                : 'Your products have a story. Your business has potential. Give both a place to grow.'}
+            </p>
+
+            <div className="mt-5 text-lg sm:text-xl font-black text-stone-900 font-brand">
+              {language === 'ar'
+                ? 'بسطية — متجرك، علامتك التجارية، بطريقتك.'
+                : 'Bastiyah — Your Store, Your Brand, Your Way.'}
+            </div>
+
+            <div className="mt-8">
+              <a
+                href="#apply-store"
+                className="px-9 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 inline-flex items-center gap-2 transition-all hover:-translate-y-0.5"
+              >
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>{language === 'ar' ? 'ابدأ الآن' : 'Get Started'}</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* 
+          ========================================================================
+          13. CONTACT US SECTION (#contact)
           ========================================================================
         */}
         <section id="contact" className="py-20 border-b border-stone-200/80 scroll-mt-20">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                {language === 'ar' ? 'تواصل معنا' : 'Get in Touch'}
+                {language === 'ar' ? 'تواصل معنا' : 'Contact Us'}
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-stone-900 mt-1 font-brand">
-                {language === 'ar' ? 'فريق بسطية جاهز لمساعدتك' : 'The Bastiyah Team is Here to Help'}
+                {language === 'ar' ? 'فريق بسطية جاهز لمساعدتك' : 'Have a Question or Need Assistance?'}
               </h2>
+              <p className="text-stone-500 text-sm mt-2">
+                {language === 'ar' 
+                  ? 'لديك استفسار أو تحتاج إلى مساعدة؟ تواصل مع فريقنا مباشرة.' 
+                  : 'Have a question or need assistance? Get in touch with our team.'}
+              </p>
             </div>
 
             <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-sm">
@@ -1004,7 +1483,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
         {/* 
           ========================================================================
-          9. LIVE HOSTED STORES DIRECTORY
+          14. LIVE HOSTED STORES DIRECTORY (#hosted-stores-directory)
           ========================================================================
         */}
         <section id="hosted-stores-directory" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
@@ -1030,7 +1509,7 @@ export const BastiyahLandingPage: React.FC = () => {
               className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 self-start sm:self-auto transition-all shadow-sm"
             >
               <Zap className="w-4 h-4 text-amber-400" />
-              <span>{t.createNewStore}</span>
+              <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
             </a>
           </div>
 
@@ -1167,47 +1646,144 @@ export const BastiyahLandingPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Bastiyah Platform Footer */}
-      <footer className="border-t border-stone-200 bg-white py-12 text-stone-500 text-xs relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <img
-              src="/bastiyah-emblem.png"
-              alt="بسطية"
-              className="w-10 h-10 object-contain shrink-0 pointer-events-none"
-            />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-brand font-black text-stone-900 text-base">
-                  بسطية
-                </span>
-                <span className="text-[10px] text-stone-400 font-bold uppercase">
-                  (Bastiyah)
-                </span>
+      {/* 
+        ========================================================================
+        15. FOOTER
+        Bastiyah | بسطية
+        A simpler way to bring your business online.
+        Explore: Home, Features, How It Works, Frequently Asked Questions
+        For Sellers: Create Your Store, Manage Your Products, Contact Support
+        Legal: Privacy Policy, Terms of Service
+        Contact Us: Have a question or need assistance? Get in touch with our team.
+        © 2026 Bastiyah. All rights reserved.
+        ========================================================================
+      */}
+      <footer className="border-t border-stone-200 bg-white py-16 text-stone-500 text-xs sm:text-sm relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-stone-100">
+            
+            {/* Brand Column */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src="/bastiyah-emblem.png"
+                  alt="BASTIYAH | بسطية"
+                  className="w-10 h-10 object-contain shrink-0 pointer-events-none"
+                />
+                <div className="flex items-baseline gap-2">
+                  <span className="font-brand font-black text-stone-900 text-xl">
+                    بسطية
+                  </span>
+                  <span className="text-stone-300 font-light">|</span>
+                  <span className="text-xs font-bold text-stone-500 tracking-wider uppercase font-sans">
+                    BASTIYAH
+                  </span>
+                </div>
               </div>
-              <span className="text-[11px] text-stone-400 font-mono block">
-                bastiyah.com • Platform
-              </span>
+
+              <p className="text-stone-600 text-sm max-w-sm font-normal leading-relaxed mb-4">
+                {language === 'ar'
+                  ? 'طريقة أسهل لنقل نشاطك التجاري إلى الإنترنت.'
+                  : 'A simpler way to bring your business online.'}
+              </p>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage('bastiyah-admin')}
+                  className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 border border-stone-300 font-bold text-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Crown className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{t.bastiyahOwnerAdmin}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Explore Column */}
+            <div>
+              <h4 className="font-bold text-xs uppercase tracking-wider text-stone-900 mb-4 font-sans">
+                {language === 'ar' ? 'استكشف' : 'Explore'}
+              </h4>
+              <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
+                <li>
+                  <a href="#" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'الرئيسية' : 'Home'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#features" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'المميزات' : 'Features'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#how-it-works" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'كيف يعمل' : 'How It Works'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* For Sellers Column */}
+            <div>
+              <h4 className="font-bold text-xs uppercase tracking-wider text-stone-900 mb-4 font-sans">
+                {language === 'ar' ? 'للتجار وأصحاب الأعمال' : 'For Sellers'}
+              </h4>
+              <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
+                <li>
+                  <a href="#apply-store" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#hosted-stores-directory" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'إدارة منتجاتك' : 'Manage Your Products'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#contact" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'الدعم الفني' : 'Contact Support'}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal Column */}
+            <div>
+              <h4 className="font-bold text-xs uppercase tracking-wider text-stone-900 mb-4 font-sans">
+                {language === 'ar' ? 'قانوني' : 'Legal'}
+              </h4>
+              <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
+                <li>
+                  <a href="#legal" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#legal" className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'شروط الخدمة' : 'Terms of Service'}
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
 
-          {/* Description */}
-          <p className="text-center md:text-start text-stone-500 max-w-md font-normal leading-relaxed">
-            {language === 'ar'
-              ? 'منصة بسطية: بنية سحابية متكاملة لتمكين التجار وأصحاب المشاريع من إطلاق متاجر إلكترونية مستقلة بهوية خاصة وروابط فرعية معزولة.'
-              : 'Bastiyah: Cloud platform for hosting independent web-stores with dedicated subdomains and isolated administration.'}
-          </p>
+          {/* Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400">
+            <div>
+              {language === 'ar' 
+                ? '© 2026 بسطية. جميع الحقوق محفوظة.' 
+                : '© 2026 Bastiyah. All rights reserved.'}
+            </div>
 
-          {/* Action */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCurrentPage('bastiyah-admin')}
-              className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 border border-stone-300 font-bold transition-colors flex items-center gap-1.5"
-            >
-              <Crown className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t.bastiyahOwnerAdmin}</span>
-            </button>
+            <div className="flex items-center gap-1 font-mono text-[11px] text-stone-400">
+              <span>bastiyah.com</span>
+              <span>•</span>
+              <span>Platform</span>
+            </div>
           </div>
         </div>
       </footer>
