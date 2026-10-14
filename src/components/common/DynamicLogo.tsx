@@ -12,7 +12,7 @@ export interface DynamicLogoProps {
 export const DynamicLogo: React.FC<DynamicLogoProps> = ({
   size = 'hero',
   layout = 'vertical',
-  showText = true, // By default, renders the matching layout font for "بسطية" below the emblem
+  showText = true,
   subtitle,
   className = '',
   onClick,
@@ -60,27 +60,27 @@ export const DynamicLogo: React.FC<DynamicLogoProps> = ({
         />
       </div>
 
-      {/* Brand Name (بسطية) & Subtitle in Matching Layout Font (Alexandria) */}
+      {/* Brand Names (بسطية & BASTIYAH) Centered Vertically - Without Any Pill */}
       {(showText || subtitle) && (
-        <div className={isVertical ? 'mt-3 sm:mt-4 flex flex-col items-center' : 'flex flex-col'}>
+        <div className="mt-3 sm:mt-4 flex flex-col items-center justify-center text-center w-full">
           {showText && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col items-center justify-center text-center">
+              {/* Arabic Name Centered */}
               <span
-                className={`font-brand ${dimensions.title} tracking-tight text-stone-900 transition-colors group-hover:text-stone-950`}
+                className={`font-brand ${dimensions.title} tracking-tight text-stone-900 transition-colors group-hover:text-stone-950 text-center leading-tight`}
               >
                 بسطية
               </span>
 
-              {size === 'hero' && (
-                <span className="font-sans text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200/80">
-                  BASTIYAH
-                </span>
-              )}
+              {/* English Name Centered Directly Below */}
+              <span className="font-sans text-[11px] sm:text-xs font-bold tracking-[0.25em] text-stone-400 uppercase mt-1 text-center">
+                BASTIYAH
+              </span>
             </div>
           )}
 
           {subtitle && (
-            <p className={`font-sans ${dimensions.sub} font-medium text-stone-500 mt-1.5 max-w-sm`}>
+            <p className={`font-sans ${dimensions.sub} font-medium text-stone-500 mt-2 max-w-md text-center leading-relaxed`}>
               {subtitle}
             </p>
           )}

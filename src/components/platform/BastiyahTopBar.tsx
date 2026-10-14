@@ -66,9 +66,6 @@ export const BastiyahTopBar: React.FC = () => {
             <span className="font-brand font-black text-sm tracking-tight text-stone-900 group-hover:text-stone-950 transition-colors">
               بسطية
             </span>
-            <span className="hidden md:inline-block text-[9px] font-bold tracking-wider text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded uppercase border border-stone-200/70">
-              BASTIYAH
-            </span>
           </button>
 
           {/* Interactive Browser Subdomain Bar + Store Switcher */}

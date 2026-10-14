@@ -66,17 +66,12 @@ export const BastiyahLandingPage: React.FC = () => {
               className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105 pointer-events-none"
             />
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-brand font-black text-xl sm:text-2xl tracking-tight text-stone-900 group-hover:text-stone-950 transition-colors">
-                  بسطية
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-stone-100 text-stone-600 border border-stone-200 uppercase tracking-wider">
-                  BASTIYAH
-                </span>
-              </div>
-              <span className="font-mono text-[11px] text-stone-500 block -mt-0.5" dir="ltr">
-                bastiyah.com
+            <div className="flex items-baseline gap-2">
+              <span className="font-brand font-black text-xl sm:text-2xl tracking-tight text-stone-900 group-hover:text-stone-950 transition-colors">
+                بسطية
+              </span>
+              <span className="text-xs font-bold text-stone-400 tracking-wider uppercase font-sans">
+                Bastiyah
               </span>
             </div>
           </div>
@@ -154,16 +149,8 @@ export const BastiyahLandingPage: React.FC = () => {
               />
             </div>
 
-            {/* Platform Tag Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-stone-200 text-stone-700 text-xs font-semibold shadow-sm mb-5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-brand font-bold">بسطية</span>
-              <span className="text-stone-300">•</span>
-              <span>{t.bastiyahHeroBadge}</span>
-            </div>
-
             {/* Hero Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.2]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.2] font-brand">
               {language === 'ar' ? (
                 <>
                   أطلق متجرك المستقل على <span className="font-brand text-stone-950 underline decoration-amber-400 decoration-wavy decoration-2">بسطية</span> برابط وهوية خاصة
@@ -179,27 +166,6 @@ export const BastiyahLandingPage: React.FC = () => {
                 ? 'تتيح منصة بسطية لكل تاجر وعلامة تجارية استضافة متجر مستقل برابط فرعي حصري، وهوية بصرية متكاملة، ولوحة تحكم معزولة تماماً لإدارة المنتجات والطلبات والصور.'
                 : t.bastiyahHeroSubtitle}
             </p>
-
-            {/* Minimalist Live Store Link Showcase */}
-            <div className="mt-8 flex flex-col items-center gap-2.5">
-              <div 
-                className="inline-flex items-center gap-2 sm:gap-3 px-5 py-3 rounded-2xl bg-white border border-stone-200/90 shadow-md shadow-stone-200/50" 
-                dir="ltr"
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
-                <span className="font-mono text-sm sm:text-base font-bold text-stone-800">
-                  https://
-                </span>
-                <span className="font-mono text-sm sm:text-base font-black text-stone-900 bg-stone-100 px-3 py-1 rounded-xl border border-stone-200">
-                  (storename).bastiyah.com
-                </span>
-              </div>
-              <p className="text-xs text-stone-500 font-medium">
-                {language === 'ar'
-                  ? '🔗 روابط فورية جاهزة للمشاركة لكل متجر • تعمل على Vercel وتتحول تلقائياً إلى دومين بسطية الخاص'
-                  : '🔗 Instant shareable links for every store • Powered by Bastiyah cloud infrastructure'}
-              </p>
-            </div>
 
             {/* Call to Actions */}
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
