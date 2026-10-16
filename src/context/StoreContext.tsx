@@ -452,6 +452,58 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.documentElement.lang = language;
   }, [language]);
 
+  // Browser Tab Bar (Document Title & Favicon) Dynamic Synchronization
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    let pageTitle = 'بسطية | BASTIYAH — احجز متجرك الإلكتروني ببساطة';
+    const faviconUrl = '/favicon-32x32.png';
+
+    const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const displayTagline = language === 'ar' ? activeStore.taglineAr || activeStore.tagline : activeStore.tagline;
+
+    if (currentPage === 'bastiyah-landing') {
+      pageTitle = language === 'ar'
+        ? 'بسطية | BASTIYAH — احجز متجرك الإلكتروني ببساطة'
+        : 'Bastiyah | بسطية — Your Business Deserves to Be Online';
+    } else if (currentPage === 'bastiyah-admin') {
+      pageTitle = language === 'ar'
+        ? 'لوحة تحكم المنصة | بسطية'
+        : 'Platform Super Admin | Bastiyah';
+    } else if (currentPage === 'admin') {
+      pageTitle = language === 'ar'
+        ? `لوحة إدارة ${displayStoreName} | بسطية`
+        : `${activeStore.name} Merchant Admin | Bastiyah`;
+    } else {
+      // Storefront sub-pages
+      if (currentPage === 'home') {
+        pageTitle = `${displayStoreName} — ${displayTagline}`;
+      } else if (currentPage === 'shop') {
+        pageTitle = `${language === 'ar' ? 'جميع المنتجات' : 'Shop All'} — ${displayStoreName}`;
+      } else if (currentPage === 'product-detail') {
+        const prod = activeStore.products.find((p) => p.id === selectedProductId);
+        const prodName = prod ? (language === 'ar' ? prod.nameAr || prod.name : prod.name) : (language === 'ar' ? 'تفاصيل المنتج' : 'Product Details');
+        pageTitle = `${prodName} — ${displayStoreName}`;
+      } else if (currentPage === 'checkout') {
+        pageTitle = `${language === 'ar' ? 'إتمام الطلب والدفع' : 'Checkout'} — ${displayStoreName}`;
+      } else if (currentPage === 'order-success') {
+        pageTitle = `${language === 'ar' ? 'تم تأكيد طلبك' : 'Order Confirmed'} — ${displayStoreName}`;
+      } else if (currentPage === 'orders') {
+        pageTitle = `${language === 'ar' ? 'سجل الطلبات' : 'Order History'} — ${displayStoreName}`;
+      } else if (currentPage === 'wishlist') {
+        pageTitle = `${language === 'ar' ? 'قائمة المفضلة' : 'Wishlist'} — ${displayStoreName}`;
+      }
+    }
+
+    document.title = pageTitle;
+
+    // Dynamically update favicon link tag
+    const linkIcon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+    if (linkIcon) {
+      linkIcon.href = faviconUrl;
+    }
+  }, [currentPage, activeStore.id, activeStore.name, activeStore.nameAr, activeStore.tagline, activeStore.taglineAr, selectedProductId, language]);
+
   // Persist multi-store state
   useEffect(() => {
     localStorage.setItem('bastiyah_stores_v1', JSON.stringify(stores));

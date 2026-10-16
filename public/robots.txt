@@ -1,0 +1,11 @@
+# Bastiyah Platform robots.txt
+# https://bastiyah.com
+
+User-agent: *
+Allow: /
+Allow: /store/
+Disallow: /owner
+Disallow: /platform-admin
+Disallow: */admin
+
+Sitemap: https://bastiyah.com/sitemap.xml
