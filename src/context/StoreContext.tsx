@@ -61,6 +61,9 @@ interface StoreContextType {
   loginPlatformAdmin: (email: string, pass: string) => boolean;
   logoutPlatformAdmin: () => void;
   platformAdminEmail: string;
+  updatePlatformAdminPassword: (newPass: string) => void;
+  restorePlatformStores: (importedStores: HostedStore[]) => void;
+  resetStoresToDefault: () => void;
 
   authenticatedStoreAdminIds: string[];
   isStoreAdminAuthenticated: (storeId?: string) => boolean;
@@ -305,7 +308,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const loginPlatformAdmin = (email: string, pass: string): boolean => {
     const cleanEmail = email.trim().toLowerCase();
     const isEmailValid = cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com';
-    const isPassValid = pass === 'bastiyah2026' || pass === 'admin123';
+    const customPass = typeof window !== 'undefined' ? localStorage.getItem('bastiyah_custom_admin_password') : null;
+    const isPassValid = (customPass && pass === customPass) || pass === 'bastiyah2026' || pass === 'admin123';
 
     if (isEmailValid && isPassValid) {
       setIsPlatformAdminAuthenticated(true);
@@ -324,6 +328,47 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem('bastiyah_platform_admin_session');
     addToast(
       language === 'ar' ? 'تم تسجيل الخروج من لوحة تحكم المنصة' : 'Logged out of Platform Super Admin',
+      'info'
+    );
+  };
+
+  const updatePlatformAdminPassword = (newPass: string) => {
+    if (!newPass || newPass.trim().length < 6) {
+      addToast(
+        language === 'ar' ? 'كلمة المرور يجب أن لا تقل عن 6 أحرف' : 'Password must be at least 6 characters',
+        'error'
+      );
+      return;
+    }
+    const clean = newPass.trim();
+    localStorage.setItem('bastiyah_custom_admin_password', clean);
+    addToast(
+      language === 'ar' ? 'تم تحديث كلمة مرور المشرف العام بنجاح!' : 'Platform Super Admin password updated successfully!',
+      'success'
+    );
+  };
+
+  const restorePlatformStores = (importedStores: HostedStore[]) => {
+    if (!Array.isArray(importedStores) || importedStores.length === 0) {
+      addToast(
+        language === 'ar' ? 'ملف النسخة الاحتياطية غير صالح' : 'Invalid backup file format',
+        'error'
+      );
+      return;
+    }
+    setStores(importedStores);
+    localStorage.setItem('bastiyah_stores_v1', JSON.stringify(importedStores));
+    addToast(
+      language === 'ar' ? `تمت استعادة بيانات ${importedStores.length} متجر بنجاح!` : `Restored ${importedStores.length} stores successfully!`,
+      'success'
+    );
+  };
+
+  const resetStoresToDefault = () => {
+    setStores(INITIAL_HOSTED_STORES);
+    localStorage.setItem('bastiyah_stores_v1', JSON.stringify(INITIAL_HOSTED_STORES));
+    addToast(
+      language === 'ar' ? 'تمت إعادة ضبط المتاجر إلى الحالة الافتراضية' : 'Stores reset to factory defaults',
       'info'
     );
   };
@@ -1226,6 +1271,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         loginPlatformAdmin,
         logoutPlatformAdmin,
         platformAdminEmail: PLATFORM_ADMIN_EMAIL,
+        updatePlatformAdminPassword,
+        restorePlatformStores,
+        resetStoresToDefault,
         authenticatedStoreAdminIds,
         isStoreAdminAuthenticated,
         loginStoreAdmin,
