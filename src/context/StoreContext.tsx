@@ -457,7 +457,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
     let pageTitle = 'بسطية | BASTIYAH — احجز متجرك الإلكتروني ببساطة';
-    const faviconUrl = '/favicon-32x32.png';
+    const faviconUrl = '/favicon-32x32.png?v=2';
 
     const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
     const displayTagline = language === 'ar' ? activeStore.taglineAr || activeStore.tagline : activeStore.tagline;
@@ -497,11 +497,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     document.title = pageTitle;
 
-    // Dynamically update favicon link tag
-    const linkIcon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
-    if (linkIcon) {
-      linkIcon.href = faviconUrl;
-    }
+    // Dynamically update all favicon link tags to prevent browser caching
+    const linkIcons = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
+    linkIcons.forEach((link) => {
+      link.href = faviconUrl;
+    });
   }, [currentPage, activeStore.id, activeStore.name, activeStore.nameAr, activeStore.tagline, activeStore.taglineAr, selectedProductId, language]);
 
   // Persist multi-store state
