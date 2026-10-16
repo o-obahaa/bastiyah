@@ -74,6 +74,8 @@ export interface Order {
   status: OrderStatus;
   paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery';
   trackingNumber?: string;
+  courier?: string;
+  notes?: string;
 }
 
 export interface Customer {
@@ -103,6 +105,14 @@ export interface StoreSettings {
   freeShippingThreshold: number;
   standardShippingFee: number;
   taxRate: number; // e.g. 0.08 for 8%
+  phoneNumber?: string;
+  paymentMethods?: {
+    cashOnDelivery: boolean;
+    creditCard: boolean;
+    bankTransfer: boolean;
+    applePay: boolean;
+  };
+  bankDetails?: string;
 }
 
 export type StoreThemeColor = 'emerald' | 'indigo' | 'amber' | 'rose' | 'cyan' | 'violet';
@@ -116,6 +126,13 @@ export interface StoreDesign {
   headerStyle: 'light' | 'dark';
   cardRadius: 'rounded' | 'pill' | 'sharp';
   heroBannerUrl?: string;
+  customLogoUrl?: string;
+  announcementText?: string;
+  announcementTextAr?: string;
+  whatsappNumber?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  snapchatUrl?: string;
 }
 
 export interface HostedStore {

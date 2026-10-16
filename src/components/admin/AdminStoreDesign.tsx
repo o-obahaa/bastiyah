@@ -9,15 +9,22 @@ import {
   Copy,
   ShieldCheck,
   AlertCircle,
-  Cloud
+  Cloud,
+  MessageCircle,
+  Instagram,
+  Twitter,
+  Image as ImageIcon,
+  Save,
+  Radio,
+  Eye,
+  Megaphone
 } from 'lucide-react';
-import { ImageUploader } from '../common/ImageUploader';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 
-const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮'];
+const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
 
 export const AdminStoreDesign: React.FC = () => {
   const {
@@ -29,6 +36,7 @@ export const AdminStoreDesign: React.FC = () => {
     language,
     t,
     addToast,
+    theme
   } = useStore();
 
   const [slug, setSlug] = useState(activeStore.slug);
@@ -37,12 +45,28 @@ export const AdminStoreDesign: React.FC = () => {
   const [tagline, setTagline] = useState(activeStore.tagline);
   const [taglineAr, setTaglineAr] = useState(activeStore.taglineAr);
 
+  // Social & announcement state
+  const [announcementText, setAnnouncementText] = useState(activeStore.design.announcementText || '');
+  const [announcementTextAr, setAnnouncementTextAr] = useState(activeStore.design.announcementTextAr || '');
+  const [whatsappNumber, setWhatsappNumber] = useState(activeStore.design.whatsappNumber || '');
+  const [instagramUrl, setInstagramUrl] = useState(activeStore.design.instagramUrl || '');
+  const [tiktokUrl, setTiktokUrl] = useState(activeStore.design.tiktokUrl || '');
+  const [customLogoUrl, setCustomLogoUrl] = useState(activeStore.design.customLogoUrl || '');
+
+  const [copiedLink, setCopiedLink] = useState(false);
+
   useEffect(() => {
     setSlug(activeStore.slug);
     setName(activeStore.name);
     setNameAr(activeStore.nameAr);
     setTagline(activeStore.tagline);
     setTaglineAr(activeStore.taglineAr);
+    setAnnouncementText(activeStore.design.announcementText || '');
+    setAnnouncementTextAr(activeStore.design.announcementTextAr || '');
+    setWhatsappNumber(activeStore.design.whatsappNumber || '');
+    setInstagramUrl(activeStore.design.instagramUrl || '');
+    setTiktokUrl(activeStore.design.tiktokUrl || '');
+    setCustomLogoUrl(activeStore.design.customLogoUrl || '');
   }, [activeStore]);
 
   const normalizedSlug = slug
@@ -67,6 +91,7 @@ export const AdminStoreDesign: React.FC = () => {
       );
       return;
     }
+
     updateHostedStore(activeStore.id, {
       slug: normalizedSlug,
       name: name.trim() || activeStore.name,
@@ -74,395 +99,467 @@ export const AdminStoreDesign: React.FC = () => {
       tagline: tagline.trim(),
       taglineAr: taglineAr.trim() || tagline.trim(),
     });
+
+    // Save design enhancements
+    updateStoreDesign({
+      customLogoUrl: customLogoUrl.trim() || undefined,
+      announcementText: announcementText.trim() || undefined,
+      announcementTextAr: announcementTextAr.trim() || undefined,
+      whatsappNumber: whatsappNumber.trim() || undefined,
+      instagramUrl: instagramUrl.trim() || undefined,
+      tiktokUrl: tiktokUrl.trim() || undefined,
+    });
+
+    addToast(
+      language === 'ar' ? 'تم حفظ هوية ومظهر المتجر بنجاح!' : 'Store identity & appearance saved successfully!',
+      'success'
+    );
   };
 
   const layoutOptions: {
     id: StoreLayoutStyle;
-    title: string;
-    desc: string;
+    titleEn: string;
+    titleAr: string;
+    descEn: string;
+    descAr: string;
   }[] = [
     {
       id: 'modern-split',
-      title: t.layoutModernSplit,
-      desc:
-        language === 'ar'
-          ? 'بطل مقسم عصري مع بطاقة منتج عائمة وتأثيرات زجاجية'
-          : 'Split-screen hero with floating product showcase & glassmorphic badges',
+      titleEn: 'Modern Split Hero',
+      titleAr: 'عصري مقسوم (Modern Split)',
+      descEn: 'Hero with dual action CTA and high-converting featured cards',
+      descAr: 'واجهة عصرية مع عرض بارز للمنتجات ومساحة إعلانية واسعة',
     },
     {
       id: 'luxury-centered',
-      title: t.layoutLuxuryCentered,
-      desc:
-        language === 'ar'
-          ? 'تصميم ملكي متمركز مناسب للعطور الفاخرة والمجوهرات'
-          : 'Regal centered typography & opulent dark gold accents for luxury brands',
+      titleEn: 'Luxury Centered',
+      titleAr: 'فخامة ملكية (Luxury Centered)',
+      descEn: 'Symmetrical centered branding tailored for perfumes, jewelry & luxury',
+      descAr: 'تصميم أنيق متناظر للماركات الفاخرة، العطور، والمجوهرات',
     },
     {
       id: 'minimal-editorial',
-      title: t.layoutMinimalEditorial,
-      desc:
-        language === 'ar'
-          ? 'تصميم تحريري بسيط وهادئ مستوحى من دور الأزياء العالمية'
-          : 'Clean, high-fashion editorial layout with crisp borders and airy spacing',
+      titleEn: 'Minimal Editorial',
+      titleAr: 'بسيط وهادئ (Minimal Editorial)',
+      descEn: 'Clean high-fashion editorial layout emphasizing product imagery',
+      descAr: 'تنسيق ناعم يركز على صور المنتجات ونقاء التفاصيل',
     },
     {
       id: 'vibrant-banner',
-      title: t.layoutVibrantBanner,
-      desc:
-        language === 'ar'
-          ? 'واجهة جريئة متدرجة الألوان مع إبراز العروض الحصرية'
-          : 'High-energy full-bleed color gradient banner for high-conversion campaigns',
+      titleEn: 'Vibrant Dynamic Banner',
+      titleAr: 'حيوي وديناميكي (Vibrant Banner)',
+      descEn: 'Bold gradient backdrop with high-energy urgency prompts',
+      descAr: 'خلفية متدرجة حيوية تلفت الأنظار وتزيد من سرعة التفاعل',
     },
   ];
 
-  const currentThemeConfig = THEME_CONFIGS[activeStore.design.themeColor];
+  const handleCopyLink = () => {
+    const storeUrl = getStoreDisplayUrl(activeStore.slug, false);
+    navigator.clipboard.writeText(storeUrl);
+    setCopiedLink(true);
+    addToast(language === 'ar' ? 'تم نسخ الرابط بنجاح!' : 'Link copied!', 'success');
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   return (
     <div className="space-y-8">
-      {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold mb-2">
-            <Palette className="w-3.5 h-3.5" />
-            <span>{t.storeDesignStudio}</span>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900">
-            {language === 'ar'
-              ? `تخصيص تصميم وهوية: ${activeStore.nameAr || activeStore.name}`
-              : `Design & Custom Link: ${activeStore.name}`}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">{t.storeDesignSubtitle}</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            {language === 'ar' ? 'تخصيص مظهر وهوية المتجر' : t.storeDesignTab}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            {language === 'ar' ? 'اختر ألوان الهوية، الشعار، التنسيق، وروابط التواصل الخاصة بمتجرك' : 'Customize theme colors, layout styles, branding, and social connections'}
+          </p>
         </div>
 
         <button
           onClick={() => setCurrentPage('home')}
-          className="px-5 py-3 rounded-2xl text-white font-bold text-sm flex items-center gap-2 shadow-lg transition-transform hover:scale-[1.02] self-start sm:self-auto"
-          style={{ backgroundColor: currentThemeConfig.hex }}
+          className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
         >
-          <span>{t.visitStore}</span>
-          <ExternalLink className="w-4 h-4" />
+          <Eye className="w-3.5 h-3.5 text-amber-400" />
+          <span>{language === 'ar' ? 'معاينة المتجر المباشر' : 'Preview Store'}</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left 6 Cols: Custom Subdomain Link & Store Brand Identity */}
-        <div className="lg:col-span-6 space-y-6">
-          <form
-            onSubmit={handleSaveIdentity}
-            className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-5"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-indigo-600" />
-                <span>
-                  {language === 'ar'
-                    ? 'الرابط المخصص وهوية المتجر المستقلة'
-                    : 'Dedicated Store Link & Brand Identity'}
-                </span>
-              </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Store URL, Identity, and Branding */}
+        <div className="lg:col-span-7 space-y-8">
+          {/* Identity & Subdomain Section */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+              <Globe className="w-5 h-5 text-emerald-600" />
+              <div>
+                <h3 className="font-bold text-base text-slate-900">
+                  {language === 'ar' ? 'الرابط الخاص وهوية المتجر' : 'Dedicated Store Link & Identity'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {language === 'ar' ? 'رابطك المستقل على بسطية الذي يشاركه عملاؤك' : 'Your customer-facing unique URL'}
+                </p>
+              </div>
             </div>
 
-            {/* Custom Subdomain Box */}
-            <div className="p-4 rounded-2xl bg-slate-950 text-white space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-semibold">{t.storeSlugLabel}</span>
-                {normalizedSlug.length >= 2 && (
-                  <span
-                    className={`inline-flex items-center gap-1 font-bold ${
-                      isSlugDuplicate ? 'text-rose-400' : 'text-emerald-400'
-                    }`}
-                  >
-                    {isSlugDuplicate ? (
-                      <>
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {t.slugTaken}
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        {t.slugAvailable}
-                      </>
-                    )}
-                  </span>
+            <form onSubmit={handleSaveIdentity} className="space-y-5">
+              {/* Store Subdomain Slug */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  {language === 'ar' ? 'معرف الرابط الخاص (Slug) *' : 'Store Subdomain Slug *'}
+                </label>
+                <div className="relative">
+                  <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500 focus-within:bg-white">
+                    <span className="px-3 text-slate-400 font-mono text-xs select-none">
+                      https://
+                    </span>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="mystore"
+                      className="py-2.5 px-1 bg-transparent font-mono font-bold text-slate-900 text-xs sm:text-sm flex-1 focus:outline-none"
+                    />
+                    <span className="px-3 text-emerald-700 font-mono font-bold text-xs select-none bg-emerald-50/50 py-2.5 border-s border-slate-200">
+                      .{getCustomDomainRoot()}
+                    </span>
+                  </div>
+                </div>
+
+                {isSlugDuplicate ? (
+                  <p className="text-[11px] text-rose-600 font-bold mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'هذا المعرف محجوز لمتجر آخر، اختر معرفاً مختلفاً.' : 'This slug is already in use by another store.'}</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{language === 'ar' ? 'رابط متجرك سيكون جاهزاً للطلب والتسوق فوراً' : 'Live storefront URL ready for customers'}</span>
+                  </p>
                 )}
               </div>
 
-              <div className="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5" dir="ltr">
-                <span className="text-slate-400 font-mono text-sm">
-                  {getCustomDomainRoot() ? 'https://' : 'bastiyah.vercel.app/store/'}
-                </span>
+              {/* Store Names (AR & EN) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    {language === 'ar' ? 'اسم المتجر (بالعربية) *' : 'Store Name (Arabic) *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    dir="rtl"
+                    value={nameAr}
+                    onChange={(e) => setNameAr(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    {language === 'ar' ? 'اسم المتجر (بالإنجليزية) *' : 'Store Name (English) *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    dir="ltr"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Taglines (AR & EN) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    {language === 'ar' ? 'الشعار اللفظي للمتجر (عربي)' : 'Tagline (Arabic)'}
+                  </label>
+                  <input
+                    type="text"
+                    dir="rtl"
+                    value={taglineAr}
+                    onChange={(e) => setTaglineAr(e.target.value)}
+                    placeholder="وجهتك الأولى للأناقة العصرية"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    {language === 'ar' ? 'الشعار اللفظي للمتجر (إنجليزي)' : 'Tagline (English)'}
+                  </label>
+                  <input
+                    type="text"
+                    dir="ltr"
+                    value={tagline}
+                    onChange={(e) => setTagline(e.target.value)}
+                    placeholder="Premium lifestyle & luxury goods"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Announcement Bar text */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center gap-1.5">
+                  <Megaphone className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{language === 'ar' ? 'شريط الإعلانات أعلى المتجر (Announcement Bar)' : 'Top Announcement Banner'}</span>
+                </label>
                 <input
                   type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="bg-transparent text-emerald-400 font-mono font-bold text-sm focus:outline-none flex-1 px-1"
+                  dir="rtl"
+                  value={announcementTextAr}
+                  onChange={(e) => setAnnouncementTextAr(e.target.value)}
+                  placeholder="مثال: شحن مجاني لكافة الطلبات فوق 50 دولار بمناسبة الإطلاق!"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-xs"
                 />
-                {getCustomDomainRoot() && (
-                  <span className="text-slate-400 font-mono text-sm">.{getCustomDomainRoot()}</span>
-                )}
+              </div>
+
+              {/* Social Connections */}
+              <div className="pt-2 border-t border-slate-100">
+                <span className="text-xs font-bold text-slate-900 block mb-3">
+                  {language === 'ar' ? 'قنوات التواصل مع العملاء' : 'Customer Contact & Social Channels'}
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1 flex items-center gap-1">
+                      <MessageCircle className="w-3 h-3 text-emerald-600" />
+                      <span>واتساب المتجر</span>
+                    </label>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      placeholder="9647XXXXXXXX"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1 flex items-center gap-1">
+                      <Instagram className="w-3 h-3 text-pink-600" />
+                      <span>انستغرام (Instagram)</span>
+                    </label>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      placeholder="@mystore"
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-600 block mb-1 flex items-center gap-1">
+                      <Twitter className="w-3 h-3 text-sky-500" />
+                      <span>تيك توك / تويتر</span>
+                    </label>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      placeholder="@mystore"
+                      value={tiktokUrl}
+                      onChange={(e) => setTiktokUrl(e.target.value)}
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
                 <button
-                  type="button"
-                  onClick={() => {
-                    const fullUrl = getStoreDisplayUrl(normalizedSlug);
-                    navigator.clipboard?.writeText(fullUrl);
-                    addToast(`${t.linkCopied}: ${fullUrl}`, 'info');
-                  }}
-                  className="ms-2 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                  title="Copy Working Link"
+                  type="submit"
+                  disabled={isSlugDuplicate}
+                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center gap-2"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <Save className="w-4 h-4 text-emerald-400" />
+                  <span>{language === 'ar' ? 'حفظ إعدادات الهوية' : 'Save Identity'}</span>
                 </button>
               </div>
-              <p className="text-[11px] text-emerald-400/90 font-mono" dir="ltr">
-                {getStoreDisplayUrl(normalizedSlug)}
-              </p>
+            </form>
+          </div>
+
+          {/* Store Layout Style Selection */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+              <Layout className="w-5 h-5 text-indigo-600" />
+              <div>
+                <h3 className="font-bold text-base text-slate-900">
+                  {language === 'ar' ? 'تنسيق الصفحة الرئيسية (Layout Style)' : 'Storefront Layout Style'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {language === 'ar' ? 'اختر النمط البصري المناسب لنوع منتجات متجرك' : 'Select structural template matching your industry'}
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t.storeNameLabel}
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t.storeNameArLabel}
-                </label>
-                <input
-                  type="text"
-                  value={nameAr}
-                  onChange={(e) => setNameAr(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {t.storeTaglineLabel} (EN)
-              </label>
-              <input
-                type="text"
-                value={tagline}
-                onChange={(e) => setTagline(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {t.storeTaglineArLabel}
-              </label>
-              <input
-                type="text"
-                value={taglineAr}
-                onChange={(e) => setTaglineAr(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            {/* Logo Icon Selector */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
-                {t.logoEmojiLabel}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {EMOJI_CHOICES.map((emo) => (
-                  <button
-                    key={emo}
-                    type="button"
-                    onClick={() => updateStoreDesign({ logoEmoji: emo })}
-                    className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center border transition-all ${
-                      activeStore.design.logoEmoji === emo
-                        ? 'border-indigo-600 bg-indigo-50 scale-110 shadow-sm'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {emo}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors"
-            >
-              {t.saveSettings}
-            </button>
-          </form>
-
-          {/* Cloudflare R2 Banner Upload Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-sky-500" />
-                <span>
-                  {language === 'ar' ? 'صورة الغلاف / البانر (Cloudflare R2)' : 'Store Hero Banner (Cloudflare R2)'}
-                </span>
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500">
-              {language === 'ar'
-                ? 'ارفع صورة الغلاف الرئيسية لمتجرك لتظهر في أعلى الواجهة بحجم كامل عبر سيرفر الصور الفائق Cloudflare R2.'
-                : 'Upload a high-resolution hero background image hosted globally on Cloudflare R2 edge storage.'}
-            </p>
-
-            <ImageUploader
-              value={activeStore.design.heroBannerUrl || ''}
-              onChange={(url) => updateStoreDesign({ heroBannerUrl: url })}
-              label="Store Hero Banner"
-              labelAr="صورة غلاف المتجر الرئيسية"
-              aspectRatio="banner"
-              helperText={
-                language === 'ar'
-                  ? 'يُنصح باستخدام صورة ذات أبعاد عريضة 16:9 أو 3:1 للحصول على أفضل مظهر.'
-                  : 'Recommended aspect ratio 16:9 or 3:1 for optimal high-resolution display.'
-              }
-            />
-          </div>
-        </div>
-
-        {/* Right 6 Cols: Theme Palette & Hero Layout Style */}
-        <div className="lg:col-span-6 space-y-6">
-          {/* Color Palette Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-5">
-            <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
-              <span>{t.themeColorLabel}</span>
-            </h2>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {(Object.keys(THEME_CONFIGS) as StoreThemeColor[]).map((colorKey) => {
-                const cfg = THEME_CONFIGS[colorKey];
-                const isSelected = activeStore.design.themeColor === colorKey;
-                return (
-                  <button
-                    key={colorKey}
-                    type="button"
-                    onClick={() => updateStoreDesign({ themeColor: colorKey })}
-                    className={`p-3.5 rounded-2xl border text-start transition-all flex items-center gap-3 ${
-                      isSelected
-                        ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                        : 'border-slate-200 hover:border-slate-300 bg-white text-slate-800'
-                    }`}
-                  >
-                    <span
-                      className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center shadow-inner"
-                      style={{ backgroundColor: cfg.hex }}
-                    >
-                      {isSelected && <Check className="w-4 h-4 text-white" />}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold truncate">
-                        {language === 'ar' ? cfg.nameAr : cfg.name}
-                      </p>
-                      <p className={`text-[10px] font-mono ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
-                        {cfg.hex}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Header Style & Card Corner Radius */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
-                  {t.headerStyleLabel}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => updateStoreDesign({ headerStyle: 'light' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold ${
-                      activeStore.design.headerStyle === 'light'
-                        ? 'border-slate-900 bg-slate-900 text-white'
-                        : 'border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {t.headerLight}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateStoreDesign({ headerStyle: 'dark' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold ${
-                      activeStore.design.headerStyle === 'dark'
-                        ? 'border-slate-900 bg-slate-900 text-white'
-                        : 'border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {t.headerDark}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
-                  {t.cardStyleLabel}
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {(['rounded', 'pill', 'sharp'] as const).map((rad) => (
-                    <button
-                      key={rad}
-                      type="button"
-                      onClick={() => updateStoreDesign({ cardRadius: rad })}
-                      className={`py-2 px-2 rounded-xl border text-[11px] font-bold capitalize ${
-                        activeStore.design.cardRadius === rad
-                          ? 'border-slate-900 bg-slate-900 text-white'
-                          : 'border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      {rad}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Storefront Layout Style Card */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-4">
-            <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-              <Layout className="w-5 h-5 text-indigo-600" />
-              <span>{t.layoutStyleLabel}</span>
-            </h2>
-
-            <div className="space-y-3">
               {layoutOptions.map((opt) => {
-                const active = activeStore.design.layoutStyle === opt.id;
+                const isSelected = activeStore.design.layoutStyle === opt.id;
                 return (
                   <button
                     key={opt.id}
-                    type="button"
                     onClick={() => updateStoreDesign({ layoutStyle: opt.id })}
-                    className={`w-full p-4 rounded-2xl border text-start transition-all flex items-start justify-between gap-4 ${
-                      active
-                        ? 'border-indigo-600 bg-indigo-50/60 ring-1 ring-indigo-600'
-                        : 'border-slate-200 hover:border-slate-300'
+                    className={`p-4 rounded-2xl border text-start transition-all ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50/40 shadow-xs ring-2 ring-indigo-500/20'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    <div>
-                      <p className="text-sm font-extrabold text-slate-900">{opt.title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-bold text-xs sm:text-sm text-slate-900">
+                        {language === 'ar' ? opt.titleAr : opt.titleEn}
+                      </span>
+                      {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
                     </div>
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                        active ? 'bg-indigo-600 text-white' : 'border border-slate-300'
-                      }`}
-                    >
-                      {active && <Check className="w-3 h-3" />}
-                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      {language === 'ar' ? opt.descAr : opt.descEn}
+                    </p>
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Theme Color, Logo Emoji/Image, and Header Style */}
+        <div className="lg:col-span-5 space-y-8">
+          {/* Theme Color Picker */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+              <Palette className="w-5 h-5 text-amber-600" />
+              <div>
+                <h3 className="font-bold text-base text-slate-900">
+                  {language === 'ar' ? 'ألوان هوية المتجر (Theme Color)' : 'Brand Theme Palette'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {language === 'ar' ? 'اللون المميز للأزرار والشارات في متجرك' : 'Accent theme color for CTA & badges'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {(Object.keys(THEME_CONFIGS) as StoreThemeColor[]).map((cKey) => {
+                const conf = THEME_CONFIGS[cKey];
+                const isSelected = activeStore.design.themeColor === cKey;
+                return (
+                  <button
+                    key={cKey}
+                    onClick={() => updateStoreDesign({ themeColor: cKey })}
+                    className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-50 shadow-xs ring-2 ring-slate-900/10'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <span
+                      className="w-6 h-6 rounded-full shadow-xs shrink-0 flex items-center justify-center text-white"
+                      style={{ backgroundColor: conf.hex }}
+                    >
+                      {isSelected && <Check className="w-3.5 h-3.5" />}
+                    </span>
+                    <span className="font-bold text-xs text-slate-800">
+                      {language === 'ar' ? conf.nameAr : conf.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Logo Emoji / Custom Logo */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              <div>
+                <h3 className="font-bold text-base text-slate-900">
+                  {language === 'ar' ? 'أيقونة وشعار المتجر' : 'Store Logo & Icon'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {language === 'ar' ? 'اختر رمز الإيموجي أو أدخل رابط صورة الشعار' : 'Choose brand emoji or image URL'}
+                </p>
+              </div>
+            </div>
+
+            {/* Emoji Grid */}
+            <div>
+              <span className="text-xs font-semibold text-slate-700 block mb-2">
+                {language === 'ar' ? 'اختر رمز الإيموجي للمتجر:' : 'Select Storefront Emoji:'}
+              </span>
+              <div className="grid grid-cols-5 gap-2">
+                {EMOJI_CHOICES.map((emoji) => {
+                  const isSelected = activeStore.design.logoEmoji === emoji;
+                  return (
+                    <button
+                      key={emoji}
+                      onClick={() => updateStoreDesign({ logoEmoji: emoji })}
+                      className={`h-11 rounded-xl text-xl flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'bg-slate-900 text-white shadow-md scale-105'
+                          : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      <span>{emoji}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Logo Image URL (Optional) */}
+            <div className="pt-2 border-t border-slate-100">
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                {language === 'ar' ? 'رابط صورة الشعار (اختياري)' : 'Custom Logo Image URL (Optional)'}
+              </label>
+              <input
+                type="url"
+                value={customLogoUrl}
+                onChange={(e) => setCustomLogoUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          {/* Header Style */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900">
+                  {language === 'ar' ? 'نمط الشريط العلوي (Header)' : 'Header Style'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {language === 'ar' ? 'خلفية شفافة فاتحة أو داكنة أنيقة' : 'Light glass or dark slate theme'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={() => updateStoreDesign({ headerStyle: 'light' })}
+                className={`p-3 rounded-2xl border text-center transition-all ${
+                  activeStore.design.headerStyle === 'light'
+                    ? 'border-slate-900 bg-slate-50 font-bold'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-xs block">{language === 'ar' ? 'فاتح أنيق (Light)' : 'Light Glass'}</span>
+              </button>
+
+              <button
+                onClick={() => updateStoreDesign({ headerStyle: 'dark' })}
+                className={`p-3 rounded-2xl border text-center transition-all ${
+                  activeStore.design.headerStyle === 'dark'
+                    ? 'border-slate-900 bg-slate-900 text-white font-bold'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-xs block">{language === 'ar' ? 'داكن ملكي (Dark)' : 'Dark Obsidian'}</span>
+              </button>
             </div>
           </div>
         </div>

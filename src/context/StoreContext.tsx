@@ -143,6 +143,7 @@ interface StoreContextType {
     paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery'
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  updateOrder: (orderId: string, updates: Partial<Order>) => void;
 
   // Customers (scoped to activeStore)
   customers: Customer[];
@@ -1166,6 +1167,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  const updateOrder = (orderId: string, updates: Partial<Order>) => {
+    mutateActiveStore((store) => ({
+      ...store,
+      orders: store.orders.map((order) => (order.id === orderId ? { ...order, ...updates } : order)),
+    }));
+    addToast(
+      language === 'ar' ? 'تم تحديث بيانات الطلب بنجاح' : 'Order details updated successfully',
+      'success'
+    );
+  };
+
   // Products CRUD (Admin)
   const addProduct = (prodData: Omit<Product, 'id' | 'createdAt'>) => {
     const newProduct: Product = {
@@ -1277,6 +1289,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         lastPlacedOrder,
         placeOrder,
         updateOrderStatus,
+        updateOrder,
         customers,
         settings,
         updateSettings,

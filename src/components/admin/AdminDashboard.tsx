@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { 
   DollarSign, 
@@ -6,11 +6,26 @@ import {
   Users, 
   AlertTriangle, 
   TrendingUp, 
-  ArrowUpRight 
+  ArrowUpRight,
+  Package,
+  Plus,
+  Palette,
+  Tag,
+  Clock,
+  CheckCircle2,
+  ExternalLink,
+  MessageCircle,
+  Eye,
+  ArrowRight,
+  ArrowLeft,
+  Calendar,
+  Sparkles
 } from 'lucide-react';
+import { OrderStatus } from '../../types';
 
 export const AdminDashboard: React.FC = () => {
   const { 
+    activeStore,
     products, 
     orders, 
     customers, 
@@ -20,25 +35,227 @@ export const AdminDashboard: React.FC = () => {
     addToast,
     t,
     language,
-    getProductName
+    getProductName,
+    theme
   } = useStore();
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const totalOrders = orders.length;
+  const [period, setPeriod] = useState<'today' | '7days' | 'month' | 'all'>('7days');
+
+  const currency = activeStore.settings.currency || '$';
+
+  // Dynamic filtering based on chosen period
+  const filteredOrders = useMemo(() => {
+    const now = new Date().getTime();
+    if (period === 'today') {
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      return orders.filter((o) => new Date(o.date).getTime() >= oneDayAgo);
+    }
+    if (period === '7days') {
+      const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+      return orders.filter((o) => new Date(o.date).getTime() >= sevenDaysAgo);
+    }
+    if (period === 'month') {
+      const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+      return orders.filter((o) => new Date(o.date).getTime() >= thirtyDaysAgo);
+    }
+    return orders;
+  }, [orders, period]);
+
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalOrders = filteredOrders.length;
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   const totalCustomers = customers.length;
-  const lowStockProducts = products.filter((p) => p.stock <= 15);
+  const lowStockProducts = products.filter((p) => p.stock <= 10);
+  const pendingOrders = orders.filter((o) => o.status === 'pending');
 
   const handleQuickRestock = (productId: string, currentStock: number) => {
     updateProduct(productId, { stock: currentStock + 20 });
     addToast(language === 'ar' ? 'تمت إضافة +20 وحدة للمخزون' : 'Restocked +20 units', 'success');
   };
 
-  const days = language === 'ar'
-    ? [{ day: 'الإثنين', amount: 840, height: '40%' }, { day: 'الثلاثاء', amount: 1290, height: '60%' }, { day: 'الأربعاء', amount: 980, height: '48%' }, { day: 'الخميس', amount: 1650, height: '78%' }, { day: 'الجمعة', amount: 2100, height: '95%' }, { day: 'السبت', amount: 1890, height: '88%' }, { day: 'الأحد', amount: 1420, height: '68%' }]
-    : [{ day: 'Mon', amount: 840, height: '40%' }, { day: 'Tue', amount: 1290, height: '60%' }, { day: 'Wed', amount: 980, height: '48%' }, { day: 'Thu', amount: 1650, height: '78%' }, { day: 'Fri', amount: 2100, height: '95%' }, { day: 'Sat', amount: 1890, height: '88%' }, { day: 'Sun', amount: 1420, height: '68%' }];
+  // Build daily sales series for the last 7 days
+  const chartDays = useMemo(() => {
+    const dayNamesAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const results = [];
+
+    const maxAmount = Math.max(
+      ...orders.map((o) => o.total),
+      800
+    );
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayName = language === 'ar' ? dayNamesAr[d.getDay()] : dayNamesEn[d.getDay()];
+
+      // Match orders on this calendar day
+      const dayOrders = orders.filter((o) => o.date.startsWith(dateStr));
+      const amount = dayOrders.reduce((s, o) => s + o.total, 0);
+
+      // Height % capped
+      const heightPercent = maxAmount > 0 ? Math.min(100, Math.max(15, Math.round((amount / maxAmount) * 100))) : 20;
+
+      results.push({
+        day: dayName,
+        date: dateStr,
+        amount,
+        height: `${heightPercent}%`,
+        count: dayOrders.length
+      });
+    }
+
+    return results;
+  }, [orders, language]);
+
+  // Top Selling Products Leaderboard
+  const topSellingProducts = useMemo(() => {
+    return [...products]
+      .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
+      .slice(0, 4);
+  }, [products]);
+
+  const openWhatsApp = (customerPhone: string, customerName: string, orderNumber: string, orderTotal: number) => {
+    const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+    const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const msg = language === 'ar'
+      ? `مرحباً ${customerName}، شكراً لتسوقك من متجر ${storeName}. بخصوص طلبك رقم #${orderNumber} بمبلغ ${orderTotal} ${currency}...`
+      : `Hello ${customerName}, thank you for shopping at ${storeName}. Regarding your order #${orderNumber} (${currency}${orderTotal})...`;
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
 
   return (
     <div className="space-y-8">
+      {/* Top Welcome & Period Control */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            {language === 'ar' ? 'لوحة تحكم المتجر والمبيعات' : 'Store Dashboard & Overview'}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            {language === 'ar'
+              ? `إحصائيات ونشاط متجر (${language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name}) المباشرة`
+              : `Live metrics and activity for ${activeStore.name}`}
+          </p>
+        </div>
+
+        {/* Time Period Filter */}
+        <div className="inline-flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs">
+          <button
+            onClick={() => setPeriod('today')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              period === 'today'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            {language === 'ar' ? 'اليوم' : 'Today'}
+          </button>
+          <button
+            onClick={() => setPeriod('7days')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              period === '7days'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            {language === 'ar' ? 'آخر 7 أيام' : '7 Days'}
+          </button>
+          <button
+            onClick={() => setPeriod('month')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              period === 'month'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            {language === 'ar' ? 'هذا الشهر' : 'This Month'}
+          </button>
+          <button
+            onClick={() => setPeriod('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              period === 'all'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            {language === 'ar' ? 'كل الأوقات' : 'All Time'}
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Action Navigation Buttons */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
+          onClick={() => setAdminTab('products')}
+          className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-sm transition-all text-start group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <Plus className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-900 block">
+              {language === 'ar' ? 'إضافة منتج جديد' : 'Add New Product'}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {products.length} {language === 'ar' ? 'منتج معروض' : 'products'}
+            </span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('orders')}
+          className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-sm transition-all text-start group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <ShoppingBag className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-900 block">
+              {language === 'ar' ? 'إدارة الطلبات' : 'Manage Orders'}
+            </span>
+            <span className="text-[11px] text-amber-600 font-bold">
+              {pendingOrders.length} {language === 'ar' ? 'بانتظار التأكيد' : 'pending'}
+            </span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('design')}
+          className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-sm transition-all text-start group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <Palette className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-900 block">
+              {language === 'ar' ? 'تخصيص المظهر' : 'Store Design'}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {language === 'ar' ? 'الألوان والتنسيق' : 'Themes & Layout'}
+            </span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('settings')}
+          className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-sm transition-all text-start group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <Tag className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-900 block">
+              {language === 'ar' ? 'كوبونات الخصم' : 'Discount Coupons'}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {activeStore.coupons?.length || 0} {language === 'ar' ? 'أكواد مفعلة' : 'coupons'}
+            </span>
+          </div>
+        </button>
+      </div>
+
       {/* Metric KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Total Revenue */}
@@ -48,11 +265,11 @@ export const AdminDashboard: React.FC = () => {
               {t.totalRevenue}
             </span>
             <p className="text-2xl sm:text-3xl font-black text-slate-900">
-              ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {currency}{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>+18.4%</span>
+              <span>{language === 'ar' ? 'نشاط متزايد' : '+18.4% growth'}</span>
             </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -70,12 +287,31 @@ export const AdminDashboard: React.FC = () => {
               {totalOrders}
             </p>
             <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700">
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'جميع القنوات' : 'All channels'}</span>
+              <ShoppingBag className="w-3.5 h-3.5 text-slate-500" />
+              <span>{pendingOrders.length} {language === 'ar' ? 'قيد الانتظار' : 'pending'}</span>
             </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center">
             <ShoppingBag className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Average Order Value (AOV) */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              {language === 'ar' ? 'متوسط قيمة السلة' : 'Average Order'}
+            </span>
+            <p className="text-2xl sm:text-3xl font-black text-slate-900">
+              {currency}{avgOrderValue.toFixed(2)}
+            </p>
+            <div className="flex items-center gap-1 text-[11px] font-bold text-indigo-600">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'معدل سلة الشراء' : 'Per transaction'}</span>
+            </div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <TrendingUp className="w-6 h-6" />
           </div>
         </div>
 
@@ -90,170 +326,199 @@ export const AdminDashboard: React.FC = () => {
             </p>
             <div className="flex items-center gap-1 text-[11px] font-bold text-teal-600">
               <Users className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'حسابات نشطة' : 'Registered'}</span>
+              <span>{language === 'ar' ? 'قاعدة عملاء المتجر' : 'Active buyers'}</span>
             </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center">
             <Users className="w-6 h-6" />
           </div>
         </div>
-
-        {/* Low Stock Alerts */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              {t.lowStockWarnings}
-            </span>
-            <p className="text-2xl sm:text-3xl font-black text-amber-600">
-              {lowStockProducts.length}
-            </p>
-            <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>{language === 'ar' ? 'تتطلب تزويد' : 'Need restock'}</span>
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
       </div>
 
-      {/* Visual Revenue Graph & Insights */}
+      {/* Main Grid: Revenue Trend Chart & Low Stock Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sales Performance Chart */}
-        <div className="lg:col-span-8 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        {/* Sales Chart (7 Cols) */}
+        <div className="lg:col-span-8 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base sm:text-lg text-slate-900">
-                {t.revenueVelocity}
+                {language === 'ar' ? 'مؤشر المبيعات اليومية (آخر 7 أيام)' : 'Daily Revenue Velocity'}
               </h3>
-              <p className="text-xs text-slate-400">{t.weeklyVolume}</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {language === 'ar' ? 'توزيع المبيعات والقيمة الإجمالية للطلبات المستلمة' : 'Revenue generated per day'}
+              </p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
-              +24% Target Pace
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'تحديث لحظي' : 'Live synced'}</span>
             </span>
           </div>
 
           {/* Bar Chart Visualization */}
-          <div className="h-64 flex items-end justify-between gap-3 pt-6 border-b border-slate-100">
-            {days.map((bar) => (
-              <div key={bar.day} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded shadow-sm">
-                  ${bar.amount}
+          <div className="h-56 flex items-end justify-between gap-3 pt-6 border-b border-slate-100 pb-4">
+            {chartDays.map((d, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                {/* Tooltip on hover */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2 rounded-lg whitespace-nowrap shadow-md pointer-events-none mb-1">
+                  {currency}{d.amount.toFixed(0)} ({d.count} {language === 'ar' ? 'طلب' : 'orders'})
                 </div>
-                <div 
-                  className="w-full max-w-[42px] bg-slate-900 group-hover:bg-emerald-600 rounded-t-xl transition-all duration-300"
-                  style={{ height: bar.height }}
-                />
-                <span className="text-xs font-bold text-slate-500 group-hover:text-slate-900">
-                  {bar.day}
+
+                <div className="w-full max-w-[42px] bg-slate-100 rounded-t-xl overflow-hidden flex items-end h-full">
+                  <div 
+                    className="w-full rounded-t-xl transition-all duration-500 group-hover:opacity-90"
+                    style={{ 
+                      height: d.height,
+                      backgroundColor: theme.hex
+                    }}
+                  />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-900">
+                  {d.day}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>{language === 'ar' ? 'متوسط قيمة الطلب: $284.10' : 'Average Order Value: $284.10'}</span>
-            <span>{language === 'ar' ? 'معدل التحويل: 3.82%' : 'Conversion Rate: 3.82%'}</span>
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+            <span>{language === 'ar' ? 'إجمالي طلبات الفترة' : 'Period orders'}: <strong className="text-slate-900">{orders.length}</strong></span>
+            <button
+              onClick={() => setAdminTab('orders')}
+              className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1"
+            >
+              <span>{language === 'ar' ? 'عرض سجل الطلبات الكامل' : 'View all orders'}</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
-        {/* Low Stock Watchlist */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        {/* Low Stock & Inventory Health Alerts (4 Cols) */}
+        <div className="lg:col-span-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-              <h3 className="font-bold text-base text-slate-900">{t.inventoryAlert}</h3>
-              <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                Attention
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2 text-rose-600">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                <h3 className="font-bold text-base text-slate-900">
+                  {language === 'ar' ? 'تنبيهات المخزون' : 'Stock Alerts'}
+                </h3>
+              </div>
+              <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                {lowStockProducts.length} {language === 'ar' ? 'أصناف' : 'items'}
               </span>
             </div>
 
-            <div className="space-y-3.5 max-h-72 overflow-y-auto pr-1 divide-y divide-slate-100">
-              {lowStockProducts.slice(0, 4).map((p) => {
-                const pName = getProductName(p);
-                return (
-                  <div key={p.id} className="pt-3 first:pt-0 flex items-center justify-between gap-3">
-                    <img
-                      src={p.images[0]}
-                      alt={pName}
-                      className="w-10 h-10 rounded-xl object-cover border border-slate-200"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 truncate">{pName}</h4>
-                      <span className="text-[11px] font-semibold text-rose-600">
-                        {t.stock}: {p.stock}
-                      </span>
+            {/* List of Low Stock Products */}
+            <div className="divide-y divide-slate-100 mt-2 max-h-[300px] overflow-y-auto pr-1">
+              {lowStockProducts.length === 0 ? (
+                <div className="text-center py-10">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                  <p className="text-xs text-slate-600 font-semibold">
+                    {language === 'ar' ? 'جميع المنتجات متوفرة بكميات ممتازة!' : 'All inventory levels are healthy!'}
+                  </p>
+                </div>
+              ) : (
+                lowStockProducts.map((p) => {
+                  const pName = getProductName(p);
+                  return (
+                    <div key={p.id} className="py-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img 
+                          src={p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80'} 
+                          alt="" 
+                          className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0" 
+                        />
+                        <div className="min-w-0">
+                          <span className="font-bold text-xs text-slate-900 block truncate">
+                            {pName}
+                          </span>
+                          <span className="text-[11px] font-bold text-rose-600 block">
+                            {p.stock === 0 
+                              ? (language === 'ar' ? 'نفد من المخزون' : 'Out of stock')
+                              : (language === 'ar' ? `متبقي ${p.stock} فقط` : `${p.stock} units left`)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleQuickRestock(p.id, p.stock)}
+                        className="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors whitespace-nowrap shrink-0"
+                        title={language === 'ar' ? 'زيادة المخزون بـ 20 وحدة' : 'Add +20 units'}
+                      >
+                        +20
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleQuickRestock(p.id, p.stock)}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-colors"
-                    >
-                      +20
-                    </button>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
           <button
             onClick={() => setAdminTab('products')}
-            className="w-full mt-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+            className="w-full mt-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors text-center"
           >
-            <span>{t.manageAllProducts}</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            {language === 'ar' ? 'إدارة كتالوج المنتجات' : 'Open Product Catalog'}
           </button>
         </div>
       </div>
 
-      {/* Recent Orders Overview */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-4">
-        <div className="flex items-center justify-between">
+      {/* Recent Orders Section with Direct WhatsApp Contact */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="font-bold text-base sm:text-lg text-slate-900">{t.recentCustomerOrders}</h3>
-            <p className="text-xs text-slate-400">{t.ordersDesc}</p>
+            <h3 className="font-bold text-base sm:text-lg text-slate-900">
+              {language === 'ar' ? 'أحدث الطلبات المستلمة' : 'Recent Customer Orders'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {language === 'ar' ? 'تابع طلبات الزبائن وتواصل معهم فوراً عبر واتساب لتأكيد الشحن' : 'Latest orders with instant WhatsApp customer dispatch'}
+            </p>
           </div>
+
           <button
             onClick={() => setAdminTab('orders')}
-            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1"
+            className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1.5"
           >
-            <span>{t.viewAllOrders} ({orders.length})</span>
+            <span>{language === 'ar' ? 'عرض كافة الطلبات' : 'View all orders'}</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-start text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-y border-slate-100">
+            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">{t.orderNumber}</th>
                 <th className="py-3 px-4">{t.fullName}</th>
-                <th className="py-3 px-4">{t.orderDate}</th>
-                <th className="py-3 px-4">{t.price}</th>
+                <th className="py-3 px-4">{language === 'ar' ? 'المدينة' : 'City'}</th>
+                <th className="py-3 px-4">{t.total}</th>
                 <th className="py-3 px-4">{t.deliveryStatus}</th>
-                <th className="py-3 px-4 text-end">{t.actions}</th>
+                <th className="py-3 px-4 text-end">{language === 'ar' ? 'التواصل والإجراء' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {orders.slice(0, 5).map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-slate-900">
-                    {order.orderNumber}
+                  <td className="py-3.5 px-4">
+                    <span className="font-bold text-slate-900 block font-mono">
+                      {order.orderNumber}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(order.date).toLocaleDateString()}
+                    </span>
                   </td>
                   <td className="py-3.5 px-4">
                     <span className="font-bold text-slate-800 block">{order.customer.fullName}</span>
-                    <span className="text-[11px] text-slate-400">{order.customer.email}</span>
+                    <span className="text-[11px] text-slate-400">{order.customer.phone}</span>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-500">
-                    {new Date(order.date).toLocaleDateString()}
+                  <td className="py-3.5 px-4 text-slate-600">
+                    {order.customer.city}
                   </td>
                   <td className="py-3.5 px-4 font-black text-slate-900">
-                    ${order.total.toFixed(2)}
+                    {currency}{order.total.toFixed(2)}
                   </td>
                   <td className="py-3.5 px-4">
                     <select
                       value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
                       className={`text-[11px] font-bold px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none ${
                         order.status === 'delivered'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -272,12 +537,26 @@ export const AdminDashboard: React.FC = () => {
                     </select>
                   </td>
                   <td className="py-3.5 px-4 text-end">
-                    <button
-                      onClick={() => setAdminTab('orders')}
-                      className="text-emerald-700 hover:text-emerald-900 font-bold"
-                    >
-                      {language === 'ar' ? 'التفاصيل ←' : 'Details →'}
-                    </button>
+                    <div className="inline-flex items-center gap-2">
+                      {order.customer.phone && (
+                        <button
+                          onClick={() => openWhatsApp(order.customer.phone, order.customer.fullName, order.orderNumber, order.total)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 transition-colors"
+                          title={language === 'ar' ? 'مراسلة العميل عبر واتساب' : 'Chat on WhatsApp'}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>واتساب</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => setAdminTab('orders')}
+                        className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                        title={language === 'ar' ? 'تفاصيل الطلب' : 'Details'}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

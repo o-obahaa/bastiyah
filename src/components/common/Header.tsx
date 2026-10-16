@@ -70,8 +70,8 @@ export const Header: React.FC = () => {
         <Sparkles className="w-3.5 h-3.5 text-white shrink-0" />
         <span>
           {language === 'ar'
-            ? `شحن مجاني للطلبات فوق ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} في ${displayStoreName}`
-            : `Free express shipping on orders over ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} at ${displayStoreName}`}
+            ? activeStore.design.announcementTextAr || `شحن مجاني للطلبات فوق ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} في ${displayStoreName}`
+            : activeStore.design.announcementText || `Free express shipping on orders over ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} at ${displayStoreName}`}
         </span>
         <span className="hidden md:inline-block opacity-60">|</span>
         <button 
@@ -95,15 +95,23 @@ export const Header: React.FC = () => {
               className="flex items-center gap-2.5 group text-start"
             >
               <div
-                className="w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform p-1 border"
+                className="w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform p-1 border overflow-hidden"
                 style={{
                   backgroundColor: `${theme.hex}20`,
                   borderColor: `${theme.hex}50`,
                 }}
               >
-                <span className="text-2xl select-none" role="img" aria-label={displayStoreName}>
-                  {activeStore.design.logoEmoji}
-                </span>
+                {activeStore.design.customLogoUrl ? (
+                  <img
+                    src={activeStore.design.customLogoUrl}
+                    alt={displayStoreName}
+                    className="w-full h-full object-cover rounded-xl"
+                  />
+                ) : (
+                  <span className="text-2xl select-none" role="img" aria-label={displayStoreName}>
+                    {activeStore.design.logoEmoji}
+                  </span>
+                )}
               </div>
               <div>
                 <span
