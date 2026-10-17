@@ -30,13 +30,27 @@ export interface Product {
   badge?: 'Best Seller' | 'New Arrival' | 'Hot Sale' | 'Limited Stock';
   tags: string[];
   specs: Record<string, string>;
+  variants?: {
+    sizes?: string[];
+    colors?: string[];
+  };
   createdAt: string;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  author: string;
+  rating: number; // 1 to 5
+  comment: string;
+  date: string;
 }
 
 export interface CartItem {
   product: Product;
   quantity: number;
   selectedColor?: string;
+  selectedSize?: string;
 }
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -47,6 +61,8 @@ export interface OrderItem {
   productImage: string;
   price: number;
   quantity: number;
+  selectedColor?: string;
+  selectedSize?: string;
 }
 
 export interface ShippingAddress {
@@ -158,6 +174,7 @@ export interface HostedStore {
   orders: Order[];
   customers: Customer[];
   coupons: Coupon[];
+  reviews?: ProductReview[];
 }
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';

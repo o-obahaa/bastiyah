@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { X, Star, ShoppingBag, ArrowRight, ShieldCheck, Truck } from 'lucide-react';
 
@@ -6,19 +6,35 @@ export const ProductQuickViewModal: React.FC = () => {
   const { 
     quickViewProduct, 
     setQuickViewProduct, 
+    activeStore,
     addToCart, 
     setSelectedProductId, 
     setCurrentPage,
     t,
     language,
     getProductName,
-    getProductTagline,
     getProductDescription,
     getCategoryName
   } = useStore();
 
+  const currency = activeStore.settings.currency || '$';
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
+  const availableSizes = quickViewProduct?.variants?.sizes || [];
+  const availableColors = quickViewProduct?.variants?.colors || [];
+
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+
+  useEffect(() => {
+    if (quickViewProduct) {
+      setActiveImageIndex(0);
+      setQuantity(1);
+      setSelectedSize(quickViewProduct.variants?.sizes?.[0] || '');
+      setSelectedColor(quickViewProduct.variants?.colors?.[0] || '');
+    }
+  }, [quickViewProduct?.id]);
 
   if (!quickViewProduct) return null;
 
@@ -34,7 +50,7 @@ export const ProductQuickViewModal: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    addToCart(quickViewProduct, quantity);
+    addToCart(quickViewProduct, quantity, selectedColor || undefined, selectedSize || undefined);
     setQuickViewProduct(null);
   };
 
@@ -107,11 +123,11 @@ export const ProductQuickViewModal: React.FC = () => {
 
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-black text-slate-900">
-                  ${quickViewProduct.price}
+                  {currency}{quickViewProduct.price}
                 </span>
                 {quickViewProduct.originalPrice && (
                   <span className="text-sm text-slate-400 line-through">
-                    ${quickViewProduct.originalPrice}
+                    {currency}{quickViewProduct.originalPrice}
                   </span>
                 )}
                 {quickViewProduct.stock > 0 && (
@@ -121,23 +137,74 @@ export const ProductQuickViewModal: React.FC = () => {
                 )}
               </div>
 
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
                 {productDesc}
               </p>
 
-              {/* Key Specs */}
-              <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs text-slate-600 border border-slate-100">
-                {Object.entries(quickViewProduct.specs).slice(0, 3).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="font-medium text-slate-500">{key}:</span>
-                    <span className="font-semibold text-slate-800">{value}</span>
+              {/* Variants Selector */}
+              {availableSizes.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-bold text-slate-700">
+                    {language === 'ar' ? 'المقاس:' : 'Size:'}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableSizes.map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => setSelectedSize(sz)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                          selectedSize === sz
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {availableColors.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-bold text-slate-700">
+                    {language === 'ar' ? 'اللون:' : 'Color:'}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableColors.map((col) => (
+                      <button
+                        key={col}
+                        type="button"
+                        onClick={() => setSelectedColor(col)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                          selectedColor === col
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {col}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Key Specs */}
+              {quickViewProduct.specs && Object.keys(quickViewProduct.specs).length > 0 && (
+                <div className="p-3 bg-slate-50 rounded-xl space-y-1 text-xs text-slate-600 border border-slate-100">
+                  {Object.entries(quickViewProduct.specs).slice(0, 3).map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="font-medium text-slate-500">{key}:</span>
+                      <span className="font-semibold text-slate-800">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Quantity and Actions */}
-            <div className="space-y-3 pt-4 border-t border-slate-100">
+            <div className="space-y-3 pt-3 border-t border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50">
                   <button
@@ -163,7 +230,7 @@ export const ProductQuickViewModal: React.FC = () => {
                   className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all disabled:bg-slate-200 disabled:text-slate-400"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>{isOutOfStock ? t.outOfStock : `${t.addToBag} • $${(quickViewProduct.price * quantity).toFixed(0)}`}</span>
+                  <span>{isOutOfStock ? t.outOfStock : `${t.addToBag} • ${currency}${(quickViewProduct.price * quantity).toFixed(0)}`}</span>
                 </button>
               </div>
 

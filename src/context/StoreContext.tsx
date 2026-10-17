@@ -17,7 +17,8 @@ import {
   HostedStore,
   StoreDesign,
   StoreThemeColor,
-  StoreLayoutStyle
+  StoreLayoutStyle,
+  ProductReview
 } from '../types';
 import { 
   INITIAL_HOSTED_STORES,
@@ -114,7 +115,7 @@ interface StoreContextType {
   
   // Cart
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number, color?: string) => void;
+  addToCart: (product: Product, quantity?: number, color?: string, size?: string) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -124,6 +125,17 @@ interface StoreContextType {
   cartShipping: number;
   cartTax: number;
   cartTotal: number;
+
+  // Sorting & Inventory Filter
+  sortBy: string;
+  setSortBy: (sort: string) => void;
+  inStockOnly: boolean;
+  setInStockOnly: (val: boolean) => void;
+
+  // Reviews
+  reviews: ProductReview[];
+  addProductReview: (review: Omit<ProductReview, 'id' | 'date'>) => void;
+  deleteProductReview: (id: string) => void;
   
   // Wishlist
   wishlist: string[];
@@ -144,7 +156,8 @@ interface StoreContextType {
   lastPlacedOrder: Order | null;
   placeOrder: (
     shippingInfo: ShippingAddress, 
-    paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery'
+    paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery',
+    notes?: string
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   updateOrder: (orderId: string, updates: Partial<Order>) => void;
@@ -984,8 +997,122 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const coupons = activeStore.coupons;
   const settings = activeStore.settings;
 
+  // Sorting & Inventory Filtering
+  const [sortBy, setSortBy] = useState<string>('featured');
+  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
+
+  // Reviews System
+  const DEFAULT_INITIAL_REVIEWS: ProductReview[] = [
+    {
+      id: 'rev-1',
+      productId: 'prod-1',
+      author: 'أحمد السعدي',
+      rating: 5,
+      comment: 'جودة الصوت استثنائية والعزل فائق القوة، والتوصيل كان سريع جداً خلال يومين فقط!',
+      date: '2026-02-10T14:30:00Z',
+    },
+    {
+      id: 'rev-2',
+      productId: 'prod-1',
+      author: 'سارة خالد',
+      rating: 5,
+      comment: 'مريحة جداً للاستخدام طوال اليوم في العمل، والبطارية تدوم لأيام دون شحن.',
+      date: '2026-02-18T11:15:00Z',
+    },
+    {
+      id: 'rev-3',
+      productId: 'prod-2',
+      author: 'عمر القحطاني',
+      rating: 5,
+      comment: 'ساعة فخمة وخامات التيتانيوم ممتازة وتستحق كل ريال. أنصح بها بشدة.',
+      date: '2026-03-01T09:40:00Z',
+    },
+    {
+      id: 'rev-4',
+      productId: 'oud-1',
+      author: 'فيصل العتيبي',
+      rating: 5,
+      comment: 'ثبات العطر وفوحانه خيالي، العود الهندي أصلي ومميز جداً للمناسبات.',
+      date: '2026-03-05T16:20:00Z',
+    },
+  ];
+
+  const reviews = activeStore.reviews && activeStore.reviews.length > 0
+    ? activeStore.reviews
+    : DEFAULT_INITIAL_REVIEWS;
+
+  const addProductReview = (reviewInput: Omit<ProductReview, 'id' | 'date'>) => {
+    const newRev: ProductReview = {
+      ...reviewInput,
+      id: `rev-${Date.now()}`,
+      date: new Date().toISOString(),
+    };
+
+    mutateActiveStore((store) => {
+      const currentReviews = store.reviews && store.reviews.length > 0 ? store.reviews : DEFAULT_INITIAL_REVIEWS;
+      const updatedReviews = [newRev, ...currentReviews];
+      
+      const productReviews = updatedReviews.filter(r => r.productId === reviewInput.productId);
+      const avgRating = Number((productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length).toFixed(1));
+
+      const updatedProducts = store.products.map(p => {
+        if (p.id === reviewInput.productId) {
+          return {
+            ...p,
+            rating: avgRating,
+            reviewCount: productReviews.length
+          };
+        }
+        return p;
+      });
+
+      return {
+        ...store,
+        reviews: updatedReviews,
+        products: updatedProducts
+      };
+    });
+
+    addToast(language === 'ar' ? 'شكراً لك! تم إضافة تقييمك بنجاح' : 'Thank you! Your review has been submitted.', 'success');
+  };
+
+  const deleteProductReview = (reviewId: string) => {
+    mutateActiveStore((store) => {
+      const currentReviews = store.reviews || DEFAULT_INITIAL_REVIEWS;
+      const targetReview = currentReviews.find(r => r.id === reviewId);
+      const updatedReviews = currentReviews.filter(r => r.id !== reviewId);
+
+      let updatedProducts = store.products;
+      if (targetReview) {
+        const remainingForProduct = updatedReviews.filter(r => r.productId === targetReview.productId);
+        const avgRating = remainingForProduct.length > 0 
+          ? Number((remainingForProduct.reduce((sum, r) => sum + r.rating, 0) / remainingForProduct.length).toFixed(1))
+          : 5.0;
+
+        updatedProducts = store.products.map(p => {
+          if (p.id === targetReview.productId) {
+            return {
+              ...p,
+              rating: avgRating,
+              reviewCount: remainingForProduct.length
+            };
+          }
+          return p;
+        });
+      }
+
+      return {
+        ...store,
+        reviews: updatedReviews,
+        products: updatedProducts
+      };
+    });
+
+    addToast(language === 'ar' ? 'تم حذف التقييم' : 'Review removed', 'info');
+  };
+
   // Cart Management
-  const addToCart = (product: Product, quantity = 1, color?: string) => {
+  const addToCart = (product: Product, quantity = 1, color?: string, size?: string) => {
     if (product.stock <= 0) {
       addToast(language === 'ar' ? 'المنتج غير متوفر بالمخزون' : 'Item is out of stock', 'error');
       return;
@@ -993,7 +1120,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setCart((prev) => {
       const existingIndex = prev.findIndex(
-        (item) => item.product.id === product.id && item.selectedColor === color
+        (item) => item.product.id === product.id && item.selectedColor === color && item.selectedSize === size
       );
 
       const prodName = getProductName(product);
@@ -1021,7 +1148,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           language === 'ar' ? `تمت إضافة "${prodName}" إلى السلة!` : `Added "${product.name}" to bag!`, 
           'success'
         );
-        return [...prev, { product, quantity: addQty, selectedColor: color }];
+        return [...prev, { product, quantity: addQty, selectedColor: color, selectedSize: size }];
       }
     });
   };
@@ -1121,7 +1248,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Orders Management
   const placeOrder = (
     shippingInfo: ShippingAddress, 
-    paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery'
+    paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery',
+    notes?: string
   ): Order => {
     const prefix = activeStore.slug.toUpperCase().slice(0, 5);
     const orderNumber = `${prefix}-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -1136,6 +1264,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         productImage: item.product.images[0],
         price: item.product.price,
         quantity: item.quantity,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
       })),
       subtotal: cartSubtotal,
       discount: cartDiscount,
@@ -1145,6 +1275,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       status: 'processing',
       paymentMethod,
       trackingNumber: `${prefix}-TRK-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      notes: notes?.trim() || undefined,
     };
 
     mutateActiveStore((store) => {
@@ -1333,6 +1464,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         cartShipping,
         cartTax,
         cartTotal,
+        sortBy,
+        setSortBy,
+        inStockOnly,
+        setInStockOnly,
+        reviews,
+        addProductReview,
+        deleteProductReview,
         wishlist,
         toggleWishlist,
         isInWishlist,

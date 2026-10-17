@@ -17,12 +17,14 @@ import {
   Save,
   Radio,
   Eye,
-  Megaphone
+  Megaphone,
+  QrCode
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCustomDomainUrl } from '../../utils/urlUtils';
+import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
 
@@ -54,6 +56,7 @@ export const AdminStoreDesign: React.FC = () => {
   const [customLogoUrl, setCustomLogoUrl] = useState(activeStore.design.customLogoUrl || '');
 
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
   useEffect(() => {
     setSlug(activeStore.slug);
@@ -174,13 +177,24 @@ export const AdminStoreDesign: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setCurrentPage('home')}
-          className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
-        >
-          <Eye className="w-3.5 h-3.5 text-amber-400" />
-          <span>{language === 'ar' ? 'معاينة المتجر المباشر' : 'Preview Store'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsQrModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs"
+          >
+            <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{language === 'ar' ? 'رمز QR للمتجر' : 'Store QR'}</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentPage('home')}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+          >
+            <Eye className="w-3.5 h-3.5 text-amber-400" />
+            <span>{language === 'ar' ? 'معاينة المتجر المباشر' : 'Preview Store'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -712,6 +726,9 @@ export const AdminStoreDesign: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Store QR Code Modal */}
+      <StoreQrCodeModal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} />
     </div>
   );
 };

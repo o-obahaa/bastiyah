@@ -12,6 +12,7 @@ import {
 
 export const CheckoutPage: React.FC = () => {
   const { 
+    activeStore,
     cart, 
     cartSubtotal, 
     cartDiscount, 
@@ -25,6 +26,9 @@ export const CheckoutPage: React.FC = () => {
     language,
     getProductName
   } = useStore();
+
+  const currency = activeStore.settings.currency || '$';
+  const [orderNotes, setOrderNotes] = useState('');
 
   const [shippingInfo, setShippingInfo] = useState<ShippingAddress>({
     fullName: language === 'ar' ? 'محمد العتيبي' : 'Alexander Wright',
@@ -70,7 +74,7 @@ export const CheckoutPage: React.FC = () => {
     setIsProcessing(true);
 
     setTimeout(() => {
-      placeOrder(shippingInfo, paymentMethod);
+      placeOrder(shippingInfo, paymentMethod, orderNotes.trim() || undefined);
       setIsProcessing(false);
     }, 1200);
   };
@@ -272,6 +276,30 @@ export const CheckoutPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* 3. Order Notes / Special Instructions */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+                3
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">
+                {language === 'ar' ? 'ملاحظات إضافية على الطلب' : 'Order Notes & Instructions'}
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500">
+              {language === 'ar'
+                ? 'أي تفاصيل خاصة بتسليم الشحنة، مواعيد التوصيل، أو تعليمات للمندوب المتجر.'
+                : 'Special delivery instructions, timing preferences, or notes for the courier.'}
+            </p>
+            <textarea
+              rows={3}
+              value={orderNotes}
+              onChange={(e) => setOrderNotes(e.target.value)}
+              placeholder={language === 'ar' ? 'اكتب ملاحظاتك هنا (اختياري)...' : 'Write any specific notes or instructions here (optional)...'}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white resize-none"
+            />
+          </div>
         </div>
 
         {/* Right Column: Order Summary & Complete Button */}
@@ -283,8 +311,8 @@ export const CheckoutPage: React.FC = () => {
 
             {/* Items scroll */}
             <div className="max-h-60 overflow-y-auto space-y-3 pr-2 divide-y divide-slate-100">
-              {cart.map((item) => (
-                <div key={item.product.id} className="pt-3 first:pt-0 flex items-center gap-3">
+              {cart.map((item, idx) => (
+                <div key={`${item.product.id}-${item.selectedColor || ''}-${item.selectedSize || ''}-${idx}`} className="pt-3 first:pt-0 flex items-center gap-3">
                   <img
                     src={item.product.images[0]}
                     alt={getProductName(item.product)}
@@ -294,12 +322,24 @@ export const CheckoutPage: React.FC = () => {
                     <p className="text-xs font-bold text-slate-900 truncate">
                       {getProductName(item.product)}
                     </p>
-                    <p className="text-[11px] text-slate-500">
-                      Qty: {item.quantity} × ${item.product.price}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                      {item.selectedSize && (
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-semibold">
+                          {language === 'ar' ? 'المقاس:' : 'Size:'} {item.selectedSize}
+                        </span>
+                      )}
+                      {item.selectedColor && (
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-semibold">
+                          {language === 'ar' ? 'اللون:' : 'Color:'} {item.selectedColor}
+                        </span>
+                      )}
+                      <span>
+                        Qty: {item.quantity} × {currency}{item.product.price}
+                      </span>
+                    </div>
                   </div>
                   <span className="text-xs font-black text-slate-900">
-                    ${(item.product.price * item.quantity).toFixed(2)}
+                    {currency}{(item.product.price * item.quantity).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -309,27 +349,27 @@ export const CheckoutPage: React.FC = () => {
             <div className="space-y-2 pt-4 border-t border-slate-100 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>{t.subtotal}</span>
-                <span className="font-semibold text-slate-900">${cartSubtotal.toFixed(2)}</span>
+                <span className="font-semibold text-slate-900">{currency}{cartSubtotal.toFixed(2)}</span>
               </div>
               {cartDiscount > 0 && (
                 <div className="flex justify-between text-emerald-600 font-semibold">
                   <span>{t.discount} ({appliedCoupon?.code})</span>
-                  <span>-${cartDiscount.toFixed(2)}</span>
+                  <span>-{currency}{cartDiscount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span>{t.shipping}</span>
                 <span className="font-semibold text-slate-900">
-                  {cartShipping === 0 ? t.free : `$${cartShipping.toFixed(2)}`}
+                  {cartShipping === 0 ? t.free : `${currency}${cartShipping.toFixed(2)}`}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>{t.estimatedTax}</span>
-                <span className="font-semibold text-slate-900">${cartTax.toFixed(2)}</span>
+                <span className="font-semibold text-slate-900">{currency}{cartTax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-black text-slate-900 pt-3 border-t border-slate-200">
                 <span>{t.total}</span>
-                <span className="text-emerald-700">${cartTotal.toFixed(2)}</span>
+                <span className="text-emerald-700">{currency}{cartTotal.toFixed(2)}</span>
               </div>
             </div>
 
@@ -347,7 +387,7 @@ export const CheckoutPage: React.FC = () => {
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  <span>{t.placeOrder} • ${cartTotal.toFixed(2)}</span>
+                  <span>{t.placeOrder} • {currency}{cartTotal.toFixed(2)}</span>
                 </>
               )}
             </button>

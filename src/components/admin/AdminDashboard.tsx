@@ -26,10 +26,12 @@ import {
   Globe,
   Send,
   Truck,
-  CheckCircle
+  CheckCircle,
+  QrCode
 } from 'lucide-react';
 import { OrderStatus } from '../../types';
 import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
+import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -50,6 +52,7 @@ export const AdminDashboard: React.FC = () => {
 
   const [period, setPeriod] = useState<'today' | '7days' | 'month' | 'all'>('7days');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
   const currency = activeStore.settings.currency || '$';
 
@@ -284,6 +287,14 @@ export const AdminDashboard: React.FC = () => {
           >
             <Share2 className="w-4 h-4" />
             <span>{language === 'ar' ? 'نشر على X' : 'Share X'}</span>
+          </button>
+
+          <button
+            onClick={() => setIsQrModalOpen(true)}
+            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all shadow-xs border border-slate-700"
+          >
+            <QrCode className="w-4 h-4 text-emerald-400" />
+            <span>{language === 'ar' ? 'رمز QR المتجر' : 'Store QR'}</span>
           </button>
 
           <button
@@ -688,6 +699,9 @@ export const AdminDashboard: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Store QR Code Modal */}
+      <StoreQrCodeModal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)} />
     </div>
   );
 };

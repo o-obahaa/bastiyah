@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Product, ProductCategory } from '../../types';
 import { 
@@ -8,6 +8,7 @@ import {
   Trash2, 
   X,
   Download,
+  Upload,
   AlertTriangle,
   CheckCircle2,
   Tag,
@@ -42,6 +43,7 @@ export const AdminProducts: React.FC = () => {
   const [stockFilter, setStockFilter] = useState<'All' | 'inStock' | 'lowStock' | 'outOfStock'>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currency = activeStore.settings.currency || '$';
 
@@ -59,6 +61,8 @@ export const AdminProducts: React.FC = () => {
     badge: 'New Arrival' as any,
     imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
     tags: 'modern, premium, smart',
+    sizes: 'S, M, L, XL',
+    colors: 'Black, Silver, Gold',
     featured: true,
   });
 
@@ -114,6 +118,8 @@ export const AdminProducts: React.FC = () => {
       badge: 'New Arrival',
       imageUrl: imagePresets[0].url,
       tags: 'smart, premium',
+      sizes: 'S, M, L, XL',
+      colors: 'Black, Silver',
       featured: true,
     });
     setEditingProduct(null);
@@ -136,6 +142,8 @@ export const AdminProducts: React.FC = () => {
       badge: p.badge || 'New Arrival',
       imageUrl: p.images?.[0] || imagePresets[0].url,
       tags: p.tags?.join(', ') || '',
+      sizes: p.variants?.sizes?.join(', ') || '',
+      colors: p.variants?.colors?.join(', ') || '',
       featured: p.featured ?? true,
     });
     setIsAddModalOpen(true);
@@ -147,6 +155,9 @@ export const AdminProducts: React.FC = () => {
       addToast(language === 'ar' ? 'يرجى إدخال اسم المنتج' : 'Please provide product name', 'error');
       return;
     }
+
+    const sizeList = formData.sizes.split(',').map((s) => s.trim()).filter(Boolean);
+    const colorList = formData.colors.split(',').map((c) => c.trim()).filter(Boolean);
 
     const payload = {
       name: formData.name.trim(),
@@ -164,6 +175,10 @@ export const AdminProducts: React.FC = () => {
       reviewCount: editingProduct ? editingProduct.reviewCount : 1,
       images: [formData.imageUrl],
       tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      variants: {
+        sizes: sizeList.length > 0 ? sizeList : undefined,
+        colors: colorList.length > 0 ? colorList : undefined,
+      },
       featured: formData.featured,
       specs: editingProduct ? editingProduct.specs : { Warranty: '1 Year', Quality: 'Authentic' },
     };
@@ -261,8 +276,123 @@ export const AdminProducts: React.FC = () => {
     addToast(language === 'ar' ? 'تم تصدير كتالوج المنتجات (CSV) بنجاح!' : 'Products exported to CSV successfully!', 'success');
   };
 
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (!text) return;
+
+        const lines = text.split(/\r\n|\n/).filter((l) => l.trim().length > 0);
+        if (lines.length < 2) {
+          addToast(
+            language === 'ar' ? 'ملف CSV لا يحتوي على أي صفوف بيانات' : 'CSV file contains no product rows',
+            'warning'
+          );
+          return;
+        }
+
+        const headers = lines[0].split(',').map((h) => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+
+        let importedCount = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const rawLine = lines[i];
+          const values: string[] = [];
+          let current = '';
+          let inQuotes = false;
+          for (let c = 0; c < rawLine.length; c++) {
+            const char = rawLine[c];
+            if (char === '"' || char === "'") {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(current.trim());
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          values.push(current.trim());
+
+          if (values.length === 0 || !values.some((v) => v.length > 0)) continue;
+
+          const getVal = (possibleHeaders: string[]): string => {
+            for (const ph of possibleHeaders) {
+              const idx = headers.findIndex((h) => h.includes(ph));
+              if (idx !== -1 && values[idx] !== undefined) {
+                return values[idx].replace(/^["']|["']$/g, '').trim();
+              }
+            }
+            return '';
+          };
+
+          const name = getVal(['name (en)', 'name', 'اسم']) || `Product ${products.length + importedCount + 1}`;
+          const nameAr = getVal(['name (ar)', 'arabic', 'عربي']) || name;
+          const categoryRaw = getVal(['category', 'تصنيف']) || 'Audio & Sound';
+          const price = parseFloat(getVal(['price', 'سعر'])) || 99;
+          const originalPrice = parseFloat(getVal(['original', 'before', 'خصم'])) || price * 1.2;
+          const stock = parseInt(getVal(['stock', 'مخزون', 'كمية'])) || 20;
+          const badge = (getVal(['badge', 'شارة']) || 'New Arrival') as any;
+          const tagsStr = getVal(['tags', 'وسوم']) || 'catalog, item';
+          const sizesStr = getVal(['sizes', 'مقاسات', 'size']);
+          const colorsStr = getVal(['colors', 'ألوان', 'color']);
+          const imageUrl = getVal(['image', 'صورة', 'url']) || imagePresets[0].url;
+
+          const validCat = categories.find((c) => c.toLowerCase() === categoryRaw.toLowerCase()) || 'Audio & Sound';
+
+          addProduct({
+            name,
+            nameAr,
+            tagline: name,
+            taglineAr: nameAr,
+            description: `${name} — Premium quality product.`,
+            descriptionAr: `${nameAr} — منتج فاخر عالي الجودة بتصميم استثنائي.`,
+            category: validCat,
+            price,
+            originalPrice,
+            stock,
+            badge,
+            rating: 5.0,
+            reviewCount: 1,
+            images: [imageUrl],
+            tags: tagsStr.split(/[,;]/).map((t) => t.trim()).filter(Boolean),
+            variants: {
+              sizes: sizesStr ? sizesStr.split(/[,;]/).map((s) => s.trim()).filter(Boolean) : undefined,
+              colors: colorsStr ? colorsStr.split(/[,;]/).map((c) => c.trim()).filter(Boolean) : undefined,
+            },
+            featured: false,
+            specs: { Quality: 'Authentic', Warranty: '1 Year' },
+          });
+
+          importedCount++;
+        }
+
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        addToast(
+          language === 'ar' ? `تم استيراد ${importedCount} منتج بنجاح إلى الكتالوج!` : `Imported ${importedCount} products successfully!`,
+          'success'
+        );
+      } catch (err: any) {
+        console.error('Import CSV error:', err);
+        addToast(language === 'ar' ? 'فشل استيراد ملف CSV' : 'Failed to import CSV file', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Hidden file input for CSV Import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".csv,text/csv"
+        onChange={handleImportCSV}
+        className="hidden"
+      />
+
       {/* Header and Action Buttons */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -270,11 +400,20 @@ export const AdminProducts: React.FC = () => {
             {language === 'ar' ? 'كتالوج المنتجات والمخزون' : t.products} ({products.length})
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            {language === 'ar' ? 'إضافة وتعديل المنتجات، نسخ العناصر، وضبط كميات المخزون فورياً' : 'Add, duplicate, and manage catalog items, inventory and pricing'}
+            {language === 'ar' ? 'إضافة وتعديل المنتجات، نسخ العناصر، استيراد/تصدير CSV وضبط المخزون' : 'Add, duplicate, and manage catalog items, inventory and pricing'}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-2xs transition-all"
+            title={language === 'ar' ? 'استيراد منتجات من ملف CSV' : 'Import products from CSV'}
+          >
+            <Upload className="w-3.5 h-3.5 text-slate-500" />
+            <span>{language === 'ar' ? 'استيراد CSV' : 'Import CSV'}</span>
+          </button>
+
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-2xs transition-all"
@@ -756,6 +895,41 @@ export const AdminProducts: React.FC = () => {
                       {preset.label}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Product Variants (Sizes & Colors) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    {language === 'ar' ? 'المقاسات المتاحة (مفصولة بفواصل)' : 'Available Sizes (comma separated)'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="S, M, L, XL, XXL"
+                    value={formData.sizes}
+                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    {language === 'ar' ? 'اتركها فارغة إذا لم تكن هناك مقاسات' : 'Leave empty if no sizes apply'}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    {language === 'ar' ? 'الألوان المتاحة (مفصولة بفواصل)' : 'Available Colors (comma separated)'}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Black, Silver, Gold, Navy"
+                    value={formData.colors}
+                    onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    {language === 'ar' ? 'اتركها فارغة إذا لم تكن هناك ألوان' : 'Leave empty if no colors apply'}
+                  </span>
                 </div>
               </div>
 

@@ -313,9 +313,14 @@ export const AdminOrders: React.FC = () => {
                       <span className="font-bold text-slate-900 block font-mono text-xs sm:text-sm">
                         {order.orderNumber}
                       </span>
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-[11px] text-slate-400 block">
                         {new Date(order.date).toLocaleDateString()}
                       </span>
+                      {order.notes && (
+                        <span className="inline-block mt-1 text-[10px] bg-amber-100 text-amber-800 font-semibold px-1.5 py-0.5 rounded shadow-2xs" title={order.notes}>
+                          📝 {language === 'ar' ? 'ملاحظة' : 'Note'}
+                        </span>
+                      )}
                     </td>
 
                     <td className="py-3.5 px-4">
@@ -517,7 +522,15 @@ export const AdminOrders: React.FC = () => {
                       <tbody className="divide-y divide-slate-100">
                         {inspectingOrder.items.map((item, idx) => (
                           <tr key={idx}>
-                            <td className="py-2 px-3 font-semibold text-slate-900">{item.productName}</td>
+                            <td className="py-2 px-3 font-semibold text-slate-900">
+                              <div>{item.productName}</div>
+                              {(item.selectedSize || item.selectedColor) && (
+                                <div className="text-[10px] text-slate-500 font-normal mt-0.5">
+                                  {item.selectedSize && <span className="me-2">{language === 'ar' ? 'المقاس:' : 'Size:'} {item.selectedSize}</span>}
+                                  {item.selectedColor && <span>{language === 'ar' ? 'اللون:' : 'Color:'} {item.selectedColor}</span>}
+                                </div>
+                              )}
+                            </td>
                             <td className="py-2 px-3 text-center text-slate-600">{item.quantity}</td>
                             <td className="py-2 px-3 text-end text-slate-600">{currency}{item.price.toFixed(2)}</td>
                             <td className="py-2 px-3 text-end font-bold text-slate-900">{currency}{(item.price * item.quantity).toFixed(2)}</td>
@@ -526,6 +539,14 @@ export const AdminOrders: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Customer Notes on Invoice */}
+                  {inspectingOrder.notes && (
+                    <div className="p-3 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs text-amber-900">
+                      <span className="font-bold block mb-0.5">{language === 'ar' ? 'ملاحظات العميل الخاصة بالطلب:' : 'Customer Order Notes:'}</span>
+                      <p className="text-amber-800">{inspectingOrder.notes}</p>
+                    </div>
+                  )}
 
                   {/* Summary Totals */}
                   <div className="flex justify-end">
@@ -597,6 +618,16 @@ export const AdminOrders: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Customer Order Notes */}
+                  {inspectingOrder.notes && (
+                    <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-2xl space-y-1">
+                      <span className="font-bold text-amber-900 block text-xs">
+                        {language === 'ar' ? 'ملاحظات العميل على الطلب:' : 'Customer Order Notes:'}
+                      </span>
+                      <p className="text-xs text-amber-800 leading-relaxed">{inspectingOrder.notes}</p>
+                    </div>
+                  )}
+
                   {/* Shipping Courier and Tracking Code Configuration */}
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
                     <div className="flex items-center justify-between">
@@ -666,11 +697,23 @@ export const AdminOrders: React.FC = () => {
                             <img
                               src={item.productImage}
                               alt=""
-                              className="w-11 h-11 rounded-lg object-cover border border-slate-200"
+                              className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0"
                             />
                             <div>
                               <p className="font-bold text-slate-900 text-xs sm:text-sm">{item.productName}</p>
-                              <p className="text-slate-400">Qty: {item.quantity} × {currency}{item.price.toFixed(2)}</p>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                {item.selectedSize && (
+                                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                                    {language === 'ar' ? 'المقاس:' : 'Size:'} {item.selectedSize}
+                                  </span>
+                                )}
+                                {item.selectedColor && (
+                                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                                    {language === 'ar' ? 'اللون:' : 'Color:'} {item.selectedColor}
+                                  </span>
+                                )}
+                                <span className="text-slate-400 text-[11px]">Qty: {item.quantity} × {currency}{item.price.toFixed(2)}</span>
+                              </div>
                             </div>
                           </div>
                           <span className="font-bold text-slate-900 text-xs sm:text-sm">

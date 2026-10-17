@@ -32,7 +32,10 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     setSelectedCategory, 
     searchQuery, 
     setSearchQuery, 
+    inStockOnly,
+    setInStockOnly,
     t, 
+    language,
     getCategoryName 
   } = useStore();
 
@@ -77,8 +80,19 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
         </div>
 
         {/* Sort & Count Controls */}
-        <div className="flex items-center gap-3 ms-auto">
-          <span className="text-xs text-slate-500 font-medium hidden sm:inline-block">
+        <div className="flex items-center gap-3 ms-auto flex-wrap sm:flex-nowrap">
+          {/* In Stock Only filter toggle */}
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm cursor-pointer select-none hover:bg-slate-50 transition-colors">
+            <input
+              type="checkbox"
+              checked={inStockOnly}
+              onChange={(e) => setInStockOnly(e.target.checked)}
+              className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 accent-emerald-600 cursor-pointer"
+            />
+            <span>{language === 'ar' ? 'المتوفر فقط' : 'In Stock Only'}</span>
+          </label>
+
+          <span className="text-xs text-slate-500 font-medium hidden md:inline-block">
             {t.showingItems} <strong className="text-slate-800">{resultCount}</strong> {t.items}
           </span>
 
@@ -90,10 +104,11 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
               className="text-xs font-semibold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
             >
               <option value="featured">{t.sortFeatured}</option>
+              <option value="newest">{t.sortNewest}</option>
+              <option value="best-sellers">{language === 'ar' ? 'الأكثر مبيعاً' : 'Best Sellers'}</option>
               <option value="price-low">{t.sortPriceLow}</option>
               <option value="price-high">{t.sortPriceHigh}</option>
               <option value="rating">{t.sortRating}</option>
-              <option value="newest">{t.sortNewest}</option>
             </select>
           </div>
         </div>

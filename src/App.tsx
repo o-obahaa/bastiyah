@@ -32,14 +32,15 @@ export function App() {
     selectedCategory, 
     setSelectedCategory, 
     searchQuery,
+    sortBy,
+    setSortBy,
+    inStockOnly,
     t,
     language,
     getProductName,
     isPlatformAdminAuthenticated,
     isStoreAdminAuthenticated
   } = useStore();
-
-  const [sortBy, setSortBy] = useState('featured');
 
   // Filter & Sort Products (works for both English & Arabic search)
   const filteredProducts = useMemo(() => {
@@ -48,6 +49,11 @@ export function App() {
     // Category filter
     if (selectedCategory !== 'All') {
       result = result.filter((p) => p.category === selectedCategory);
+    }
+
+    // In Stock Only filter
+    if (inStockOnly) {
+      result = result.filter((p) => p.stock > 0);
     }
 
     // Search query filter (matches both English and Arabic)
@@ -77,6 +83,9 @@ export function App() {
       case 'newest':
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
+      case 'best-sellers':
+        result.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+        break;
       case 'featured':
       default:
         result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
@@ -84,7 +93,7 @@ export function App() {
     }
 
     return result;
-  }, [products, selectedCategory, searchQuery, sortBy, language]);
+  }, [products, selectedCategory, searchQuery, sortBy, inStockOnly, language]);
 
   const ArrowIcon = language === 'ar' ? ArrowLeft : ArrowRight;
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
