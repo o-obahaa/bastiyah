@@ -16,7 +16,11 @@ import {
   Copy,
   Check,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  ArrowRight,
+  DollarSign,
+  TrendingUp,
+  Share2
 } from 'lucide-react';
 
 export const AdminOrders: React.FC = () => {
@@ -99,6 +103,42 @@ export const AdminOrders: React.FC = () => {
     setIsInvoiceOpen(false);
   };
 
+  const handleAdvanceStatus = (orderId: string, currentStatus: OrderStatus) => {
+    let nextStatus: OrderStatus = currentStatus;
+    if (currentStatus === 'pending') nextStatus = 'processing';
+    else if (currentStatus === 'processing') nextStatus = 'shipped';
+    else if (currentStatus === 'shipped') nextStatus = 'delivered';
+
+    if (nextStatus !== currentStatus) {
+      updateOrderStatus(orderId, nextStatus);
+      addToast(
+        language === 'ar'
+          ? `تم تحديث حالة الطلب إلى: ${nextStatus === 'processing' ? 'قيد التجهيز' : nextStatus === 'shipped' ? 'تم الشحن' : 'تم التوصيل'}`
+          : `Order status advanced to ${nextStatus}`,
+        'success'
+      );
+    }
+  };
+
+  const handleSendTrackingWhatsApp = (order: Order, courier: string, tracking: string) => {
+    const cleanPhone = (order.customer.phone || '').replace(/[^0-9]/g, '');
+    if (!cleanPhone) {
+      addToast(language === 'ar' ? 'رقم هاتف العميل غير متوفر' : 'Customer phone number not available', 'error');
+      return;
+    }
+    const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const msg = language === 'ar'
+      ? `مرحباً ${order.customer.fullName}، يسعدنا إبلاغك بأنه تم شحن طلبك رقم #${order.orderNumber} من متجر ${storeName} بنجاح!\n\nشركة الشحن: ${courier}\nرقم التتبع: ${tracking}\n\nشكراً لتسوقك معنا، وسنكون سعداء بخدمتك دائماً.`
+      : `Hello ${order.customer.fullName}, your order #${order.orderNumber} from ${storeName} has been shipped!\n\nCourier: ${courier}\nTracking Number: ${tracking}\n\nThank you for shopping with us!`;
+
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const totalRevenueAll = orders.reduce((sum, o) => sum + o.total, 0);
+  const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
+  const processingOrdersCount = orders.filter(o => o.status === 'processing').length;
+  const shippedDeliveredCount = orders.filter(o => o.status === 'shipped' || o.status === 'delivered').length;
+
   const handleSaveShippingInfo = () => {
     if (!inspectingOrder) return;
     updateOrder(inspectingOrder.id, {
@@ -106,6 +146,7 @@ export const AdminOrders: React.FC = () => {
       trackingNumber: trackingInput.trim()
     });
     setInspectingOrder((prev) => prev ? { ...prev, courier: courierInput, trackingNumber: trackingInput.trim() } : null);
+    addToast(language === 'ar' ? 'تم حفظ بيانات الشحن بنجاح!' : 'Shipping info saved!', 'success');
   };
 
   const handleExportCSV = () => {
@@ -167,6 +208,26 @@ export const AdminOrders: React.FC = () => {
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>{language === 'ar' ? 'تصدير CSV' : 'Export CSV'}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Orders Quick Summary KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'إجمالي الطلبات' : 'Total Orders'}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{orders.length}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'إجمالي المبيعات' : 'Total Sales'}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{currency}{totalRevenueAll.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'بانتظار التأكيد' : 'Pending Orders'}</span>
+          <span className={`text-lg font-black mt-0.5 block ${pendingOrdersCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>{pendingOrdersCount}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'تم الشحن والتوصيل' : 'Fulfilled'}</span>
+          <span className="text-lg font-black text-emerald-700 mt-0.5 block">{shippedDeliveredCount}</span>
         </div>
       </div>
 
@@ -321,6 +382,19 @@ export const AdminOrders: React.FC = () => {
 
                     <td className="py-3.5 px-4 text-end">
                       <div className="inline-flex items-center gap-1.5 justify-end">
+                        {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                          <button
+                            onClick={() => handleAdvanceStatus(order.id, order.status)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold transition-all shadow-2xs whitespace-nowrap"
+                            title={language === 'ar' ? 'ترقية الحالة للمرحلة التالية' : 'Advance status'}
+                          >
+                            {order.status === 'pending' && <span>{language === 'ar' ? 'تجهيز' : 'Process'}</span>}
+                            {order.status === 'processing' && <span>{language === 'ar' ? 'شحن' : 'Ship'}</span>}
+                            {order.status === 'shipped' && <span>{language === 'ar' ? 'تسليم' : 'Deliver'}</span>}
+                            <ArrowRight className={`w-3 h-3 text-emerald-400 ${language === 'ar' ? 'rotate-180' : ''}`} />
+                          </button>
+                        )}
+
                         {/* WhatsApp Contact */}
                         {order.customer.phone && (
                           <button
@@ -567,6 +641,19 @@ export const AdminOrders: React.FC = () => {
                         />
                       </div>
                     </div>
+
+                    {trackingInput.trim() && inspectingOrder.customer.phone && (
+                      <div className="pt-2 border-t border-slate-200/80 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleSendTrackingWhatsApp(inspectingOrder, courierInput, trackingInput.trim())}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-2xs"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>{language === 'ar' ? 'إرسال بيانات التتبع للعميل عبر واتساب' : 'Send Tracking via WhatsApp'}</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Items List */}

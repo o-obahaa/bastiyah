@@ -103,6 +103,10 @@ export const AdminCustomers: React.FC = () => {
            o.customer.fullName.toLowerCase() === inspectingCustomer.name.toLowerCase()
   ) : [];
 
+  const totalCustomerSpend = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+  const avgCustomerSpend = customers.length > 0 ? totalCustomerSpend / customers.length : 0;
+  const vipCount = customers.filter(c => c.totalSpent >= 500).length;
+
   return (
     <div className="space-y-6">
       {/* Header and Export */}
@@ -123,6 +127,26 @@ export const AdminCustomers: React.FC = () => {
           <Download className="w-3.5 h-3.5 text-slate-500" />
           <span>{language === 'ar' ? 'تصدير العملاء (CSV)' : 'Export CSV'}</span>
         </button>
+      </div>
+
+      {/* Customer KPI Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'إجمالي العملاء' : 'Total Customers'}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{customers.length}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'إجمالي إنفاق العملاء' : 'Total Spent (LTV)'}</span>
+          <span className="text-lg font-black text-emerald-700 mt-0.5 block">{currency}{totalCustomerSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'متوسط قيمة العميل' : 'Avg Spend / Buyer'}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{currency}{avgCustomerSpend.toFixed(2)}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'عملاء النخبة (VIP)' : 'VIP Customers'}</span>
+          <span className="text-lg font-black text-amber-600 mt-0.5 block">{vipCount}</span>
+        </div>
       </div>
 
       {/* Filter Tiers */}

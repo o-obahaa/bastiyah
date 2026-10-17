@@ -562,6 +562,154 @@ export const AdminStoreDesign: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Card Corner Radius */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900">
+                  {language === 'ar' ? 'انحناء زوايا البطاقات (Card Radius)' : 'Card Corner Radius'}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {language === 'ar' ? 'شكل حواف بطاقات المنتجات والأزرار' : 'Shape of product cards and UI elements'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => updateStoreDesign({ cardRadius: 'rounded' })}
+                className={`p-3 rounded-xl border text-center transition-all ${
+                  activeStore.design.cardRadius === 'rounded'
+                    ? 'border-slate-900 bg-slate-50 font-bold shadow-2xs'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div className="w-6 h-6 border-2 border-slate-400 rounded-lg mx-auto mb-1.5" />
+                <span className="text-[11px] block">{language === 'ar' ? 'عصري (Rounded)' : 'Rounded'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateStoreDesign({ cardRadius: 'pill' })}
+                className={`p-3 rounded-2xl border text-center transition-all ${
+                  activeStore.design.cardRadius === 'pill'
+                    ? 'border-slate-900 bg-slate-50 font-bold shadow-2xs'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div className="w-6 h-6 border-2 border-slate-400 rounded-full mx-auto mb-1.5" />
+                <span className="text-[11px] block">{language === 'ar' ? 'ناعم (Pill)' : 'Pill Curved'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateStoreDesign({ cardRadius: 'sharp' })}
+                className={`p-3 rounded-none border text-center transition-all ${
+                  activeStore.design.cardRadius === 'sharp'
+                    ? 'border-slate-900 bg-slate-50 font-bold shadow-2xs'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div className="w-6 h-6 border-2 border-slate-400 rounded-none mx-auto mb-1.5" />
+                <span className="text-[11px] block">{language === 'ar' ? 'حاد (Sharp)' : 'Sharp'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Real-Time Live Mockup Card */}
+          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  {language === 'ar' ? 'المعاينة المباشرة لتخصيصاتك' : 'Live Real-Time Storefront Mockup'}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                {language === 'ar' ? 'تحديث تلقائي' : 'Auto synced'}
+              </span>
+            </div>
+
+            {/* Mockup Container */}
+            <div className="rounded-2xl border-2 border-slate-800 bg-slate-900 p-2 shadow-inner">
+              {/* Browser Bar */}
+              <div className="flex items-center gap-1.5 px-2 py-1 mb-2 bg-slate-800 rounded-lg text-[10px] text-slate-300 font-mono">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="ms-2 truncate text-slate-400">https://{normalizedSlug || activeStore.slug}.bastiyah.com</span>
+              </div>
+
+              {/* Mock Storefront Screen */}
+              <div className="bg-slate-50 rounded-xl overflow-hidden text-slate-900 shadow-sm">
+                {/* Announcement Bar */}
+                <div 
+                  className="py-1 px-3 text-[10px] text-white text-center font-bold truncate transition-colors"
+                  style={{ backgroundColor: theme.hex }}
+                >
+                  {announcementTextAr || announcementText || (language === 'ar' ? 'شحن مجاني لكافة الطلبات فوق 50$!' : 'Free shipping on orders over $50!')}
+                </div>
+
+                {/* Header */}
+                <div className={`p-3 border-b border-slate-200/80 flex items-center justify-between ${
+                  activeStore.design.headerStyle === 'dark' ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shadow-2xs overflow-hidden"
+                      style={{ backgroundColor: `${theme.hex}20` }}
+                    >
+                      {customLogoUrl ? (
+                        <img src={customLogoUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{activeStore.design.logoEmoji}</span>
+                      )}
+                    </div>
+                    <span className="font-black text-xs truncate max-w-[120px]">
+                      {language === 'ar' ? nameAr || name : name}
+                    </span>
+                  </div>
+
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    {language === 'ar' ? 'السلة (0)' : 'Cart (0)'}
+                  </span>
+                </div>
+
+                {/* Sample Hero / Card */}
+                <div className="p-4 space-y-3">
+                  <div 
+                    className={`p-3 text-white text-start transition-all ${
+                      activeStore.design.cardRadius === 'pill' ? 'rounded-2xl' : activeStore.design.cardRadius === 'sharp' ? 'rounded-none' : 'rounded-xl'
+                    }`}
+                    style={{ backgroundColor: theme.hex }}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider block opacity-90">
+                      {language === 'ar' ? 'التشكيلة الجديدة' : 'New Collection'}
+                    </span>
+                    <span className="text-xs font-black block mt-0.5">
+                      {language === 'ar' ? taglineAr || tagline : tagline}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {language === 'ar' ? `النمط: ${activeStore.design.layoutStyle}` : `Layout: ${activeStore.design.layoutStyle}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage('home')}
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                    >
+                      <span>{language === 'ar' ? 'معاينة ملء الشاشة' : 'Full Preview'}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

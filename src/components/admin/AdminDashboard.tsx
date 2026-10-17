@@ -19,9 +19,17 @@ import {
   ArrowRight,
   ArrowLeft,
   Calendar,
-  Sparkles
+  Sparkles,
+  Copy,
+  Check,
+  Share2,
+  Globe,
+  Send,
+  Truck,
+  CheckCircle
 } from 'lucide-react';
 import { OrderStatus } from '../../types';
+import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -32,6 +40,7 @@ export const AdminDashboard: React.FC = () => {
     updateOrderStatus, 
     updateProduct, 
     setAdminTab,
+    setCurrentPage,
     addToast,
     t,
     language,
@@ -40,6 +49,7 @@ export const AdminDashboard: React.FC = () => {
   } = useStore();
 
   const [period, setPeriod] = useState<'today' | '7days' | 'month' | 'all'>('7days');
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const currency = activeStore.settings.currency || '$';
 
@@ -125,6 +135,50 @@ export const AdminDashboard: React.FC = () => {
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  const fulfilledOrdersCount = orders.filter((o) => o.status === 'delivered' || o.status === 'shipped').length;
+  const fulfillmentRate = orders.length > 0 ? Math.round((fulfilledOrdersCount / orders.length) * 100) : 100;
+  const storeUrl = getStoreDisplayUrl(activeStore.slug, false);
+
+  const handleCopyStoreLink = () => {
+    navigator.clipboard.writeText(storeUrl);
+    setCopiedLink(true);
+    addToast(language === 'ar' ? 'تم نسخ رابط متجرك بنجاح!' : 'Store link copied to clipboard!', 'success');
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleShareWhatsApp = () => {
+    const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const msg = language === 'ar'
+      ? `أهلاً بكم في متجرنا الرسمي (${storeName}) على منصة بسطية! تصفحوا أحدث المنتجات واطلبوا مباشرة عبر الرابط:\n${storeUrl}`
+      : `Welcome to our official store (${storeName}) on Bastiyah! Browse our catalog and shop now:\n${storeUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const handleShareTwitter = () => {
+    const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const text = language === 'ar'
+      ? `تسوقوا الآن من متجر ${storeName} عبر منصة بسطية!`
+      : `Shop from ${storeName} on Bastiyah!`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(storeUrl)}`, '_blank');
+  };
+
+  const handleAdvanceStatus = (orderId: string, currentStatus: OrderStatus) => {
+    let nextStatus: OrderStatus = currentStatus;
+    if (currentStatus === 'pending') nextStatus = 'processing';
+    else if (currentStatus === 'processing') nextStatus = 'shipped';
+    else if (currentStatus === 'shipped') nextStatus = 'delivered';
+
+    if (nextStatus !== currentStatus) {
+      updateOrderStatus(orderId, nextStatus);
+      addToast(
+        language === 'ar'
+          ? `تم تحديث حالة الطلب إلى: ${nextStatus === 'processing' ? 'قيد التجهيز' : nextStatus === 'shipped' ? 'تم الشحن' : 'تم التوصيل'}`
+          : `Order status advanced to ${nextStatus}`,
+        'success'
+      );
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Top Welcome & Period Control */}
@@ -181,6 +235,63 @@ export const AdminDashboard: React.FC = () => {
             }`}
           >
             {language === 'ar' ? 'كل الأوقات' : 'All Time'}
+          </button>
+        </div>
+      </div>
+
+      {/* Storefront Share & Launch Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-5 sm:p-6 text-white shadow-lg border border-slate-700/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div className="space-y-2 max-w-xl">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+              {language === 'ar' ? 'متجرك جاهز للطلب ومتاح للعملاء' : 'Live Storefront Ready'}
+            </span>
+            <span className="text-[11px] font-semibold text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700">
+              {language === 'ar' ? `معدل إنجاز الطلبات: ${fulfillmentRate}%` : `Fulfillment: ${fulfillmentRate}%`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-xs text-slate-200">
+              <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="truncate max-w-[240px] sm:max-w-none">{getStorePathLabel(activeStore.slug, false)}</span>
+            </div>
+
+            <button
+              onClick={handleCopyStoreLink}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-colors"
+              title={language === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedLink ? (language === 'ar' ? 'تم النسخ!' : 'Copied!') : (language === 'ar' ? 'نسخ الرابط' : 'Copy')}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+          <button
+            onClick={handleShareWhatsApp}
+            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>{language === 'ar' ? 'مشاركة بالواتساب' : 'WhatsApp'}</span>
+          </button>
+
+          <button
+            onClick={handleShareTwitter}
+            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all shadow-xs"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>{language === 'ar' ? 'نشر على X' : 'Share X'}</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentPage('home')}
+            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold transition-all shadow-xs"
+          >
+            <Eye className="w-4 h-4 text-amber-600" />
+            <span>{language === 'ar' ? 'زيارة المتجر' : 'Visit Store'}</span>
           </button>
         </div>
       </div>
@@ -537,7 +648,20 @@ export const AdminDashboard: React.FC = () => {
                     </select>
                   </td>
                   <td className="py-3.5 px-4 text-end">
-                    <div className="inline-flex items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5 justify-end">
+                      {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                        <button
+                          onClick={() => handleAdvanceStatus(order.id, order.status)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold transition-all shadow-2xs whitespace-nowrap"
+                          title={language === 'ar' ? 'ترقية الحالة للمرحلة التالية' : 'Advance status'}
+                        >
+                          {order.status === 'pending' && <span>{language === 'ar' ? 'تجهيز' : 'Process'}</span>}
+                          {order.status === 'processing' && <span>{language === 'ar' ? 'شحن' : 'Ship'}</span>}
+                          {order.status === 'shipped' && <span>{language === 'ar' ? 'تسليم' : 'Deliver'}</span>}
+                          <ArrowRight className={`w-3 h-3 text-emerald-400 ${language === 'ar' ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+
                       {order.customer.phone && (
                         <button
                           onClick={() => openWhatsApp(order.customer.phone, order.customer.fullName, order.orderNumber, order.total)}

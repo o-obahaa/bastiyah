@@ -137,6 +137,7 @@ interface StoreContextType {
   coupons: Coupon[];
   addCoupon: (coupon: Coupon) => void;
   toggleCouponStatus: (code: string) => void;
+  deleteCoupon: (code: string) => void;
 
   // Orders (scoped to activeStore)
   orders: Order[];
@@ -1109,6 +1110,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
 
+  const deleteCoupon = (code: string) => {
+    mutateActiveStore((store) => ({
+      ...store,
+      coupons: store.coupons.filter((c) => c.code !== code),
+    }));
+    addToast(language === 'ar' ? `تم حذف الكوبون "${code}"` : `Coupon "${code}" deleted`, 'info');
+  };
+
   // Orders Management
   const placeOrder = (
     shippingInfo: ShippingAddress, 
@@ -1333,6 +1342,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         coupons,
         addCoupon,
         toggleCouponStatus,
+        deleteCoupon,
         orders,
         lastPlacedOrder,
         placeOrder,

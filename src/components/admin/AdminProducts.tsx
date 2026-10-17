@@ -16,7 +16,10 @@ import {
   Filter,
   Eye,
   Percent,
-  Package
+  Package,
+  Copy,
+  Star,
+  DollarSign
 } from 'lucide-react';
 import { ImageUploader } from '../common/ImageUploader';
 
@@ -188,6 +191,45 @@ export const AdminProducts: React.FC = () => {
     }
   };
 
+  const handleDuplicateProduct = (p: Product) => {
+    const duplicated: Omit<Product, 'id' | 'createdAt'> = {
+      name: `${p.name} (Copy)`,
+      nameAr: p.nameAr ? `${p.nameAr} (نسخة)` : `${p.name} (نسخة)`,
+      tagline: p.tagline,
+      taglineAr: p.taglineAr,
+      description: p.description,
+      descriptionAr: p.descriptionAr,
+      category: p.category,
+      price: p.price,
+      originalPrice: p.originalPrice,
+      stock: p.stock,
+      badge: p.badge,
+      rating: p.rating,
+      reviewCount: 0,
+      images: [...p.images],
+      tags: [...(p.tags || [])],
+      featured: false,
+      specs: p.specs ? { ...p.specs } : { Warranty: '1 Year', Quality: 'Authentic' },
+    };
+    addProduct(duplicated);
+    addToast(language === 'ar' ? 'تم نسخ المنتج بنجاح!' : 'Product duplicated successfully!', 'success');
+  };
+
+  const handleToggleFeatured = (p: Product) => {
+    const newFeatured = !p.featured;
+    updateProduct(p.id, { featured: newFeatured });
+    addToast(
+      language === 'ar'
+        ? (newFeatured ? 'تم تمييز المنتج في واجهة المتجر' : 'تم إلغاء تمييز المنتج')
+        : (newFeatured ? 'Marked as featured' : 'Unmarked from featured'),
+      'success'
+    );
+  };
+
+  const totalUnitsInStock = products.reduce((sum, p) => sum + p.stock, 0);
+  const totalCatalogValue = products.reduce((sum, p) => sum + (p.price * p.stock), 0);
+  const lowStockProductsCount = products.filter(p => p.stock <= 10).length;
+
   const handleExportCSV = () => {
     if (products.length === 0) {
       addToast(language === 'ar' ? 'لا توجد منتجات لتصديرها' : 'No products to export', 'info');
@@ -228,7 +270,7 @@ export const AdminProducts: React.FC = () => {
             {language === 'ar' ? 'كتالوج المنتجات والمخزون' : t.products} ({products.length})
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            {language === 'ar' ? 'إضافة وتعديل المنتجات، ضبط الأسعار، وإدارة كميات المخزون فورياً' : 'Add and manage catalog items, inventory and pricing'}
+            {language === 'ar' ? 'إضافة وتعديل المنتجات، نسخ العناصر، وضبط كميات المخزون فورياً' : 'Add, duplicate, and manage catalog items, inventory and pricing'}
           </p>
         </div>
 
@@ -249,6 +291,26 @@ export const AdminProducts: React.FC = () => {
             <Plus className="w-4 h-4" />
             <span>{t.addProduct}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Catalog Quick Summary Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'إجمالي الأصناف' : 'Total Items'}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{products.length}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'الوحدات المتوفرة بالمخزون' : 'Units in Stock'}</span>
+          <span className="text-lg font-black text-emerald-700 mt-0.5 block">{totalUnitsInStock}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'القيمة التقديرية للمخزون' : 'Total Inventory Value'}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{currency}{totalCatalogValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'تنبيهات انخفاض المخزون' : 'Low Stock Items'}</span>
+          <span className={`text-lg font-black mt-0.5 block ${lowStockProductsCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>{lowStockProductsCount}</span>
         </div>
       </div>
 
@@ -444,7 +506,27 @@ export const AdminProducts: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4 text-end">
-                        <div className="inline-flex items-center gap-1.5 justify-end">
+                        <div className="inline-flex items-center gap-1 justify-end">
+                          <button
+                            onClick={() => handleToggleFeatured(p)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              p.featured
+                                ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
+                                : 'text-slate-300 hover:text-amber-500 hover:bg-amber-50/50'
+                            }`}
+                            title={p.featured ? (language === 'ar' ? 'مميز في الواجهة' : 'Featured') : (language === 'ar' ? 'تمييز في الواجهة' : 'Mark as featured')}
+                          >
+                            <Star className={`w-4 h-4 ${p.featured ? 'fill-amber-400' : ''}`} />
+                          </button>
+
+                          <button
+                            onClick={() => handleDuplicateProduct(p)}
+                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title={language === 'ar' ? 'استنساخ المنتج' : 'Duplicate product'}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+
                           <button
                             onClick={() => handleOpenEdit(p)}
                             className="p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -452,6 +534,7 @@ export const AdminProducts: React.FC = () => {
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
+                          
                           <button
                             onClick={() => handleDelete(p.id, pName)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"

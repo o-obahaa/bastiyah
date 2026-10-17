@@ -17,7 +17,8 @@ import {
   Trash2,
   DollarSign,
   ShieldCheck,
-  Check
+  Check,
+  Download
 } from 'lucide-react';
 
 export const AdminSettings: React.FC = () => {
@@ -27,6 +28,7 @@ export const AdminSettings: React.FC = () => {
     coupons, 
     addCoupon, 
     toggleCouponStatus, 
+    deleteCoupon,
     updateHostedStore,
     t, 
     language,
@@ -127,6 +129,31 @@ export const AdminSettings: React.FC = () => {
     setNewCouponData({ code: '', discountPercent: 15, minSpend: 50, description: '' });
     setIsNewCouponOpen(false);
     addToast(language === 'ar' ? 'تم إنشاء كود الخصم بنجاح!' : 'Coupon created successfully!', 'success');
+  };
+
+  const handleDeleteCoupon = (code: string) => {
+    if (window.confirm(language === 'ar' ? `هل أنت متأكد من حذف كود الخصم (${code})؟` : `Delete coupon ${code}?`)) {
+      deleteCoupon(code);
+      addToast(language === 'ar' ? 'تم حذف كود الخصم بنجاح' : 'Coupon deleted', 'info');
+    }
+  };
+
+  const handleDownloadStoreBackup = () => {
+    const backupData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      store: activeStore
+    };
+
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `store-backup-${activeStore.slug}-${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    addToast(language === 'ar' ? 'تم تنزيل النسخة الاحتياطية لمتجرك بنجاح!' : 'Store backup downloaded!', 'success');
   };
 
   return (
@@ -447,16 +474,27 @@ export const AdminSettings: React.FC = () => {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => toggleCouponStatus(coupon.code)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                      coupon.active
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                        : 'bg-slate-200 text-slate-600'
-                    }`}
-                  >
-                    {coupon.active ? t.active : t.disabled}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleCouponStatus(coupon.code)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                        coupon.active
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          : 'bg-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {coupon.active ? t.active : t.disabled}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCoupon(coupon.code)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      title={language === 'ar' ? 'حذف الكوبون' : 'Delete coupon'}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -492,6 +530,33 @@ export const AdminSettings: React.FC = () => {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Store Data & Disaster Recovery Backup Card */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  {language === 'ar' ? 'النسخ الاحتياطي وحفظ البيانات' : 'Store Data & Backup'}
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {language === 'ar'
+                ? 'قم بتنزيل نسخة احتياطية كاملة لمتجرك (المنتجات، الكوبونات، الطلبات، والإعدادات) في ملف JSON يمكنك الاحتفاظ به بأمان.'
+                : 'Download a JSON snapshot of your store catalog, coupons, orders, and configuration.'}
+            </p>
+
+            <button
+              type="button"
+              onClick={handleDownloadStoreBackup}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs"
+            >
+              <Download className="w-4 h-4 text-emerald-400" />
+              <span>{language === 'ar' ? 'تحميل نسخة احتياطية للمتجر (JSON)' : 'Download Store Backup (JSON)'}</span>
+            </button>
           </div>
         </div>
       </div>
