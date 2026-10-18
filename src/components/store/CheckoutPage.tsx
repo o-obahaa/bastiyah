@@ -1,14 +1,40 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { ShippingAddress } from '../../types';
+import { ShippingAddress, Order } from '../../types';
 import { 
   CreditCard, 
   Truck, 
   Lock, 
   ArrowLeft, 
   ArrowRight,
-  ShoppingBag
+  ShoppingBag,
+  Banknote,
+  Smartphone,
+  MapPin,
+  CheckCircle2,
+  Phone
 } from 'lucide-react';
+
+export const IRAQ_GOVERNORATES = [
+  { ar: 'بغداد (العاصمة)', en: 'Baghdad (Capital)', code: 'BG' },
+  { ar: 'البصرة', en: 'Basra', code: 'BA' },
+  { ar: 'أربيل', en: 'Erbil', code: 'ER' },
+  { ar: 'النجف الأشرف', en: 'Najaf', code: 'NA' },
+  { ar: 'كربلاء المقدسة', en: 'Karbala', code: 'KA' },
+  { ar: 'نينوى (الموصل)', en: 'Nineveh (Mosul)', code: 'NI' },
+  { ar: 'كركوك', en: 'Kirkuk', code: 'KI' },
+  { ar: 'السليمانية', en: 'Sulaymaniyah', code: 'SU' },
+  { ar: 'دهوك', en: 'Duhok', code: 'DA' },
+  { ar: 'بابل (الحلة)', en: 'Babylon (Hillah)', code: 'BB' },
+  { ar: 'الأنبار (الرمادي/الفلوجة)', en: 'Anbar (Ramadi/Fallujah)', code: 'AN' },
+  { ar: 'ديالى (بعقوبة)', en: 'Diyala (Baqubah)', code: 'DI' },
+  { ar: 'ذي قار (الناصرية)', en: 'Dhi Qar (Nasiriyah)', code: 'DQ' },
+  { ar: 'ميسان (العمارة)', en: 'Maysan (Amarah)', code: 'MA' },
+  { ar: 'المثنى (السماوة)', en: 'Muthanna (Samawah)', code: 'MU' },
+  { ar: 'القادسية (الديوانية)', en: 'Al-Qadisiyyah (Diwaniyah)', code: 'QA' },
+  { ar: 'واسط (الكوت)', en: 'Wasit (Kut)', code: 'WA' },
+  { ar: 'صلاح الدين (تكريت/سامراء)', en: 'Saladin (Tikrit/Samarra)', code: 'SD' },
+];
 
 export const CheckoutPage: React.FC = () => {
   const { 
@@ -27,21 +53,21 @@ export const CheckoutPage: React.FC = () => {
     getProductName
   } = useStore();
 
-  const currency = activeStore.settings.currency || '$';
+  const currency = activeStore.settings.currency || 'د.ع';
   const [orderNotes, setOrderNotes] = useState('');
 
   const [shippingInfo, setShippingInfo] = useState<ShippingAddress>({
-    fullName: language === 'ar' ? 'محمد العتيبي' : 'Alexander Wright',
-    email: 'client@pandastore.com',
-    phone: '+966 50 123 4567',
-    address: language === 'ar' ? 'طريق الملك فهد، حي العليا' : '450 Mission Street, Suite 800',
-    city: language === 'ar' ? 'الرياض' : 'San Francisco',
-    state: language === 'ar' ? 'الرياض' : 'CA',
-    zipCode: '12214',
-    country: language === 'ar' ? 'المملكة العربية السعودية' : 'United States',
+    fullName: language === 'ar' ? 'حيدر علي العراقي' : 'Haidar Ali Al-Iraqi',
+    email: 'customer@pandastore.iq',
+    phone: '+964 770 123 4567',
+    address: language === 'ar' ? 'حي المنصور - شارع 14 رمضان' : 'Al-Mansour, 14th of Ramadan St',
+    city: language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)',
+    state: language === 'ar' ? 'بغداد' : 'Baghdad',
+    zipCode: '10011',
+    country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery'>('Credit Card');
+  const [paymentMethod, setPaymentMethod] = useState<Order['paymentMethod']>('Cash on Delivery');
   const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4242');
   const [cardExpiry, setCardExpiry] = useState('12/28');
   const [cardCvc, setCardCvc] = useState('884');
@@ -111,6 +137,15 @@ export const CheckoutPage: React.FC = () => {
               </h2>
             </div>
 
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-xs text-emerald-900 font-medium">
+              <span className="text-base">🇮🇶</span>
+              <span>
+                {language === 'ar'
+                  ? 'التوصيل متاح لكافة محافظات العراق الـ 18 (شحن قياسي 5,000 د.ع أو مجاني للطلبات فوق 50,000 د.ع)'
+                  : 'Domestic delivery is available exclusively across all 18 Iraqi Governorates (standard 5,000 د.ع or free over 50,000 د.ع)'}
+              </span>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -123,6 +158,24 @@ export const CheckoutPage: React.FC = () => {
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {t.phone} ({language === 'ar' ? 'زين 078، آسيا سيل 077، كورك 075' : 'Zain 078, Asiacell 077, Korek 075'})
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    required
+                    dir="ltr"
+                    placeholder="0770 123 4567"
+                    value={shippingInfo.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                  />
+                  <Phone className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
+                </div>
               </div>
 
               <div>
@@ -140,68 +193,61 @@ export const CheckoutPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {t.phone}
+                  {language === 'ar' ? 'المحافظة (العراق)' : 'Governorate (Iraq)'}
                 </label>
-                <input
-                  type="tel"
+                <select
                   required
-                  value={shippingInfo.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {t.streetAddress}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={shippingInfo.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                />
+                  value={shippingInfo.state}
+                  onChange={(e) => {
+                    const gov = e.target.value;
+                    handleInputChange('state', gov);
+                  }}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                >
+                  {IRAQ_GOVERNORATES.map((g) => (
+                    <option key={g.code} value={language === 'ar' ? g.ar : g.en}>
+                      {language === 'ar' ? g.ar : g.en}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {t.city}
+                  {language === 'ar' ? 'المدينة / المنطقة / القضاء' : 'City / District / Area'}
                 </label>
                 <input
                   type="text"
                   required
+                  placeholder={language === 'ar' ? 'مثال: حي المنصور، الكرادة، زيونة...' : 'e.g. Al-Mansour, Karrada...'}
                   value={shippingInfo.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.stateRegion}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={shippingInfo.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {language === 'ar' ? 'تفاصيل العنوان وأقرب نقطة دالة' : 'Street Address & Landmark'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={language === 'ar' ? 'الشارع، رقم الزقاق أو العمارة، أقرب نقطة دالة...' : 'Street, alley, building, landmark...'}
+                  value={shippingInfo.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                />
+              </div>
+
+              <div className="sm:col-span-2 flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                <div className="flex items-center gap-2 text-slate-700 font-bold">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <span>{language === 'ar' ? 'الدولة: جمهورية العراق 🇮🇶 (حصراً)' : 'Country: Republic of Iraq 🇮🇶 (Exclusive)'}</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.zipCode}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={shippingInfo.zipCode}
-                    onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
-                </div>
+                <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-100/60 px-2 py-0.5 rounded-full">
+                  {language === 'ar' ? 'توصيل محلي لكافة المحافظات' : 'All Governorates Covered'}
+                </span>
               </div>
             </div>
           </div>
@@ -218,32 +264,120 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Payment options pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { id: 'Credit Card' as const, label: t.creditCard },
-                { id: 'Apple Pay' as const, label: t.applePay },
-                { id: 'PayPal' as const, label: t.payPal },
-                { id: 'Cash on Delivery' as const, label: t.cashOnDelivery },
-              ].map((method) => (
-                <button
-                  type="button"
-                  key={method.id}
-                  onClick={() => setPaymentMethod(method.id)}
-                  className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-2 ${
-                    paymentMethod === method.id
-                      ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-2 ring-emerald-200'
-                      : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <CreditCard className="w-4 h-4 text-emerald-600" />
-                  <span className="text-center">{method.label}</span>
-                </button>
-              ))}
+                { 
+                  id: 'Cash on Delivery' as const, 
+                  label: language === 'ar' ? 'الدفع عند الاستلام' : 'Cash on Delivery',
+                  subtitle: language === 'ar' ? 'نقدًا لمندوب التوصيل عند الباب' : 'Pay cash to courier upon arrival',
+                  badge: language === 'ar' ? 'الأكثر شيوعاً' : 'Most Popular',
+                  icon: Banknote 
+                },
+                { 
+                  id: 'Zain Cash' as const, 
+                  label: language === 'ar' ? 'زين كاش (Zain Cash)' : 'Zain Cash',
+                  subtitle: language === 'ar' ? 'محفظة زين كاش العراقية' : 'Zain Cash mobile wallet',
+                  badge: language === 'ar' ? 'محفظة إلكترونية' : 'Wallet',
+                  icon: Smartphone 
+                },
+                { 
+                  id: 'FastPay' as const, 
+                  label: language === 'ar' ? 'فاست باي (FastPay)' : 'FastPay',
+                  subtitle: language === 'ar' ? 'محفظة فاست باي الرقمية' : 'FastPay digital wallet',
+                  badge: language === 'ar' ? 'محفظة إلكترونية' : 'Wallet',
+                  icon: Smartphone 
+                },
+                { 
+                  id: 'Credit Card' as const, 
+                  label: language === 'ar' ? 'كي كارد / ماستركارد / فيزا' : 'Qi Card / MasterCard / Visa',
+                  subtitle: language === 'ar' ? 'بطاقة مصرفية إلكترونية' : 'Debit or credit card',
+                  badge: language === 'ar' ? 'دفع إلكتروني' : 'Card',
+                  icon: CreditCard 
+                },
+              ].map((method) => {
+                const Icon = method.icon;
+                const isSelected = paymentMethod === method.id;
+                return (
+                  <button
+                    type="button"
+                    key={method.id}
+                    onClick={() => setPaymentMethod(method.id)}
+                    className={`p-4 rounded-2xl border text-start transition-all relative flex items-start gap-3 ${
+                      isSelected
+                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-2 ring-emerald-200'
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl shrink-0 ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-bold text-xs text-slate-900 block truncate">{method.label}</span>
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded shrink-0">
+                          {method.badge}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">{method.subtitle}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Simulated Card inputs */}
+            {/* Payment method dynamic details */}
+            {paymentMethod === 'Cash on Delivery' && (
+              <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200/80 space-y-1.5 text-xs text-emerald-950">
+                <div className="flex items-center gap-2 font-bold text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>{language === 'ar' ? 'الدفع نقداً عند استلام شحنتك' : 'Cash on Delivery Active'}</span>
+                </div>
+                <p className="text-emerald-800/80 leading-relaxed text-[11px]">
+                  {language === 'ar'
+                    ? `ادفع نقداً بالدينار العراقي (${currency}${cartTotal.toFixed(0)}) لمندوب التوصيل بعد استلام ومعاينة طلبك. سيتصل بك المندوب على هاتفك (${shippingInfo.phone}) لتأكيد موعد التسليم.`
+                    : `Pay cash in Iraqi Dinars (${currency}${cartTotal.toFixed(0)}) upon receiving your parcel. The courier will contact you at (${shippingInfo.phone}).`}
+                </p>
+              </div>
+            )}
+
+            {paymentMethod === 'Zain Cash' && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="font-bold text-slate-800">{language === 'ar' ? 'رقم محفظة زين كاش للمتجر:' : 'Store Zain Cash Wallet:'}</span>
+                  <span className="font-mono font-black text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200" dir="ltr">
+                    0780 123 4567
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  {language === 'ar'
+                    ? `حوّل إجمالي الطلب (${currency}${cartTotal.toFixed(0)}) إلى رقم المحفظة أعلاه عبر تطبيق زين كاش، وسيتم ربط وتجهيز طلبك تلقائياً برقم هاتفك.`
+                    : `Transfer total (${currency}${cartTotal.toFixed(0)}) via Zain Cash app to the number above.`}
+                </p>
+              </div>
+            )}
+
+            {paymentMethod === 'FastPay' && (
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="font-bold text-slate-800">{language === 'ar' ? 'رقم حساب فاست باي للمتجر:' : 'Store FastPay Account:'}</span>
+                  <span className="font-mono font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200" dir="ltr">
+                    0750 123 4567
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  {language === 'ar'
+                    ? `حوّل إجمالي الطلب (${currency}${cartTotal.toFixed(0)}) عبر تطبيق FastPay، وسيتم شحن طلبك فوراً.`
+                    : `Transfer total (${currency}${cartTotal.toFixed(0)}) via FastPay to the account above.`}
+                </p>
+              </div>
+            )}
+
             {paymentMethod === 'Credit Card' && (
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
+                  <span className="font-bold text-slate-700">{language === 'ar' ? 'بيانات البطاقة المصرفية' : 'Card Details'}</span>
+                  <span className="text-[10px] text-slate-500 font-mono">Qi Card • MasterCard • Visa</span>
+                </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">{t.cardNumber}</label>
                   <input

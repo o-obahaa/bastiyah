@@ -33,6 +33,7 @@ export const CartDrawer: React.FC = () => {
   } = useStore();
 
   const [couponInput, setCouponInput] = useState('');
+  const currency = settings.currency || 'د.ع';
 
   if (!isCartDrawerOpen) return null;
 
@@ -139,7 +140,7 @@ export const CartDrawer: React.FC = () => {
                         {prodName}
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-0.5">
-                        ${item.product.price}
+                        {currency}{item.product.price}
                       </p>
 
                       {/* Quantity Stepper */}
@@ -175,7 +176,7 @@ export const CartDrawer: React.FC = () => {
 
                     <div className="text-end shrink-0">
                       <span className="text-sm font-black text-slate-900">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        {currency}{(item.product.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -225,27 +226,27 @@ export const CartDrawer: React.FC = () => {
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>{t.subtotal}</span>
-                  <span className="font-semibold text-slate-900">${cartSubtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-slate-900">{currency}{cartSubtotal.toFixed(2)}</span>
                 </div>
                 {cartDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-semibold">
                     <span>{t.discount}</span>
-                    <span>-${cartDiscount.toFixed(2)}</span>
+                    <span>-{currency}{cartDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span>{t.shipping}</span>
                   <span className="font-semibold text-slate-900">
-                    {cartShipping === 0 ? t.free : `$${cartShipping.toFixed(2)}`}
+                    {cartShipping === 0 ? t.free : `${currency}${cartShipping.toFixed(2)}`}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>{t.estimatedTax}</span>
-                  <span className="font-semibold text-slate-900">${cartTax.toFixed(2)}</span>
+                  <span className="font-semibold text-slate-900">{currency}{cartTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
                   <span>{t.total}</span>
-                  <span className="text-emerald-700">${cartTotal.toFixed(2)}</span>
+                  <span className="text-emerald-700">{currency}{cartTotal.toFixed(2)}</span>
                 </div>
               </div>
 

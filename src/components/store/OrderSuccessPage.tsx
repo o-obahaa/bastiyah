@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 
 export const OrderSuccessPage: React.FC = () => {
-  const { lastPlacedOrder, setCurrentPage, t, language } = useStore();
+  const { lastPlacedOrder, setCurrentPage, t, language, activeStore } = useStore();
+  const currency = activeStore.settings.currency || 'د.ع';
 
   useEffect(() => {
     try {
@@ -78,7 +79,7 @@ export const OrderSuccessPage: React.FC = () => {
           <div>
             <span className="text-slate-500 block font-medium">{t.total}</span>
             <span className="font-black text-emerald-700 text-sm">
-              ${lastPlacedOrder.total.toFixed(2)}
+              {currency}{lastPlacedOrder.total.toFixed(2)}
             </span>
           </div>
           <div>
@@ -123,11 +124,11 @@ export const OrderSuccessPage: React.FC = () => {
                   />
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">{item.productName}</h4>
-                    <p className="text-[11px] text-slate-500">Qty: {item.quantity} × ${item.price}</p>
+                    <p className="text-[11px] text-slate-500">Qty: {item.quantity} × {currency}{item.price}</p>
                   </div>
                 </div>
                 <span className="text-xs font-black text-slate-900">
-                  ${(item.price * item.quantity).toFixed(2)}
+                  {currency}{(item.price * item.quantity).toFixed(2)}
                 </span>
               </div>
             ))}

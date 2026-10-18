@@ -41,7 +41,7 @@ export const ProductDetailPage: React.FC = () => {
     getCategoryName
   } = useStore();
 
-  const currency = activeStore.settings.currency || '$';
+  const currency = activeStore.settings.currency || 'د.ع';
   const product = products.find((p) => p.id === selectedProductId) || products[0];
 
   const [selectedImage, setSelectedImage] = useState(0);

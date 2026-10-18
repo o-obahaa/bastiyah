@@ -21,15 +21,7 @@ import {
 import { getStorePathLabel } from '../../utils/urlUtils';
 
 const COUNTRY_CODES = [
-  { code: '+966', country: 'SA', flag: '🇸🇦', nameAr: 'السعودية', nameEn: 'Saudi Arabia' },
-  { code: '+971', country: 'AE', flag: '🇦🇪', nameAr: 'الإمارات', nameEn: 'UAE' },
-  { code: '+965', country: 'KW', flag: '🇰🇼', nameAr: 'الكويت', nameEn: 'Kuwait' },
-  { code: '+974', country: 'QA', flag: '🇶🇦', nameAr: 'قطر', nameEn: 'Qatar' },
-  { code: '+973', country: 'BH', flag: '🇧🇭', nameAr: 'البحرين', nameEn: 'Bahrain' },
-  { code: '+968', country: 'OM', flag: '🇴🇲', nameAr: 'عمان', nameEn: 'Oman' },
-  { code: '+20',  country: 'EG', flag: '🇪🇬', nameAr: 'مصر', nameEn: 'Egypt' },
-  { code: '+962', country: 'JO', flag: '🇯🇴', nameAr: 'الأردن', nameEn: 'Jordan' },
-  { code: '+1',   country: 'US', flag: '🇺🇸', nameAr: 'أمريكا', nameEn: 'USA' },
+  { code: '+964', country: 'IQ', flag: '🇮🇶', nameAr: 'العراق', nameEn: 'Iraq' },
 ];
 
 export const StoreMerchantLogin: React.FC = () => {
@@ -48,7 +40,7 @@ export const StoreMerchantLogin: React.FC = () => {
   } = useStore();
 
   const [authMethod, setAuthMethod] = useState<'otp' | 'password'>('otp');
-  const [selectedCountryCode, setSelectedCountryCode] = useState('+966');
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+964');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpStep, setOtpStep] = useState<'input_phone' | 'input_code'>('input_phone');
   const [otpCode, setOtpCode] = useState('');
@@ -61,7 +53,7 @@ export const StoreMerchantLogin: React.FC = () => {
 
   const ArrowIcon = language === 'ar' ? ArrowRight : ArrowLeft;
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
-  const registeredPhone = activeStore.ownerPhone || '+966 50 123 4567';
+  const registeredPhone = activeStore.ownerPhone || '+964 770 123 4567';
 
   // Timer countdown effect for OTP resend
   useEffect(() => {
@@ -185,7 +177,7 @@ export const StoreMerchantLogin: React.FC = () => {
   const handleUseDemoCredentials = () => {
     setError(null);
     // Parse registered phone
-    const regPhone = activeStore.ownerPhone || '+966 50 123 4567';
+    const regPhone = activeStore.ownerPhone || '+964 770 123 4567';
     
     // Find matching country code prefix
     const matchedCountry = COUNTRY_CODES.find((c) => regPhone.startsWith(c.code));
@@ -194,8 +186,8 @@ export const StoreMerchantLogin: React.FC = () => {
       const localNum = regPhone.replace(matchedCountry.code, '').trim();
       setPhoneNumber(localNum);
     } else {
-      setSelectedCountryCode('+966');
-      setPhoneNumber(regPhone.replace('+966', '').trim());
+      setSelectedCountryCode('+964');
+      setPhoneNumber(regPhone.replace('+964', '').trim());
     }
 
     if (authMethod === 'password') {
@@ -420,7 +412,7 @@ export const StoreMerchantLogin: React.FC = () => {
                         required
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="50 123 4567"
+                        placeholder="0770 123 4567"
                         className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 focus:border-slate-600 text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors font-mono font-bold tracking-wider"
                       />
                       <Smartphone className="w-4 h-4 text-slate-500 absolute top-1/2 -translate-y-1/2 end-3.5 pointer-events-none" />
@@ -429,8 +421,8 @@ export const StoreMerchantLogin: React.FC = () => {
 
                   <p className="text-[11px] text-slate-500 mt-1.5">
                     {language === 'ar'
-                      ? 'سيتم إرسال رمز تحقق مكوّن من 4 أرقام عبر رسالة SMS إلى هاتفك المسجل.'
-                      : 'A 4-digit verification code will be sent via SMS to your registered phone.'}
+                      ? 'يدعم شبكات الاتصال داخل العراق (زين 078، آسيا سيل 077، كورك 075). سيتم إرسال رمز التحقق SMS.'
+                      : 'Supports Iraqi networks (Zain 078, Asiacell 077, Korek 075). An SMS code will be sent.'}
                   </p>
                 </div>
 
@@ -549,7 +541,7 @@ export const StoreMerchantLogin: React.FC = () => {
                       required
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="50 123 4567"
+                      placeholder="0770 123 4567"
                       className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 focus:border-slate-600 text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none transition-colors font-mono font-bold tracking-wider"
                     />
                     <Smartphone className="w-4 h-4 text-slate-500 absolute top-1/2 -translate-y-1/2 end-3.5 pointer-events-none" />

@@ -17,7 +17,7 @@ export const ProductQuickViewModal: React.FC = () => {
     getCategoryName
   } = useStore();
 
-  const currency = activeStore.settings.currency || '$';
+  const currency = activeStore.settings.currency || 'د.ع';
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
 

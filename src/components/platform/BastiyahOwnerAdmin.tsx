@@ -154,7 +154,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [newCategoryIndex, setNewCategoryIndex] = useState(0);
   const [newOwnerName, setNewOwnerName] = useState('');
   const [newOwnerEmail, setNewOwnerEmail] = useState('');
-  const [newOwnerPhone, setNewOwnerPhone] = useState('+966 50 123 4567');
+  const [newOwnerPhone, setNewOwnerPhone] = useState('+964 770 123 4567');
   const [newAdminPassword, setNewAdminPassword] = useState('merchant123');
   const [newPlan, setNewPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
   const [newThemeColor, setNewThemeColor] = useState<StoreThemeColor>('emerald');
@@ -197,7 +197,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setEditCategory(store.category);
     setEditOwnerName(store.ownerName);
     setEditOwnerEmail(store.ownerEmail);
-    setEditOwnerPhone(store.ownerPhone || '+966 50 123 4567');
+    setEditOwnerPhone(store.ownerPhone || '+964 770 123 4567');
     setEditAdminPassword(store.adminPassword || 'merchant123');
     setEditPlan(store.plan);
     setEditStatus(store.status);
@@ -332,7 +332,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       categoryAr: chosenCat.ar,
       ownerName: newOwnerName || 'Store Merchant',
       ownerEmail: newOwnerEmail || `merchant@${normalizedNewSlug}.bastiyah.com`,
-      ownerPhone: newOwnerPhone.trim() || '+966 50 123 4567',
+      ownerPhone: newOwnerPhone.trim() || '+964 770 123 4567',
       adminPassword: newAdminPassword.trim() || 'merchant123',
       plan: newPlan,
       themeColor: newThemeColor,
@@ -349,7 +349,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setNewTaglineAr('');
     setNewOwnerName('');
     setNewOwnerEmail('');
-    setNewOwnerPhone('+966 50 123 4567');
+    setNewOwnerPhone('+964 770 123 4567');
     setNewAdminPassword('merchant123');
     setShowCreateModal(false);
 
@@ -1826,10 +1826,10 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                               <div className="flex items-center gap-1.5">
                                 <span className="font-mono text-xs text-emerald-400 font-bold flex items-center gap-1">
                                   <Phone className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span>{store.ownerPhone || '+966 50 123 4567'}</span>
+                                  <span>{store.ownerPhone || '+964 770 123 4567'}</span>
                                 </span>
                                 <button
-                                  onClick={() => handleCopyText(store.ownerPhone || '+966 50 123 4567', 'Merchant Phone')}
+                                  onClick={() => handleCopyText(store.ownerPhone || '+964 770 123 4567', 'Merchant Phone')}
                                   className="text-slate-500 hover:text-slate-300 p-0.5 rounded"
                                   title="Copy Phone"
                                 >
@@ -2959,7 +2959,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     type="tel"
                     value={editOwnerPhone}
                     onChange={(e) => setEditOwnerPhone(e.target.value)}
-                    placeholder="+966 50 123 4567"
+                    placeholder="+964 770 123 4567"
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
                     dir="ltr"
                   />
@@ -3159,7 +3159,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     type="tel"
                     value={newOwnerPhone}
                     onChange={(e) => setNewOwnerPhone(e.target.value)}
-                    placeholder="+966 50 123 4567"
+                    placeholder="+964 770 123 4567"
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
                     dir="ltr"
                   />

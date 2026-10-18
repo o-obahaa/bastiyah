@@ -88,7 +88,7 @@ export interface Order {
   tax: number;
   total: number;
   status: OrderStatus;
-  paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery';
+  paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery' | 'Zain Cash' | 'FastPay' | 'Qi Card';
   trackingNumber?: string;
   courier?: string;
   notes?: string;

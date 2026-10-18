@@ -159,7 +159,7 @@ interface StoreContextType {
   lastPlacedOrder: Order | null;
   placeOrder: (
     shippingInfo: ShippingAddress, 
-    paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery',
+    paymentMethod: Order['paymentMethod'],
     notes?: string
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -304,14 +304,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map((s: any) => {
-            if (!s.ownerPhone) {
-              const initMatch = INITIAL_HOSTED_STORES.find((init) => init.id === s.id);
-              return {
-                ...s,
-                ownerPhone: initMatch?.ownerPhone || '+966 50 123 4567',
-              };
-            }
-            return s;
+            const initMatch = INITIAL_HOSTED_STORES.find((init) => init.id === s.id);
+            const needsIraqiPhone = !s.ownerPhone || s.ownerPhone.startsWith('+966') || s.ownerPhone.startsWith('+971');
+            const needsIraqiCurrency = !s.settings?.currency || s.settings?.currency === '$';
+            return {
+              ...s,
+              ownerPhone: needsIraqiPhone ? (initMatch?.ownerPhone || '+964 770 123 4567') : s.ownerPhone,
+              settings: {
+                ...s.settings,
+                currency: needsIraqiCurrency ? 'د.ع' : s.settings?.currency,
+                freeShippingThreshold: needsIraqiCurrency ? 50000 : (s.settings?.freeShippingThreshold || 50000),
+                standardShippingFee: needsIraqiCurrency ? 5000 : (s.settings?.standardShippingFee || 5000),
+                taxRate: 0,
+              },
+            };
           });
         }
       } catch {
@@ -418,7 +424,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   >({});
 
   const normalizePhoneNumber = (phone: string): string => {
-    return phone.replace(/[^0-9]/g, '');
+    let digits = phone.replace(/[^0-9]/g, '');
+    if (digits.startsWith('964')) {
+      digits = digits.slice(3);
+    }
+    if (digits.startsWith('0')) {
+      digits = digits.slice(1);
+    }
+    return digits;
   };
 
   const isStoreAdminAuthenticated = (storeId?: string): boolean => {
@@ -441,12 +454,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!inputPhoneNorm || inputPhoneNorm.length < 7) {
       return {
         success: false,
-        message: language === 'ar' ? 'يرجى إدخال رقم هاتف صحيح' : 'Please provide a valid phone number',
+        message: language === 'ar' ? 'يرجى إدخال رقم هاتف عراقي صحيح' : 'Please provide a valid Iraqi phone number',
         error: 'invalid_phone',
       };
     }
 
-    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+966 50 123 4567');
+    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+964 770 123 4567');
     const isMatch =
       targetPhoneNorm === inputPhoneNorm ||
       (inputPhoneNorm.length >= 8 && targetPhoneNorm.endsWith(inputPhoneNorm.slice(-8))) ||
@@ -516,7 +529,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!targetStore) return false;
 
     const inputPhoneNorm = normalizePhoneNumber(identifier);
-    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+966 50 123 4567');
+    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+964 770 123 4567');
     const isPhoneMatch =
       inputPhoneNorm.length >= 7 &&
       (targetPhoneNorm === inputPhoneNorm ||
@@ -1035,7 +1048,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       categoryAr: input.categoryAr || input.category,
       ownerName: input.ownerName.trim() || 'Store Owner',
       ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.com`,
-      ownerPhone: input.ownerPhone?.trim() || '+966 50 123 4567',
+      ownerPhone: input.ownerPhone?.trim() || '+964 770 123 4567',
       adminPassword: input.adminPassword?.trim() || 'merchant123',
       status: 'active',
       plan: input.plan,
@@ -1050,10 +1063,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       settings: {
         storeName: input.name.trim(),
         supportEmail: input.ownerEmail.trim() || `support@${cleanSlug}.com`,
-        currency: input.currency || '$',
-        freeShippingThreshold: 100,
-        standardShippingFee: 9.99,
-        taxRate: 0.08,
+        currency: input.currency || 'د.ع',
+        freeShippingThreshold: 50000,
+        standardShippingFee: 5000,
+        taxRate: 0,
       },
       products: starterProducts.map((p, idx) => ({
         ...p,
@@ -1385,7 +1398,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Orders Management
   const placeOrder = (
     shippingInfo: ShippingAddress, 
-    paymentMethod: 'Credit Card' | 'Apple Pay' | 'PayPal' | 'Cash on Delivery',
+    paymentMethod: Order['paymentMethod'],
     notes?: string
   ): Order => {
     const prefix = activeStore.slug.toUpperCase().slice(0, 5);

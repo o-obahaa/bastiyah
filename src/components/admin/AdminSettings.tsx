@@ -59,7 +59,7 @@ export const AdminSettings: React.FC = () => {
   });
 
   // Merchant login credentials & security
-  const [ownerLoginPhone, setOwnerLoginPhone] = useState(activeStore.ownerPhone || '+966 50 123 4567');
+  const [ownerLoginPhone, setOwnerLoginPhone] = useState(activeStore.ownerPhone || '+964 770 123 4567');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -67,17 +67,13 @@ export const AdminSettings: React.FC = () => {
   const [newCouponData, setNewCouponData] = useState({
     code: '',
     discountPercent: 15,
-    minSpend: 50,
+    minSpend: 25000,
     description: '',
   });
 
   const currencies = [
+    { symbol: 'د.ع', label: 'IQD (د.ع) — دينار عراقي (العملة الرسمية داخل العراق)' },
     { symbol: '$', label: 'USD ($) — دولار أمريكي' },
-    { symbol: 'د.ع', label: 'IQD (د.ع) — دينار عراقي' },
-    { symbol: 'ر.س', label: 'SAR (ر.س) — ريال سعودي' },
-    { symbol: 'د.إ', label: 'AED (د.إ) — درهم إماراتي' },
-    { symbol: 'د.ك', label: 'KWD (د.ك) — دينار كويتي' },
-    { symbol: 'ج.م', label: 'EGP (ج.م) — جنيه مصري' },
   ];
 
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -133,7 +129,7 @@ export const AdminSettings: React.FC = () => {
       description: newCouponData.description || `${newCouponData.discountPercent}% off orders over ${formSettings.currency}${newCouponData.minSpend}`,
     });
 
-    setNewCouponData({ code: '', discountPercent: 15, minSpend: 50, description: '' });
+    setNewCouponData({ code: '', discountPercent: 15, minSpend: 25000, description: '' });
     setIsNewCouponOpen(false);
     addToast(language === 'ar' ? 'تم إنشاء كود الخصم بنجاح!' : 'Coupon created successfully!', 'success');
   };
@@ -323,7 +319,7 @@ export const AdminSettings: React.FC = () => {
                     />
                     <CreditCard className="w-4 h-4 text-indigo-600" />
                     <div>
-                      <span className="font-bold text-slate-800 block">{language === 'ar' ? 'البطاقات الإلكترونية / مدى' : 'Credit / Debit Card'}</span>
+                      <span className="font-bold text-slate-800 block">{language === 'ar' ? 'البطاقات الإلكترونية / كي كارد / ماستركارد' : 'Debit / Credit / Qi Card'}</span>
                       <span className="text-[10px] text-slate-400">{language === 'ar' ? 'دفع إلكتروني فوري' : 'Online checkout'}</span>
                     </div>
                   </label>
@@ -351,7 +347,7 @@ export const AdminSettings: React.FC = () => {
                     />
                     <Banknote className="w-4 h-4 text-amber-600" />
                     <div>
-                      <span className="font-bold text-slate-800 block">{language === 'ar' ? 'التحويل البنكي المباشر' : 'Direct Bank Wire'}</span>
+                      <span className="font-bold text-slate-800 block">{language === 'ar' ? 'التحويل المصرفي / محفظة زين كاش' : 'Direct Bank / Mobile Wallet'}</span>
                       <span className="text-[10px] text-slate-400">{language === 'ar' ? 'إيداع على حساب التاجر' : 'Wire to bank account'}</span>
                     </div>
                   </label>
@@ -360,11 +356,11 @@ export const AdminSettings: React.FC = () => {
                 {paymentMethods.bankTransfer && (
                   <div>
                     <label className="font-bold text-slate-700 block mb-1">
-                      {language === 'ar' ? 'بيانات الحساب البنكي والآيبان (IBAN)' : 'Bank Details & IBAN'}
+                      {language === 'ar' ? 'بيانات الحساب المصرفي أو رقم محفظة زين كاش' : 'Bank Details or Zain Cash Wallet'}
                     </label>
                     <textarea
                       rows={2}
-                      placeholder="اسم البنك: ... الآيبان: SA..."
+                      placeholder={language === 'ar' ? 'اسم المصرف (مثال: مصرف التي بي آي / مصرف بغداد / محفظة زين كاش 0780...)' : 'Bank name / Qi Card / Zain Cash Wallet 0780...'}
                       value={formSettings.bankDetails}
                       onChange={(e) => setFormSettings({ ...formSettings, bankDetails: e.target.value })}
                       className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-xs font-mono"
@@ -410,7 +406,7 @@ export const AdminSettings: React.FC = () => {
                     required
                     value={ownerLoginPhone}
                     onChange={(e) => setOwnerLoginPhone(e.target.value)}
-                    placeholder="+966 50 123 4567"
+                    placeholder="+964 770 123 4567"
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
                     dir="ltr"
                   />

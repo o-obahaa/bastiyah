@@ -92,7 +92,7 @@ export const translations = {
     // Storefront Brand
     storeName: 'Panda Store',
     storeSubtitle: 'Lifestyle & Smart Tech',
-    topBanner: 'Complimentary express delivery on orders over $99 • Use code WELCOME10 for 10% off',
+    topBanner: 'Complimentary express delivery across all Iraq for orders over 50,000 د.ع • Use code WELCOME10 for 10% off',
     shopNow: 'Shop Now',
 
     // Navigation
@@ -175,7 +175,7 @@ export const translations = {
     bagEmpty: 'Your bag is empty',
     bagEmptyDesc: 'Explore our curated collection and discover the perfect items.',
     freeShippingUnlocked: 'You unlocked FREE Express Shipping!',
-    freeShippingRemaining: 'Add ${amount} more for FREE Express Shipping!',
+    freeShippingRemaining: 'Add {amount} د.ع more for FREE Express Shipping!',
     couponCode: 'Coupon',
     applyCoupon: 'Apply',
     couponPlaceholder: 'Coupon (e.g. WELCOME10)',
@@ -394,7 +394,7 @@ export const translations = {
     // Storefront Brand
     storeName: 'متجر باندا',
     storeSubtitle: 'التقنية العصرية ونمط الحياة',
-    topBanner: 'توصيل مجاني فائق السرعة للطلبات فوق 99$ • استخدم كود WELCOME10 لخصم 10%',
+    topBanner: 'توصيل مجاني فائق السرعة لكافة محافظات العراق للطلبات فوق 50,000 د.ع • استخدم كود WELCOME10 لخصم 10%',
     shopNow: 'تسوق الآن',
 
     // Navigation
@@ -477,7 +477,7 @@ export const translations = {
     bagEmpty: 'سلتك فارغة حالياً',
     bagEmptyDesc: 'استكشف مجموعتنا المختارة واعثر على أرقى المنتجات.',
     freeShippingUnlocked: 'مبروك! حصلت على شحن سريع مجاني!',
-    freeShippingRemaining: 'أضف منتجات بقيمة {amount}$ للحصول على شحن مجاني!',
+    freeShippingRemaining: 'أضف منتجات بقيمة {amount} د.ع للحصول على شحن مجاني!',
     couponCode: 'كوبون الخصم',
     applyCoupon: 'تطبيق',
     couponPlaceholder: 'رمز الكوبون (مثال: WELCOME10)',
