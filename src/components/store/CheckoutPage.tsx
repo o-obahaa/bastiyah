@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ShippingAddress, Order } from '../../types';
 import { 
@@ -6,13 +6,14 @@ import {
   Truck, 
   Lock, 
   ArrowLeft, 
-  ArrowRight,
+  ArrowRight, 
   ShoppingBag,
   Banknote,
   Smartphone,
   MapPin,
   CheckCircle2,
-  Phone
+  Phone,
+  MessageCircle
 } from 'lucide-react';
 
 export const IRAQ_GOVERNORATES = [
@@ -50,7 +51,9 @@ export const CheckoutPage: React.FC = () => {
     setCurrentPage,
     t,
     language,
-    getProductName
+    getProductName,
+    currentCustomer,
+    setIsCustomerAuthModalOpen
   } = useStore();
 
   const currency = activeStore.settings.currency || 'د.ع';
@@ -66,6 +69,19 @@ export const CheckoutPage: React.FC = () => {
     zipCode: '10011',
     country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
   });
+
+  useEffect(() => {
+    if (currentCustomer) {
+      setShippingInfo((prev) => ({
+        ...prev,
+        fullName: currentCustomer.name || prev.fullName,
+        phone: currentCustomer.phone || prev.phone,
+        email: currentCustomer.email || prev.email,
+        address: currentCustomer.address || prev.address,
+        city: currentCustomer.city || prev.city,
+      }));
+    }
+  }, [currentCustomer]);
 
   const [paymentMethod, setPaymentMethod] = useState<Order['paymentMethod']>('Cash on Delivery');
   const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4242');
@@ -145,6 +161,44 @@ export const CheckoutPage: React.FC = () => {
                   : 'Domestic delivery is available exclusively across all 18 Iraqi Governorates (standard 5,000 د.ع or free over 50,000 د.ع)'}
               </span>
             </div>
+
+            {/* WhatsApp Customer Sign-In / Account Status */}
+            {currentCustomer ? (
+              <div className="flex items-center justify-between p-3.5 bg-[#25D366]/10 border border-[#25D366]/30 rounded-2xl text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[#25D366] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    <MessageCircle className="w-4 h-4 fill-white" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-900 block">
+                      {language === 'ar' ? `مسجل دخول عبر واتساب: ${currentCustomer.name}` : `Signed in via WhatsApp: ${currentCustomer.name}`}
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-800" dir="ltr">{currentCustomer.phone}</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-[#075E54] bg-white px-2.5 py-1 rounded-lg border border-[#25D366]/30 shadow-2xs">
+                  {language === 'ar' ? 'تمت تعبئة بياناتك تلقائياً ✓' : 'Auto-filled ✓'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs gap-3">
+                <div className="flex items-center gap-2.5">
+                  <MessageCircle className="w-5 h-5 text-[#25D366] shrink-0" />
+                  <span className="text-slate-600 text-xs">
+                    {language === 'ar'
+                      ? 'لديك حساب سابق؟ سجّل الدخول عبر واتساب لتعبئة بياناتك تلقائياً بنقرة واحدة.'
+                      : 'Have an account? Sign in with WhatsApp to auto-fill your delivery info.'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomerAuthModalOpen(true)}
+                  className="px-3.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-bold text-xs rounded-xl shrink-0 transition-all shadow-sm"
+                >
+                  {language === 'ar' ? 'دخول واتساب' : 'WhatsApp Login'}
+                </button>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">

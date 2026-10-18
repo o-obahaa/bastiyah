@@ -106,6 +106,18 @@ export interface Customer {
   joinedDate: string;
 }
 
+export interface CustomerUser {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  city?: string;
+  address?: string;
+  avatar?: string;
+  authenticatedVia: 'whatsapp';
+  authenticatedAt: string;
+}
+
 export interface Coupon {
   code: string;
   discountPercent: number;

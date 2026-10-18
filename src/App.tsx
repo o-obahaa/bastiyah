@@ -8,6 +8,7 @@ import { BastiyahLandingPage } from './components/platform/BastiyahLandingPage';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { ToastContainer } from './components/common/ToastContainer';
+import { CustomerWhatsAppAuthModal } from './components/common/CustomerWhatsAppAuthModal';
 import { HeroBanner } from './components/store/HeroBanner';
 import { CategoryFilter } from './components/store/CategoryFilter';
 import { ProductCard } from './components/store/ProductCard';
@@ -139,6 +140,7 @@ export function App() {
       <ToastContainer />
       <ProductQuickViewModal />
       <CartDrawer />
+      <CustomerWhatsAppAuthModal />
 
       {/* Discrete Floating Platform Switcher for preview & testing */}
       <PlatformSwitcherPill />

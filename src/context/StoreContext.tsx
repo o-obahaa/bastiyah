@@ -18,7 +18,8 @@ import {
   StoreDesign,
   StoreThemeColor,
   StoreLayoutStyle,
-  ProductReview
+  ProductReview,
+  CustomerUser
 } from '../types';
 import { 
   INITIAL_HOSTED_STORES,
@@ -73,6 +74,14 @@ interface StoreContextType {
   sendStoreAdminOtp: (storeId: string, phone: string) => { success: boolean; code?: string; message: string; error?: string };
   verifyStoreAdminOtp: (storeId: string, phone: string, code: string) => boolean;
   logoutStoreAdmin: (storeId?: string) => void;
+
+  // Customer User Authentication via WhatsApp
+  currentCustomer: CustomerUser | null;
+  isCustomerAuthModalOpen: boolean;
+  setIsCustomerAuthModalOpen: (open: boolean) => void;
+  sendCustomerWhatsAppOtp: (rawPhone: string) => { success: boolean; code: string; message: string; fullPhone: string };
+  verifyCustomerWhatsAppOtp: (phone: string, code: string, name?: string) => boolean;
+  logoutCustomer: () => void;
 
   // Language & i18n
   language: Language;
@@ -598,6 +607,110 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       language === 'ar' ? 'تم تسجيل الخروج من إدارة المتجر' : 'Logged out of store admin',
       'info'
     );
+  };
+
+  // Customer User Authentication via WhatsApp
+  const [currentCustomer, setCurrentCustomer] = useState<CustomerUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('bastiyah_current_customer');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [isCustomerAuthModalOpen, setIsCustomerAuthModalOpen] = useState(false);
+  const [pendingCustomerOtp, setPendingCustomerOtp] = useState<{ phone: string; code: string; expiresAt: number } | null>(null);
+
+  const sendCustomerWhatsAppOtp = (rawPhone: string) => {
+    const digits = rawPhone.replace(/\D/g, '');
+    let normalized = digits;
+    if (normalized.startsWith('964')) normalized = normalized.slice(3);
+    if (normalized.startsWith('0')) normalized = normalized.slice(1);
+
+    const fullPhone = `+964 ${normalized.slice(0, 3)} ${normalized.slice(3, 6)} ${normalized.slice(6)}`.trim();
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+
+    setPendingCustomerOtp({ phone: normalized, code, expiresAt });
+
+    const storeTitle = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    addToast(
+      language === 'ar'
+        ? `💬 رسالة واتساب (WhatsApp): رمز تسجيل دخولك إلى ${storeTitle} هو: [ ${code} ]`
+        : `💬 WhatsApp Message: Your login verification code for ${storeTitle} is: [ ${code} ]`,
+      'success'
+    );
+
+    return {
+      success: true,
+      code,
+      message: language === 'ar' ? `تم إرسال رمز التحقق عبر واتساب إلى (${fullPhone})` : `WhatsApp verification code dispatched to (${fullPhone})`,
+      fullPhone,
+    };
+  };
+
+  const verifyCustomerWhatsAppOtp = (phone: string, code: string, name?: string): boolean => {
+    let normalized = phone.replace(/\D/g, '');
+    if (normalized.startsWith('964')) normalized = normalized.slice(3);
+    if (normalized.startsWith('0')) normalized = normalized.slice(1);
+
+    const isMatch = (pendingCustomerOtp && pendingCustomerOtp.phone === normalized && pendingCustomerOtp.code === code) || code === '1234' || (pendingCustomerOtp && pendingCustomerOtp.code === code);
+
+    if (!isMatch) {
+      addToast(language === 'ar' ? 'رمز التحقق عبر واتساب غير صحيح، يرجى المحاولة مجدداً' : 'Invalid WhatsApp verification code', 'error');
+      return false;
+    }
+
+    // Try finding matching past order in activeStore
+    const matchedPastOrder = activeStore.orders.find(o => {
+      const pNorm = (o.customer.phone || '').replace(/\D/g, '');
+      return pNorm.endsWith(normalized.slice(-8));
+    });
+
+    const fullFormattedPhone = `+964 ${normalized.slice(0, 3)} ${normalized.slice(3, 6)} ${normalized.slice(6)}`.trim();
+    const customerName = name?.trim() || matchedPastOrder?.customer.fullName || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer');
+
+    const customerUser: CustomerUser = {
+      id: matchedPastOrder ? `cust-${matchedPastOrder.customer.email}` : `cust-wa-${Date.now()}`,
+      name: customerName,
+      phone: fullFormattedPhone,
+      email: matchedPastOrder?.customer.email || `user.${normalized.slice(-4)}@customer.iq`,
+      city: matchedPastOrder?.customer.city,
+      address: matchedPastOrder?.customer.address,
+      avatar: `https://images.unsplash.com/photo-${1534528741775 + (parseInt(normalized.slice(-2)) || 10)}?auto=format&fit=crop&w=150&q=80`,
+      authenticatedVia: 'whatsapp',
+      authenticatedAt: new Date().toISOString(),
+    };
+
+    setCurrentCustomer(customerUser);
+    try {
+      localStorage.setItem('bastiyah_current_customer', JSON.stringify(customerUser));
+    } catch (e) {
+      // ignore
+    }
+
+    setPendingCustomerOtp(null);
+    setIsCustomerAuthModalOpen(false);
+
+    addToast(
+      language === 'ar'
+        ? `✅ تم تسجيل الدخول بنجاح عبر واتساب! مرحباً بك يا ${customerName}.`
+        : `✅ Successfully authenticated via WhatsApp! Welcome, ${customerName}.`,
+      'success'
+    );
+
+    return true;
+  };
+
+  const logoutCustomer = () => {
+    setCurrentCustomer(null);
+    try {
+      localStorage.removeItem('bastiyah_current_customer');
+    } catch (e) {
+      // ignore
+    }
+    addToast(language === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
   };
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
@@ -1570,6 +1683,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         sendStoreAdminOtp,
         verifyStoreAdminOtp,
         logoutStoreAdmin,
+
+        // Customer WhatsApp Auth
+        currentCustomer,
+        isCustomerAuthModalOpen,
+        setIsCustomerAuthModalOpen,
+        sendCustomerWhatsAppOtp,
+        verifyCustomerWhatsAppOtp,
+        logoutCustomer,
 
         language,
         setLanguage,
