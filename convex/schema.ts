@@ -14,6 +14,7 @@ export default defineSchema({
     categoryAr: v.optional(v.string()),
     ownerName: v.string(),
     ownerEmail: v.string(),
+    ownerPhone: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("maintenance"), v.literal("suspended")),
     plan: v.union(v.literal("Starter"), v.literal("Growth"), v.literal("Enterprise")),
     createdAt: v.string(),

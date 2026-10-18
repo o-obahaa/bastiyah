@@ -213,7 +213,7 @@ export const AdminLayout: React.FC = () => {
                     {activeStore.ownerName}
                   </span>
                   <span className="text-[10px] text-slate-400 block font-mono" dir="ltr">
-                    {activeStore.ownerEmail}
+                    {activeStore.ownerPhone || activeStore.ownerEmail}
                   </span>
                 </div>
 

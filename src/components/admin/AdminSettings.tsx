@@ -14,6 +14,7 @@ import {
   CreditCard, 
   Banknote, 
   Phone, 
+  Smartphone,
   Trash2,
   DollarSign,
   ShieldCheck,
@@ -57,7 +58,8 @@ export const AdminSettings: React.FC = () => {
     applePay: settings.paymentMethods?.applePay ?? true,
   });
 
-  // Password reset state
+  // Merchant login credentials & security
+  const [ownerLoginPhone, setOwnerLoginPhone] = useState(activeStore.ownerPhone || '+966 50 123 4567');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -94,24 +96,29 @@ export const AdminSettings: React.FC = () => {
     addToast(language === 'ar' ? 'تم حفظ إعدادات المتجر بنجاح!' : 'Store settings updated!', 'success');
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdateSecurity = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword.trim()) {
-      addToast(language === 'ar' ? 'يرجى إدخال كلمة المرور الجديدة' : 'Please enter new password', 'error');
+    if (!ownerLoginPhone.trim()) {
+      addToast(language === 'ar' ? 'يرجى إدخال رقم جوال مالك المتجر' : 'Please provide owner phone number', 'error');
       return;
     }
-    if (newPassword !== confirmPassword) {
+
+    if (newPassword && newPassword !== confirmPassword) {
       addToast(language === 'ar' ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match', 'error');
       return;
     }
 
     updateHostedStore(activeStore.id, {
-      adminPassword: newPassword.trim(),
+      ownerPhone: ownerLoginPhone.trim(),
+      ...(newPassword.trim() ? { adminPassword: newPassword.trim() } : {}),
     });
 
     setNewPassword('');
     setConfirmPassword('');
-    addToast(language === 'ar' ? 'تم تحديث كلمة مرور مدير المتجر بنجاح!' : 'Store admin password updated!', 'success');
+    addToast(
+      language === 'ar' ? 'تم حفظ بيانات أمان الدخول ورقم الجوال بنجاح!' : 'Login phone and security settings saved!',
+      'success'
+    );
   };
 
   const handleCreateCoupon = (e: React.FormEvent) => {
@@ -381,26 +388,48 @@ export const AdminSettings: React.FC = () => {
           {/* Store Owner Password & Security */}
           <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-              <Lock className="w-5 h-5 text-indigo-600" />
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
               <div>
                 <h3 className="font-bold text-base text-slate-900">
-                  {language === 'ar' ? 'أمان الدخول وكلمة المرور' : 'Store Admin Security & Password'}
+                  {language === 'ar' ? 'أمان وتسجيل دخول مالك المتجر' : 'Store Owner Authentication & Security'}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {language === 'ar' ? 'تغيير كلمة مرور لوحة تحكم المتجر المخصصة لك' : 'Update your dedicated merchant panel password'}
+                  {language === 'ar' ? 'تحديث رقم الجوال المستخدم في تسجيل الدخول (SMS OTP) وكلمة المرور' : 'Update your login mobile phone (SMS OTP) and panel password'}
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleUpdatePassword} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleUpdateSecurity} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">
+                  {language === 'ar' ? 'رقم جوال تسجيل الدخول (معتمد لرموز SMS)' : 'Merchant Login Phone (SMS OTP)'} *
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    required
+                    value={ownerLoginPhone}
+                    onChange={(e) => setOwnerLoginPhone(e.target.value)}
+                    placeholder="+966 50 123 4567"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
+                    dir="ltr"
+                  />
+                  <Smartphone className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {language === 'ar'
+                    ? 'يُستخدم هذا الرقم للتحقق المباشر عند تسجيل الدخول إلى لوحة إدارة متجرك وتلقي رمز التحقق السري.'
+                    : 'This mobile number is used to verify store owner access and receive 4-digit SMS OTP codes.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'كلمة المرور الجديدة' : 'New Password'}
+                    {language === 'ar' ? 'تغيير كلمة المرور (اختياري)' : 'New Password (Optional)'}
                   </label>
                   <input
                     type="password"
-                    required
                     placeholder="••••••••"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -414,7 +443,6 @@ export const AdminSettings: React.FC = () => {
                   </label>
                   <input
                     type="password"
-                    required
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -423,12 +451,13 @@ export const AdminSettings: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors shadow-sm"
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors shadow-sm flex items-center gap-1.5"
                 >
-                  {language === 'ar' ? 'تحديث كلمة المرور' : 'Update Password'}
+                  <Save className="w-4 h-4 text-emerald-400" />
+                  <span>{language === 'ar' ? 'حفظ إعدادات الأمان والجوال' : 'Save Security & Phone'}</span>
                 </button>
               </div>
             </form>

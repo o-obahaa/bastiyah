@@ -136,6 +136,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [editCategory, setEditCategory] = useState('');
   const [editOwnerName, setEditOwnerName] = useState('');
   const [editOwnerEmail, setEditOwnerEmail] = useState('');
+  const [editOwnerPhone, setEditOwnerPhone] = useState('');
   const [editAdminPassword, setEditAdminPassword] = useState('');
   const [editPlan, setEditPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
   const [editStatus, setEditStatus] = useState<'active' | 'maintenance' | 'suspended'>('active');
@@ -153,6 +154,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [newCategoryIndex, setNewCategoryIndex] = useState(0);
   const [newOwnerName, setNewOwnerName] = useState('');
   const [newOwnerEmail, setNewOwnerEmail] = useState('');
+  const [newOwnerPhone, setNewOwnerPhone] = useState('+966 50 123 4567');
   const [newAdminPassword, setNewAdminPassword] = useState('merchant123');
   const [newPlan, setNewPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
   const [newThemeColor, setNewThemeColor] = useState<StoreThemeColor>('emerald');
@@ -195,6 +197,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setEditCategory(store.category);
     setEditOwnerName(store.ownerName);
     setEditOwnerEmail(store.ownerEmail);
+    setEditOwnerPhone(store.ownerPhone || '+966 50 123 4567');
     setEditAdminPassword(store.adminPassword || 'merchant123');
     setEditPlan(store.plan);
     setEditStatus(store.status);
@@ -237,6 +240,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       category: editCategory,
       ownerName: editOwnerName.trim() || 'Store Merchant',
       ownerEmail: editOwnerEmail.trim(),
+      ownerPhone: editOwnerPhone.trim(),
       adminPassword: editAdminPassword.trim() || 'merchant123',
       plan: editPlan,
       status: editStatus,
@@ -328,6 +332,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       categoryAr: chosenCat.ar,
       ownerName: newOwnerName || 'Store Merchant',
       ownerEmail: newOwnerEmail || `merchant@${normalizedNewSlug}.bastiyah.com`,
+      ownerPhone: newOwnerPhone.trim() || '+966 50 123 4567',
       adminPassword: newAdminPassword.trim() || 'merchant123',
       plan: newPlan,
       themeColor: newThemeColor,
@@ -344,6 +349,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setNewTaglineAr('');
     setNewOwnerName('');
     setNewOwnerEmail('');
+    setNewOwnerPhone('+966 50 123 4567');
     setNewAdminPassword('merchant123');
     setShowCreateModal(false);
 
@@ -568,8 +574,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
         const q = merchantSearch.toLowerCase();
         const matchesOwner = s.ownerName.toLowerCase().includes(q);
         const matchesEmail = s.ownerEmail.toLowerCase().includes(q);
+        const matchesPhone = (s.ownerPhone || '').toLowerCase().includes(q);
         const matchesStore = s.name.toLowerCase().includes(q) || (s.nameAr || '').toLowerCase().includes(q) || s.slug.toLowerCase().includes(q);
-        return matchesOwner || matchesEmail || matchesStore;
+        return matchesOwner || matchesEmail || matchesPhone || matchesStore;
       }
       return true;
     });
@@ -1815,21 +1822,37 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           </td>
 
                           <td className="py-4 px-4">
-                            <div className="flex items-center gap-1.5" dir="ltr">
-                              <a
-                                href={`mailto:${store.ownerEmail}`}
-                                className="font-mono text-xs text-slate-300 hover:text-amber-400 hover:underline flex items-center gap-1"
-                              >
-                                <Mail className="w-3.5 h-3.5 text-slate-500" />
-                                <span>{store.ownerEmail}</span>
-                              </a>
-                              <button
-                                onClick={() => handleCopyText(store.ownerEmail, 'Merchant Email')}
-                                className="text-slate-500 hover:text-slate-300 p-0.5 rounded"
-                                title="Copy Email"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </button>
+                            <div className="space-y-1.5" dir="ltr">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-xs text-emerald-400 font-bold flex items-center gap-1">
+                                  <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                                  <span>{store.ownerPhone || '+966 50 123 4567'}</span>
+                                </span>
+                                <button
+                                  onClick={() => handleCopyText(store.ownerPhone || '+966 50 123 4567', 'Merchant Phone')}
+                                  className="text-slate-500 hover:text-slate-300 p-0.5 rounded"
+                                  title="Copy Phone"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <a
+                                  href={`mailto:${store.ownerEmail}`}
+                                  className="font-mono text-[11px] text-slate-400 hover:text-amber-400 hover:underline flex items-center gap-1"
+                                >
+                                  <Mail className="w-3 h-3 text-slate-500" />
+                                  <span>{store.ownerEmail}</span>
+                                </a>
+                                <button
+                                  onClick={() => handleCopyText(store.ownerEmail, 'Merchant Email')}
+                                  className="text-slate-500 hover:text-slate-300 p-0.5 rounded"
+                                  title="Copy Email"
+                                >
+                                  <Copy className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
                             </div>
                           </td>
 
@@ -2929,6 +2952,21 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-emerald-400" />
+                    <span>{language === 'ar' ? 'رقم جوال المالك (لتسجيل الدخول)' : 'Owner Phone (for Login)'}</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={editOwnerPhone}
+                    onChange={(e) => setEditOwnerPhone(e.target.value)}
+                    placeholder="+966 50 123 4567"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
                     <KeyRound className="w-3 h-3 text-amber-400" />
                     <span>{language === 'ar' ? 'كلمة المرور' : 'Password'}</span>
                   </label>
@@ -3109,6 +3147,21 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     onChange={(e) => setNewOwnerEmail(e.target.value)}
                     placeholder="merchant@domain.com"
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-emerald-400" />
+                    <span>{language === 'ar' ? 'رقم جوال المالك (لتسجيل الدخول)' : 'Owner Phone (for Login)'}</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={newOwnerPhone}
+                    onChange={(e) => setNewOwnerPhone(e.target.value)}
+                    placeholder="+966 50 123 4567"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                    dir="ltr"
                   />
                 </div>
 

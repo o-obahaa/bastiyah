@@ -48,6 +48,7 @@ export interface CreateStoreInput {
   categoryAr?: string;
   ownerName: string;
   ownerEmail: string;
+  ownerPhone?: string;
   adminPassword?: string;
   plan: 'Starter' | 'Growth' | 'Enterprise';
   themeColor: StoreThemeColor;
@@ -68,7 +69,9 @@ interface StoreContextType {
 
   authenticatedStoreAdminIds: string[];
   isStoreAdminAuthenticated: (storeId?: string) => boolean;
-  loginStoreAdmin: (storeId: string, email: string, pass: string) => boolean;
+  loginStoreAdmin: (storeId: string, identifier: string, passOrOtp: string) => boolean;
+  sendStoreAdminOtp: (storeId: string, phone: string) => { success: boolean; code?: string; message: string; error?: string };
+  verifyStoreAdminOtp: (storeId: string, phone: string, code: string) => boolean;
   logoutStoreAdmin: (storeId?: string) => void;
 
   // Language & i18n
@@ -299,7 +302,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((s: any) => {
+            if (!s.ownerPhone) {
+              const initMatch = INITIAL_HOSTED_STORES.find((init) => init.id === s.id);
+              return {
+                ...s,
+                ownerPhone: initMatch?.ownerPhone || '+966 50 123 4567',
+              };
+            }
+            return s;
+          });
+        }
       } catch {
         // fallback to initial
       }
@@ -398,6 +412,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
+  // Phone OTP Verification Sessions per store: { [storeId]: { code, phone, expiresAt } }
+  const [adminOtpSessions, setAdminOtpSessions] = useState<
+    Record<string, { code: string; phone: string; expiresAt: number }>
+  >({});
+
+  const normalizePhoneNumber = (phone: string): string => {
+    return phone.replace(/[^0-9]/g, '');
+  };
+
   const isStoreAdminAuthenticated = (storeId?: string): boolean => {
     const targetId = storeId || activeStoreId;
     // Platform Super Admin has master operator access
@@ -405,30 +428,139 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return authenticatedStoreAdminIds.includes(targetId);
   };
 
-  const loginStoreAdmin = (storeId: string, email: string, pass: string): boolean => {
+  const sendStoreAdminOtp = (
+    storeId: string,
+    phone: string
+  ): { success: boolean; code?: string; message: string; error?: string } => {
+    const targetStore = stores.find((s) => s.id === storeId);
+    if (!targetStore) {
+      return { success: false, message: 'Store not found', error: 'not_found' };
+    }
+
+    const inputPhoneNorm = normalizePhoneNumber(phone);
+    if (!inputPhoneNorm || inputPhoneNorm.length < 7) {
+      return {
+        success: false,
+        message: language === 'ar' ? 'يرجى إدخال رقم هاتف صحيح' : 'Please provide a valid phone number',
+        error: 'invalid_phone',
+      };
+    }
+
+    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+966 50 123 4567');
+    const isMatch =
+      targetPhoneNorm === inputPhoneNorm ||
+      (inputPhoneNorm.length >= 8 && targetPhoneNorm.endsWith(inputPhoneNorm.slice(-8))) ||
+      (targetPhoneNorm.length >= 8 && inputPhoneNorm.endsWith(targetPhoneNorm.slice(-8)));
+
+    if (!isMatch) {
+      // Check if this phone number belongs to another store
+      const otherStore = stores.find((s) => {
+        if (s.id === storeId || !s.ownerPhone) return false;
+        const otherNorm = normalizePhoneNumber(s.ownerPhone);
+        return (
+          otherNorm === inputPhoneNorm ||
+          (inputPhoneNorm.length >= 8 && otherNorm.endsWith(inputPhoneNorm.slice(-8)))
+        );
+      });
+
+      if (otherStore) {
+        const otherName = language === 'ar' ? otherStore.nameAr || otherStore.name : otherStore.name;
+        return {
+          success: false,
+          message:
+            language === 'ar'
+              ? `هذا الرقم مسجل لمتجر آخر (${otherName}) ولا يملك صلاحية إدارة متجر (${targetStore.nameAr || targetStore.name}).`
+              : `This phone number belongs to another store (${otherName}) and cannot manage (${targetStore.name}).`,
+          error: 'wrong_store',
+        };
+      }
+
+      return {
+        success: false,
+        message:
+          language === 'ar'
+            ? `رقم الهاتف المدخل غير مسجل كمالك معتمد لمتجر (${targetStore.nameAr || targetStore.name}).`
+            : `This phone number is not registered as the owner for (${targetStore.name}).`,
+        error: 'not_registered',
+      };
+    }
+
+    // Generate 4-digit verification code
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    setAdminOtpSessions((prev) => ({
+      ...prev,
+      [storeId]: { code, phone: inputPhoneNorm, expiresAt },
+    }));
+
+    addToast(
+      language === 'ar'
+        ? `📩 رسالة نصية قصيرة (SMS): رمز التحقق لمتجر ${targetStore.nameAr || targetStore.name} هو: [ ${code} ]`
+        : `📩 Incoming SMS: Verification code for ${targetStore.name} is: [ ${code} ]`,
+      'info'
+    );
+
+    return {
+      success: true,
+      code,
+      message:
+        language === 'ar'
+          ? `تم إرسال رمز التحقق بنجاح إلى هاتفك (${phone})`
+          : `Verification code sent successfully to ${phone}`,
+    };
+  };
+
+  const loginStoreAdmin = (storeId: string, identifier: string, passOrOtp: string): boolean => {
     const targetStore = stores.find((s) => s.id === storeId);
     if (!targetStore) return false;
 
-    const cleanEmail = email.trim().toLowerCase();
-    const ownerEmail = targetStore.ownerEmail.toLowerCase();
-    const expectedPass = targetStore.adminPassword || 'merchant123';
+    const inputPhoneNorm = normalizePhoneNumber(identifier);
+    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+966 50 123 4567');
+    const isPhoneMatch =
+      inputPhoneNorm.length >= 7 &&
+      (targetPhoneNorm === inputPhoneNorm ||
+        (inputPhoneNorm.length >= 8 && targetPhoneNorm.endsWith(inputPhoneNorm.slice(-8))) ||
+        (targetPhoneNorm.length >= 8 && inputPhoneNorm.endsWith(targetPhoneNorm.slice(-8))));
 
-    // Store Merchant match
-    const isStoreOwner = cleanEmail === ownerEmail && (pass === expectedPass || pass === 'merchant123');
+    const cleanEmail = identifier.trim().toLowerCase();
+    const ownerEmail = targetStore.ownerEmail.toLowerCase();
+    const isEmailMatch = cleanEmail === ownerEmail;
+
+    // Check OTP session
+    const activeOtp = adminOtpSessions[storeId];
+    const isOtpValid = Boolean(
+      activeOtp &&
+        (activeOtp.phone === inputPhoneNorm ||
+          (inputPhoneNorm.length >= 8 && activeOtp.phone.endsWith(inputPhoneNorm.slice(-8)))) &&
+        activeOtp.code === passOrOtp.trim() &&
+        Date.now() < activeOtp.expiresAt
+    );
+
+    const expectedPass = targetStore.adminPassword || 'merchant123';
+    const isPasswordValid = passOrOtp === expectedPass || passOrOtp === 'merchant123';
 
     // Platform Super Admin master key
-    const isPlatformMaster = (cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com') && 
-                            (pass === 'bastiyah2026' || pass === 'admin123');
+    const isPlatformMaster =
+      (cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com') &&
+      (passOrOtp === 'bastiyah2026' || passOrOtp === 'admin123');
 
-    if (isStoreOwner || isPlatformMaster) {
+    if (((isPhoneMatch || isEmailMatch) && (isOtpValid || isPasswordValid)) || isPlatformMaster) {
+      // Clear OTP session upon successful verification
+      setAdminOtpSessions((prev) => {
+        const next = { ...prev };
+        delete next[storeId];
+        return next;
+      });
+
       setAuthenticatedStoreAdminIds((prev) => {
         const next = Array.from(new Set([...prev, storeId]));
         localStorage.setItem('bastiyah_auth_store_admins', JSON.stringify(next));
         return next;
       });
       addToast(
-        language === 'ar' 
-          ? `مرحباً بك في لوحة إدارة متجر ${targetStore.nameAr || targetStore.name}!` 
+        language === 'ar'
+          ? `مرحباً بك في لوحة إدارة متجر ${targetStore.nameAr || targetStore.name}!`
           : `Welcome to ${targetStore.name} Merchant Portal!`,
         'success'
       );
@@ -436,6 +568,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     return false;
+  };
+
+  const verifyStoreAdminOtp = (storeId: string, phone: string, code: string): boolean => {
+    return loginStoreAdmin(storeId, phone, code);
   };
 
   const logoutStoreAdmin = (storeId?: string) => {
@@ -899,6 +1035,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       categoryAr: input.categoryAr || input.category,
       ownerName: input.ownerName.trim() || 'Store Owner',
       ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.com`,
+      ownerPhone: input.ownerPhone?.trim() || '+966 50 123 4567',
       adminPassword: input.adminPassword?.trim() || 'merchant123',
       status: 'active',
       plan: input.plan,
@@ -1417,6 +1554,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         authenticatedStoreAdminIds,
         isStoreAdminAuthenticated,
         loginStoreAdmin,
+        sendStoreAdminOtp,
+        verifyStoreAdminOtp,
         logoutStoreAdmin,
 
         language,
