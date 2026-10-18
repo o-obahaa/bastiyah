@@ -22,7 +22,7 @@ import {
   Star,
   DollarSign
 } from 'lucide-react';
-import { ImageUploader } from '../common/ImageUploader';
+import { ProductMediaUploader } from '../common/ProductMediaUploader';
 
 export const AdminProducts: React.FC = () => {
   const { 
@@ -59,7 +59,7 @@ export const AdminProducts: React.FC = () => {
     originalPrice: 129,
     stock: 25,
     badge: 'New Arrival' as any,
-    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'],
     tags: 'modern, premium, smart',
     sizes: 'S, M, L, XL',
     colors: 'Black, Silver, Gold',
@@ -116,7 +116,7 @@ export const AdminProducts: React.FC = () => {
       originalPrice: 129,
       stock: 25,
       badge: 'New Arrival',
-      imageUrl: imagePresets[0].url,
+      images: [imagePresets[0].url],
       tags: 'smart, premium',
       sizes: 'S, M, L, XL',
       colors: 'Black, Silver',
@@ -140,7 +140,7 @@ export const AdminProducts: React.FC = () => {
       originalPrice: p.originalPrice || p.price * 1.2,
       stock: p.stock,
       badge: p.badge || 'New Arrival',
-      imageUrl: p.images?.[0] || imagePresets[0].url,
+      images: p.images && p.images.length > 0 ? [...p.images] : [imagePresets[0].url],
       tags: p.tags?.join(', ') || '',
       sizes: p.variants?.sizes?.join(', ') || '',
       colors: p.variants?.colors?.join(', ') || '',
@@ -158,6 +158,10 @@ export const AdminProducts: React.FC = () => {
 
     const sizeList = formData.sizes.split(',').map((s) => s.trim()).filter(Boolean);
     const colorList = formData.colors.split(',').map((c) => c.trim()).filter(Boolean);
+    const validImages = formData.images.filter((img) => img && img.trim().length > 0);
+    if (validImages.length === 0) {
+      validImages.push(imagePresets[0].url);
+    }
 
     const payload = {
       name: formData.name.trim(),
@@ -173,7 +177,7 @@ export const AdminProducts: React.FC = () => {
       badge: formData.badge,
       rating: editingProduct ? editingProduct.rating : 5.0,
       reviewCount: editingProduct ? editingProduct.reviewCount : 1,
-      images: [formData.imageUrl],
+      images: validImages,
       tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
       variants: {
         sizes: sizeList.length > 0 ? sizeList : undefined,
@@ -858,45 +862,11 @@ export const AdminProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* Product Image URL with Presets */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  {language === 'ar' ? 'صورة المنتج الرئيسية' : 'Primary Product Image'}
-                </label>
-                <div className="flex items-center gap-3 mb-2">
-                  <img
-                    src={formData.imageUrl}
-                    alt="Preview"
-                    className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0 shadow-xs"
-                  />
-                  <input
-                    type="url"
-                    required
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-mono text-xs"
-                    placeholder="https://..."
-                  />
-                </div>
-
-                {/* Preset Options */}
-                <div className="flex gap-2 overflow-x-auto pb-1 pt-1">
-                  {imagePresets.map((preset, idx) => (
-                    <button
-                      type="button"
-                      key={idx}
-                      onClick={() => setFormData({ ...formData, imageUrl: preset.url })}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all whitespace-nowrap ${
-                        formData.imageUrl === preset.url
-                          ? 'bg-emerald-600 text-white border-emerald-600'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Direct Cloud Hosting Product Photos Uploader */}
+              <ProductMediaUploader
+                images={formData.images}
+                onChange={(newImages) => setFormData({ ...formData, images: newImages })}
+              />
 
               {/* Product Variants (Sizes & Colors) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
