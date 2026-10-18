@@ -156,7 +156,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <span className="text-lg font-black text-slate-900">
                 {activeStore.settings.currency}{product.price}
               </span>
-              {product.originalPrice && (
+              {product.originalPrice && product.originalPrice > product.price && (
                 <span className="text-xs text-slate-400 line-through">
                   {activeStore.settings.currency}{product.originalPrice}
                 </span>

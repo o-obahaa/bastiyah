@@ -206,7 +206,7 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="text-3xl font-black text-slate-900">
                   {currency}{product.price}
                 </span>
-                {product.originalPrice && (
+                {product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-base text-slate-400 line-through">
                     {currency}{product.originalPrice}
                   </span>

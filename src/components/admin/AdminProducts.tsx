@@ -56,9 +56,9 @@ export const AdminProducts: React.FC = () => {
     descriptionAr: '',
     category: 'Audio & Sound' as ProductCategory,
     price: 99,
-    originalPrice: 129,
+    originalPrice: '' as string | number,
     stock: 25,
-    badge: 'New Arrival' as any,
+    badge: '' as string,
     images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'],
     tags: 'modern, premium, smart',
     sizes: 'S, M, L, XL',
@@ -113,9 +113,9 @@ export const AdminProducts: React.FC = () => {
       descriptionAr: '',
       category: 'Audio & Sound',
       price: 99,
-      originalPrice: 129,
+      originalPrice: '',
       stock: 25,
-      badge: 'New Arrival',
+      badge: '',
       images: [imagePresets[0].url],
       tags: 'smart, premium',
       sizes: 'S, M, L, XL',
@@ -137,9 +137,9 @@ export const AdminProducts: React.FC = () => {
       descriptionAr: p.descriptionAr || '',
       category: p.category,
       price: p.price,
-      originalPrice: p.originalPrice || p.price * 1.2,
+      originalPrice: p.originalPrice && p.originalPrice > p.price ? p.originalPrice : '',
       stock: p.stock,
-      badge: p.badge || 'New Arrival',
+      badge: p.badge || '',
       images: p.images && p.images.length > 0 ? [...p.images] : [imagePresets[0].url],
       tags: p.tags?.join(', ') || '',
       sizes: p.variants?.sizes?.join(', ') || '',
@@ -163,6 +163,9 @@ export const AdminProducts: React.FC = () => {
       validImages.push(imagePresets[0].url);
     }
 
+    const origPriceNum = formData.originalPrice !== '' && formData.originalPrice !== undefined ? Number(formData.originalPrice) : undefined;
+    const hasDiscount = origPriceNum !== undefined && !isNaN(origPriceNum) && origPriceNum > Number(formData.price);
+
     const payload = {
       name: formData.name.trim(),
       nameAr: formData.nameAr.trim() || formData.name.trim(),
@@ -172,9 +175,9 @@ export const AdminProducts: React.FC = () => {
       descriptionAr: formData.descriptionAr.trim() || formData.description.trim(),
       category: formData.category,
       price: Number(formData.price),
-      originalPrice: Number(formData.originalPrice),
+      originalPrice: hasDiscount ? origPriceNum : undefined,
       stock: Number(formData.stock),
-      badge: formData.badge,
+      badge: (formData.badge && formData.badge.trim() ? formData.badge.trim() : undefined) as any,
       rating: editingProduct ? editingProduct.rating : 5.0,
       reviewCount: editingProduct ? editingProduct.reviewCount : 1,
       images: validImages,
@@ -336,9 +339,11 @@ export const AdminProducts: React.FC = () => {
           const nameAr = getVal(['name (ar)', 'arabic', 'عربي']) || name;
           const categoryRaw = getVal(['category', 'تصنيف']) || 'Audio & Sound';
           const price = parseFloat(getVal(['price', 'سعر'])) || 99;
-          const originalPrice = parseFloat(getVal(['original', 'before', 'خصم'])) || price * 1.2;
+          const origPriceRaw = parseFloat(getVal(['original', 'before', 'خصم']));
+          const originalPrice = !isNaN(origPriceRaw) && origPriceRaw > price ? origPriceRaw : undefined;
           const stock = parseInt(getVal(['stock', 'مخزون', 'كمية'])) || 20;
-          const badge = (getVal(['badge', 'شارة']) || 'New Arrival') as any;
+          const badgeRaw = getVal(['badge', 'شارة']);
+          const badge = badgeRaw && badgeRaw.trim() ? (badgeRaw.trim() as any) : undefined;
           const tagsStr = getVal(['tags', 'وسوم']) || 'catalog, item';
           const sizesStr = getVal(['sizes', 'مقاسات', 'size']);
           const colorsStr = getVal(['colors', 'ألوان', 'color']);
@@ -800,14 +805,20 @@ export const AdminProducts: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'شارة المنتج' : 'Badge'}
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700 block">
+                      {language === 'ar' ? 'شارة المنتج' : 'Badge'}
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      ({language === 'ar' ? 'اختياري' : 'Optional'})
+                    </span>
+                  </div>
                   <select
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
                   >
+                    <option value="">{language === 'ar' ? 'بدون شارة (افتراضي)' : 'No Badge (None)'}</option>
                     <option value="New Arrival">{language === 'ar' ? 'جديد (New Arrival)' : 'New Arrival'}</option>
                     <option value="Best Seller">{language === 'ar' ? 'الأكثر مبيعاً (Best Seller)' : 'Best Seller'}</option>
                     <option value="Hot Sale">{language === 'ar' ? 'عرض خاص (Hot Sale)' : 'Hot Sale'}</option>
@@ -834,17 +845,30 @@ export const AdminProducts: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? `السعر قبل الخصم (${currency})` : `Original Price (${currency})`}
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700 block">
+                      {language === 'ar' ? `السعر قبل الخصم (${currency})` : `Original Price (${currency})`}
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      ({language === 'ar' ? 'اختياري' : 'Optional'})
+                    </span>
+                  </div>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
+                    placeholder={language === 'ar' ? 'فارغ إذا لم يوجد خصم' : 'Leave empty if no discount'}
                     value={formData.originalPrice}
-                    onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-500"
+                    onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-600"
                   />
+                  {formData.originalPrice !== '' && Number(formData.originalPrice) > Number(formData.price) && (
+                    <p className="text-[11px] text-emerald-600 font-bold mt-1">
+                      {language === 'ar'
+                        ? `خصم بنسبة ${Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}%`
+                        : `${Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}% Discount`}
+                    </p>
+                  )}
                 </div>
 
                 <div>

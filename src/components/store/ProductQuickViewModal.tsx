@@ -125,7 +125,7 @@ export const ProductQuickViewModal: React.FC = () => {
                 <span className="text-3xl font-black text-slate-900">
                   {currency}{quickViewProduct.price}
                 </span>
-                {quickViewProduct.originalPrice && (
+                {quickViewProduct.originalPrice && quickViewProduct.originalPrice > quickViewProduct.price && (
                   <span className="text-sm text-slate-400 line-through">
                     {currency}{quickViewProduct.originalPrice}
                   </span>
