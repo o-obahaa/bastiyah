@@ -642,6 +642,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       'success'
     );
 
+    if (convexClient) {
+      convexClient
+        .action(api.whatsapp.sendWhatsAppOtp, {
+          phone: `964${normalized}`,
+          code,
+          storeName: storeTitle,
+        })
+        .then((res: any) => {
+          if (res?.mode === 'live') {
+            console.log('Real WhatsApp message dispatched via Meta Cloud API:', res.messageId);
+          }
+        })
+        .catch((err: any) => {
+          console.warn('Convex WhatsApp action note:', err);
+        });
+    }
+
     return {
       success: true,
       code,

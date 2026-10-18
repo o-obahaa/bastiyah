@@ -1,0 +1,138 @@
+"use node";
+import { action } from "./_generated/server";
+import { v } from "convex/values";
+
+/**
+ * Sends a real WhatsApp OTP verification code using Meta WhatsApp Business Cloud API.
+ * Graph API endpoint: https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages
+ */
+export const sendWhatsAppOtp = action({
+  args: {
+    phone: v.string(), // E.164 without spaces, e.g. "9647701234567"
+    code: v.string(),  // 4-digit or 6-digit OTP
+    storeName: v.optional(v.string()),
+    templateName: v.optional(v.string()),
+    languageCode: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+    // Clean phone number (strip '+', spaces, dashes)
+    let recipient = args.phone.replace(/\D/g, "");
+    if (recipient.startsWith("00")) {
+      recipient = recipient.slice(2);
+    }
+
+    // Simulation fallback if credentials are not yet saved in Convex Dashboard
+    if (!phoneNumberId || !accessToken) {
+      console.log(
+        `[WhatsApp Simulation] Recipient: ${recipient}, OTP: ${args.code}. (Configure WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Convex to send real live WhatsApp messages)`
+      );
+      return {
+        success: true,
+        mode: "simulation" as const,
+        code: args.code,
+        message: "Simulation mode active. Set Convex environment variables to deliver live messages.",
+      };
+    }
+
+    const templateName = args.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "bastiyah_auth_otp";
+    const languageCode = args.languageCode || "ar";
+
+    // 1. WhatsApp Template message payload (Recommended by Meta for authentication OTPs)
+    const templatePayload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: recipient,
+      type: "template",
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              {
+                type: "text",
+                text: args.code,
+              },
+            ],
+          },
+          {
+            type: "button",
+            sub_type: "url",
+            index: "0",
+            parameters: [
+              {
+                type: "text",
+                text: args.code,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    // 2. Direct session text message fallback
+    const directTextPayload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: recipient,
+      type: "text",
+      text: {
+        preview_url: false,
+        body: `رمز تسجيل دخولك إلى ${args.storeName || "بسطية"} هو: *${args.code}*\nصالح لمدة 10 دقائق. لا تشارك الرمز مع أي شخص.`,
+      },
+    };
+
+    try {
+      // First attempt template message
+      let res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(templatePayload),
+      });
+
+      let data = await res.json();
+
+      // If template not found or template error, attempt direct text message
+      if (!res.ok) {
+        console.warn("Template attempt note, trying text payload:", data?.error?.message);
+        res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(directTextPayload),
+        });
+        data = await res.json();
+      }
+
+      if (!res.ok) {
+        console.error("Meta WhatsApp Cloud API error:", data);
+        return {
+          success: false,
+          error: data.error?.message || "Failed to deliver WhatsApp message via Meta Cloud API",
+          details: data,
+        };
+      }
+
+      return {
+        success: true,
+        mode: "live" as const,
+        messageId: data.messages?.[0]?.id,
+      };
+    } catch (err: any) {
+      console.error("WhatsApp dispatch network error:", err);
+      return {
+        success: false,
+        error: err.message || "Network error contacting Meta WhatsApp Cloud API",
+      };
+    }
+  },
+});
