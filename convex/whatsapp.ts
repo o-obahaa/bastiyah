@@ -37,10 +37,10 @@ export const sendWhatsAppOtp = action({
       };
     }
 
-    const templateName = args.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "bastiyah_auth_otp";
+    const templateName = args.templateName || process.env.WHATSAPP_TEMPLATE_NAME || "bastiyah_order_update";
     const languageCode = args.languageCode || "ar";
 
-    // 1. WhatsApp Template message payload (Recommended by Meta for authentication OTPs)
+    // 1. WhatsApp Template message payload matching approved bastiyah_order_update
     const templatePayload = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
@@ -52,17 +52,6 @@ export const sendWhatsAppOtp = action({
         components: [
           {
             type: "body",
-            parameters: [
-              {
-                type: "text",
-                text: args.code,
-              },
-            ],
-          },
-          {
-            type: "button",
-            sub_type: "url",
-            index: "0",
             parameters: [
               {
                 type: "text",
@@ -136,3 +125,45 @@ export const sendWhatsAppOtp = action({
     }
   },
 });
+
+export const getPhoneInfo = action({
+  args: {},
+  handler: async () => {
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    if (!phoneNumberId || !accessToken) {
+      return { configured: false, error: "Missing WhatsApp credentials in Convex" };
+    }
+    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json();
+    return { configured: true, data };
+  },
+});
+
+export const registerPhoneNumber = action({
+  args: { pin: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    if (!phoneNumberId || !accessToken) {
+      return { success: false, error: "Missing WhatsApp credentials in Convex" };
+    }
+    const pin = args.pin || "123456";
+    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/register`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        pin,
+      }),
+    });
+    const data = await res.json();
+    return data;
+  },
+});
+
