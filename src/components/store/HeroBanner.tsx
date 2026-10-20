@@ -2,6 +2,7 @@ import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ArrowRight, Sparkles, Star, Globe, Palette } from 'lucide-react';
 import { getStorePathLabel } from '../../utils/urlUtils';
+import { StoreHeroSlider } from './StoreHeroSlider';
 
 export const HeroBanner: React.FC = () => {
   const { 
@@ -18,6 +19,11 @@ export const HeroBanner: React.FC = () => {
     getProductTagline, 
     getCategoryName 
   } = useStore();
+
+  // If the store owner configured a custom Hero Section or Banner Slider, render it!
+  if (activeStore.design.heroConfig?.enabled) {
+    return <StoreHeroSlider config={activeStore.design.heroConfig} />;
+  }
 
   const featuredProduct = products.find((p) => p.featured) || products[0];
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;

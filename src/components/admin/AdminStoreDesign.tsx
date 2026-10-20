@@ -30,6 +30,8 @@ import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
 import { uploadImageToR2, validateImageFile } from '../../utils/cloudflareR2';
+import { HeroSectionEditor } from './HeroSectionEditor';
+import { StoreHeroSlider } from '../store/StoreHeroSlider';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
 
@@ -565,6 +567,9 @@ export const AdminStoreDesign: React.FC = () => {
               })}
             </div>
           </div>
+
+          {/* Hero Section / Banner Slider Section Editor */}
+          <HeroSectionEditor />
         </div>
 
         {/* Right Column: Theme Color, Logo Emoji/Image, and Header Style */}
@@ -932,36 +937,40 @@ export const AdminStoreDesign: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Sample Hero / Card */}
-                <div className="p-4 space-y-3">
-                  <div 
-                    className={`p-3 text-white text-start transition-all ${
-                      activeStore.design.cardRadius === 'pill' ? 'rounded-2xl' : activeStore.design.cardRadius === 'sharp' ? 'rounded-none' : 'rounded-xl'
-                    }`}
-                    style={{ backgroundColor: theme.hex }}
-                  >
-                    <span className="text-[10px] font-bold uppercase tracking-wider block opacity-90">
-                      {language === 'ar' ? 'التشكيلة الجديدة' : 'New Collection'}
-                    </span>
-                    <span className="text-xs font-black block mt-0.5">
-                      {language === 'ar' ? taglineAr || tagline : tagline}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] text-slate-400 font-semibold">
-                      {language === 'ar' ? `النمط: ${activeStore.design.layoutStyle}` : `Layout: ${activeStore.design.layoutStyle}`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage('home')}
-                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                {/* Hero Preview or Fallback Card */}
+                {activeStore.design.heroConfig?.enabled ? (
+                  <StoreHeroSlider config={activeStore.design.heroConfig} isPreview={true} />
+                ) : (
+                  <div className="p-4 space-y-3">
+                    <div 
+                      className={`p-3 text-white text-start transition-all ${
+                        activeStore.design.cardRadius === 'pill' ? 'rounded-2xl' : activeStore.design.cardRadius === 'sharp' ? 'rounded-none' : 'rounded-xl'
+                      }`}
+                      style={{ backgroundColor: theme.hex }}
                     >
-                      <span>{language === 'ar' ? 'معاينة ملء الشاشة' : 'Full Preview'}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
+                      <span className="text-[10px] font-bold uppercase tracking-wider block opacity-90">
+                        {language === 'ar' ? 'التشكيلة الجديدة' : 'New Collection'}
+                      </span>
+                      <span className="text-xs font-black block mt-0.5">
+                        {language === 'ar' ? taglineAr || tagline : tagline}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[10px] text-slate-400 font-semibold">
+                        {language === 'ar' ? `النمط: ${activeStore.design.layoutStyle}` : `Layout: ${activeStore.design.layoutStyle}`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage('home')}
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                      >
+                        <span>{language === 'ar' ? 'معاينة ملء الشاشة' : 'Full Preview'}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

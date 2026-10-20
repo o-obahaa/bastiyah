@@ -319,6 +319,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             return {
               ...s,
               ownerPhone: needsIraqiPhone ? (initMatch?.ownerPhone || '+964 770 123 4567') : s.ownerPhone,
+              design: {
+                ...s.design,
+                heroConfig: s.design?.heroConfig || initMatch?.design?.heroConfig,
+              },
               settings: {
                 ...s.settings,
                 currency: needsIraqiCurrency ? 'د.ع' : s.settings?.currency,

@@ -147,6 +147,88 @@ export type StoreThemeColor = 'emerald' | 'indigo' | 'amber' | 'rose' | 'cyan' |
 
 export type StoreLayoutStyle = 'modern-split' | 'luxury-centered' | 'minimal-editorial' | 'vibrant-banner';
 
+export type HeroDisplayMode = 'single' | 'slider';
+export type HeroHeight = 'small' | 'medium' | 'large' | 'fullscreen' | 'custom';
+export type HeroTransitionEffect = 'slide' | 'fade';
+export type HeroTextAlign = 'left' | 'center' | 'right';
+export type HeroTextPosition = 'top' | 'center' | 'bottom';
+export type HeroImagePosition = 'center' | 'top' | 'bottom' | 'left' | 'right';
+
+export interface HeroSlide {
+  id: string;
+  enabled: boolean;
+  title: string;
+  titleAr?: string;
+  subtitle?: string;
+  subtitleAr?: string;
+  badge?: string;
+  badgeAr?: string;
+  // Images
+  desktopImage: string;
+  mobileImage?: string;
+  imageAlt?: string;
+  imagePosition?: HeroImagePosition;
+  // Call to Actions
+  primaryCtaText?: string;
+  primaryCtaTextAr?: string;
+  primaryCtaUrl?: string;
+  secondaryCtaText?: string;
+  secondaryCtaTextAr?: string;
+  secondaryCtaUrl?: string;
+  bannerLinkUrl?: string; // Optional clickable whole banner link
+  // Slide-specific appearance overrides
+  textAlign?: HeroTextAlign;
+  textPosition?: HeroTextPosition;
+  textColor?: 'light' | 'dark' | 'custom';
+  customTextColor?: string;
+  backgroundColor?: string;
+  overlayColor?: string;
+  overlayOpacity?: number; // 0-100
+}
+
+export interface HeroSectionConfig {
+  enabled: boolean;
+  mode: HeroDisplayMode; // 'single' | 'slider'
+  
+  // Layout
+  fullWidth: boolean;
+  height: HeroHeight;
+  customHeightPx?: number;
+  mobileHeight?: 'small' | 'medium' | 'large' | 'auto';
+  roundedCorners: boolean;
+  contentMaxWidth: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  spacingTop?: boolean;
+  spacingBottom?: boolean;
+
+  // Navigation (Slider mode)
+  showArrows: boolean;
+  arrowStyle: 'solid' | 'outline' | 'ghost' | 'glass';
+  showDots: boolean;
+  dotStyle: 'dots' | 'bars' | 'numbers';
+  enableSwipe: boolean;
+
+  // Autoplay (Slider mode)
+  autoplay: boolean;
+  autoplayInterval: number; // ms, e.g. 5000
+  transitionEffect: HeroTransitionEffect; // 'slide' | 'fade'
+  transitionDuration: number; // ms, e.g. 500
+  pauseOnHover: boolean;
+
+  // Global Overlay & Style
+  enableOverlay: boolean;
+  overlayColor: string;
+  overlayOpacity: number; // 0-100
+  overlayGradient: boolean;
+  
+  // Typography & Button Defaults
+  headingSize: 'small' | 'medium' | 'large' | 'xl';
+  buttonStyle: 'rounded' | 'pill' | 'sharp';
+  buttonThemeColor: boolean;
+
+  // Ordered slide records
+  slides: HeroSlide[];
+}
+
 export interface StoreDesign {
   themeColor: StoreThemeColor;
   layoutStyle: StoreLayoutStyle;
@@ -162,6 +244,7 @@ export interface StoreDesign {
   instagramUrl?: string;
   tiktokUrl?: string;
   snapchatUrl?: string;
+  heroConfig?: HeroSectionConfig;
 }
 
 export interface HostedStore {
