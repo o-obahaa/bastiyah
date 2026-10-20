@@ -4,6 +4,7 @@ import {
   ShieldCheck, 
   Lock, 
   Mail, 
+  User,
   Crown, 
   ArrowRight, 
   ArrowLeft, 
@@ -41,8 +42,8 @@ export const BastiyahPlatformAdminLogin: React.FC = () => {
       if (!success) {
         setError(
           language === 'ar'
-            ? 'بيانات المشرف غير صحيحة. يرجى التحقق من البريد الإلكتروني وكلمة المرور الخاصة بإدارة المنصة.'
-            : 'Invalid platform administrator credentials. Please check your admin email and password.'
+            ? 'بيانات المالك غير صحيحة. يرجى التحقق من اسم المستخدم وكلمة المرور الخاصة بإدارة المنصة.'
+            : 'Invalid owner administrator credentials. Please check your username and password.'
         );
       }
       setIsLoading(false);
@@ -50,8 +51,8 @@ export const BastiyahPlatformAdminLogin: React.FC = () => {
   };
 
   const handleUseDemoCredentials = () => {
-    setEmail(platformAdminEmail || 'admin@bastiyah.com');
-    setPassword('bastiyah2026');
+    setEmail('fairuz2002');
+    setPassword('luxfairuz2026');
     setError(null);
   };
 
@@ -134,25 +135,25 @@ export const BastiyahPlatformAdminLogin: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             <div>
               <label className="block text-xs font-bold text-stone-300 mb-1.5">
-                {language === 'ar' ? 'البريد الإلكتروني للمشرف العام' : 'Platform Admin Email'}
+                {language === 'ar' ? 'اسم المستخدم لحساب المالك' : 'Owner Account Username'}
               </label>
               <div className="relative">
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@bastiyah.com"
-                  className="w-full px-4 py-3 rounded-2xl bg-stone-950 border border-stone-800 focus:border-amber-500 text-xs sm:text-sm text-white placeholder:text-stone-600 focus:outline-none transition-colors"
+                  placeholder="fairuz2002"
+                  className="w-full px-4 py-3 rounded-2xl bg-stone-950 border border-stone-800 focus:border-amber-500 text-xs sm:text-sm text-white placeholder:text-stone-600 focus:outline-none transition-colors font-mono font-bold"
                   dir="ltr"
                 />
-                <Mail className="w-4 h-4 text-stone-500 absolute top-1/2 -translate-y-1/2 end-3.5 pointer-events-none" />
+                <User className="w-4 h-4 text-stone-500 absolute top-1/2 -translate-y-1/2 end-3.5 pointer-events-none" />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-stone-300 mb-1.5">
-                {language === 'ar' ? 'كلمة مرور حساب المشرف' : 'Admin Security Password'}
+                {language === 'ar' ? 'كلمة مرور حساب المالك' : 'Owner Security Password'}
               </label>
               <div className="relative">
                 <input
@@ -161,7 +162,7 @@ export const BastiyahPlatformAdminLogin: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full px-4 py-3 rounded-2xl bg-stone-950 border border-stone-800 focus:border-amber-500 text-xs sm:text-sm text-white placeholder:text-stone-600 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-2xl bg-stone-950 border border-stone-800 focus:border-amber-500 text-xs sm:text-sm text-white placeholder:text-stone-600 focus:outline-none transition-colors font-mono"
                   dir="ltr"
                 />
                 <Lock className="w-4 h-4 text-stone-500 absolute top-1/2 -translate-y-1/2 end-3.5 pointer-events-none" />
@@ -177,15 +178,15 @@ export const BastiyahPlatformAdminLogin: React.FC = () => {
               <span>
                 {isLoading 
                   ? (language === 'ar' ? 'جارٍ التحقق...' : 'Authenticating...') 
-                  : (language === 'ar' ? 'دخول لوحة تحكم المنصة' : 'Sign In to Super Admin')}
+                  : (language === 'ar' ? 'دخول لوحة تحكم المالك' : 'Sign In to Owner Admin')}
               </span>
             </button>
           </form>
 
-          {/* Quick Demo Credentials Helper */}
+          {/* Quick Credentials Helper */}
           <div className="mt-6 pt-5 border-t border-stone-800 text-center space-y-2.5">
             <div className="flex items-center justify-between text-[11px] text-stone-400">
-              <span>{language === 'ar' ? 'بيانات المشرف التجريبية للاختبار:' : 'Authorized Demo Admin Account:'}</span>
+              <span>{language === 'ar' ? 'بيانات حساب المالك المعتمدة:' : 'Authorized Owner Account:'}</span>
               <button
                 type="button"
                 onClick={handleUseDemoCredentials}
@@ -196,9 +197,9 @@ export const BastiyahPlatformAdminLogin: React.FC = () => {
               </button>
             </div>
             <div className="bg-stone-950/80 p-2.5 rounded-xl border border-stone-800/80 font-mono text-[11px] text-stone-300 flex items-center justify-between" dir="ltr">
-              <span>admin@bastiyah.com</span>
+              <span className="font-bold text-amber-300">fairuz2002</span>
               <span className="text-stone-500">•</span>
-              <span className="text-amber-400">bastiyah2026</span>
+              <span className="text-amber-400 font-bold">luxfairuz2026</span>
             </div>
           </div>
         </div>

@@ -2454,7 +2454,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400 block mb-1">{language === 'ar' ? 'البريد الإلكتروني المعتمد:' : 'Primary Email:'}</span>
+                    <span className="text-xs text-slate-400 block mb-1">{language === 'ar' ? 'اسم المستخدم المعتمد للمالك:' : 'Authorized Owner Username:'}</span>
                     <p className="font-mono text-sm font-bold text-white" dir="ltr">{platformAdminEmail}</p>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-relaxed">

@@ -354,23 +354,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentPage, setCurrentPage] = useState<ActivePage>(initialRouting.page);
 
   // 1. Platform Admin Authentication
-  const PLATFORM_ADMIN_EMAIL = 'admin@bastiyah.com';
+  const PLATFORM_ADMIN_EMAIL = 'fairuz2002';
   const [isPlatformAdminAuthenticated, setIsPlatformAdminAuthenticated] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('bastiyah_platform_admin_session') === 'true';
   });
 
-  const loginPlatformAdmin = (email: string, pass: string): boolean => {
-    const cleanEmail = email.trim().toLowerCase();
-    const isEmailValid = cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com';
+  const loginPlatformAdmin = (identifier: string, pass: string): boolean => {
+    const cleanId = identifier.trim().toLowerCase();
+    const isIdValid =
+      cleanId === 'fairuz2002' ||
+      cleanId === 'fairuz2002@bastiyah.com' ||
+      cleanId === 'admin@bastiyah.com' ||
+      cleanId === 'owner@bastiyah.com';
     const customPass = typeof window !== 'undefined' ? localStorage.getItem('bastiyah_custom_admin_password') : null;
-    const isPassValid = (customPass && pass === customPass) || pass === 'bastiyah2026' || pass === 'admin123';
+    const isPassValid =
+      pass === 'luxfairuz2026' ||
+      (customPass && pass === customPass) ||
+      pass === 'bastiyah2026' ||
+      pass === 'admin123';
 
-    if (isEmailValid && isPassValid) {
+    if (isIdValid && isPassValid) {
       setIsPlatformAdminAuthenticated(true);
       localStorage.setItem('bastiyah_platform_admin_session', 'true');
       addToast(
-        language === 'ar' ? 'تم تسجيل دخول المشرف العام بنجاح!' : 'Platform Super Admin authenticated successfully!',
+        language === 'ar' ? 'تم تسجيل دخول المالك (fairuz2002) بنجاح!' : 'Platform Owner (fairuz2002) authenticated successfully!',
         'success'
       );
       return true;
@@ -576,8 +584,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // Platform Super Admin master key
     const isPlatformMaster =
-      (cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com') &&
-      (passOrOtp === 'bastiyah2026' || passOrOtp === 'admin123');
+      (cleanEmail === 'fairuz2002' || cleanEmail === 'admin@bastiyah.com' || cleanEmail === 'owner@bastiyah.com') &&
+      (passOrOtp === 'luxfairuz2026' || passOrOtp === 'bastiyah2026' || passOrOtp === 'admin123');
 
     if (((isPhoneMatch || isEmailMatch) && (isOtpValid || isPasswordValid)) || isPlatformMaster) {
       // Clear OTP session upon successful verification
