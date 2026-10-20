@@ -18,6 +18,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   const {
     isCustomerAuthModalOpen,
     setIsCustomerAuthModalOpen,
+    setIsCustomerAccountModalOpen,
     sendCustomerWhatsAppOtp,
     verifyCustomerWhatsAppOtp,
     currentCustomer,
@@ -28,11 +29,11 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   } = useStore();
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('0770 123 4567');
-  const [fullName, setFullName] = useState('أحمد العراقي');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [fullName, setFullName] = useState('');
   const [otpCode, setOtpCode] = useState(['', '', '', '']);
-  const [simulatedCode, setSimulatedCode] = useState<string>('4829');
-  const [formattedPhone, setFormattedPhone] = useState('+964 770 123 4567');
+  const [simulatedCode, setSimulatedCode] = useState<string>('');
+  const [formattedPhone, setFormattedPhone] = useState('');
   const [resendCountdown, setResendCountdown] = useState(30);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -52,6 +53,8 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   const handleClose = () => {
     setIsCustomerAuthModalOpen(false);
     setStep('phone');
+    setPhoneNumber('');
+    setFullName('');
     setOtpCode(['', '', '', '']);
   };
 
@@ -114,6 +117,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
       setIsVerifying(false);
       if (ok) {
         handleClose();
+        setIsCustomerAccountModalOpen(true);
       }
     }, 500);
   };
@@ -124,11 +128,6 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
       setOtpCode(digits);
       verifyCode(simulatedCode);
     }
-  };
-
-  const handleUseDemoCredentials = () => {
-    setPhoneNumber('0770 123 4567');
-    setFullName(language === 'ar' ? 'أحمد العراقي' : 'Ahmed Al-Iraqi');
   };
 
   const storeTitle = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
@@ -219,16 +218,6 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                   <User className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
                 </div>
               </div>
-
-              {/* Demo button pill */}
-              <button
-                type="button"
-                onClick={handleUseDemoCredentials}
-                className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-semibold flex items-center justify-between transition-colors"
-              >
-                <span>{language === 'ar' ? '⚡ تجربة سريعة برقم تجريبي:' : '⚡ Quick demo phone:'}</span>
-                <span className="font-mono font-bold text-[#128C7E]" dir="ltr">0770 123 4567</span>
-              </button>
 
               <button
                 type="submit"

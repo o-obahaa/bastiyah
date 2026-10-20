@@ -375,13 +375,13 @@ export const Header: React.FC = () => {
             ) : (
               /* User Account trigger when not logged in */
               <button
-                onClick={() => setIsCustomerAccountModalOpen(true)}
+                onClick={() => setIsCustomerAuthModalOpen(true)}
                 className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
                   isDarkHeader
                     ? 'bg-slate-800/90 hover:bg-slate-750 text-white border-slate-700'
                     : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
                 }`}
-                title={language === 'ar' ? 'حسابي وبيانات التوصيل' : 'Customer Account & Shipping'}
+                title={language === 'ar' ? 'تسجيل الدخول / إنشاء حساب بالهاتف' : 'Sign In / Register'}
               >
                 <div 
                   className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
@@ -391,9 +391,6 @@ export const Header: React.FC = () => {
                 </div>
                 <div className="flex flex-col text-start leading-none">
                   <span className="font-bold text-xs">{language === 'ar' ? 'حسابي' : 'Account'}</span>
-                  <span className="text-[10px] text-slate-400 font-normal hidden sm:inline">
-                    {language === 'ar' ? 'موقع التوصيل' : 'Shipping'}
-                  </span>
                 </div>
               </button>
             )}
@@ -537,7 +534,7 @@ export const Header: React.FC = () => {
             ) : (
               <button
                 onClick={() => {
-                  setIsCustomerAccountModalOpen(true);
+                  setIsCustomerAuthModalOpen(true);
                   setMobileMenuOpen(false);
                 }}
                 className="w-full py-2.5 px-3.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-between shadow-sm"
@@ -549,10 +546,10 @@ export const Header: React.FC = () => {
                   >
                     <User className="w-3.5 h-3.5" />
                   </div>
-                  <span>{language === 'ar' ? 'حسابي وبيانات موقع التوصيل' : 'My Account & Shipping Location'}</span>
+                  <span>{language === 'ar' ? 'حسابي (تسجيل الدخول / إنشاء حساب)' : 'Account (Sign In / Register)'}</span>
                 </div>
-                <span className="text-[10px] text-amber-400 font-normal">
-                  {language === 'ar' ? 'عرض وضبط' : 'Manage'}
+                <span className="text-[10px] text-emerald-400 font-normal">
+                  {language === 'ar' ? 'بالهاتف' : 'By Phone'}
                 </span>
               </button>
             )}

@@ -50,14 +50,14 @@ export const CustomerAccountModal: React.FC = () => {
       setName(currentCustomer.name || '');
       setPhone(currentCustomer.phone || '');
       setState(currentCustomer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'));
-      setCity(currentCustomer.city || (language === 'ar' ? 'الكرخ / المنصور' : 'Al-Mansour'));
-      setAddress(currentCustomer.address || (language === 'ar' ? 'شارع 14 رمضان، زقاق 12' : '14th Ramadan St'));
-      setLandmark(currentCustomer.landmark || (language === 'ar' ? 'قرب تقاطع الرواد' : 'Near Al-Ruwwad'));
+      setCity(currentCustomer.city || '');
+      setAddress(currentCustomer.address || '');
+      setLandmark(currentCustomer.landmark || '');
     } else {
-      setName(language === 'ar' ? 'ضيف بسطية' : 'Shopper Guest');
-      setPhone('+964 770 123 4567');
+      setName('');
+      setPhone('');
       setState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
-      setCity(language === 'ar' ? 'حي المنصور' : 'Al-Mansour');
+      setCity('');
       setAddress('');
       setLandmark('');
     }
@@ -158,13 +158,13 @@ export const CustomerAccountModal: React.FC = () => {
 
               <p className="text-xs text-slate-200/90 font-mono mt-0.5 flex items-center gap-1.5" dir="ltr">
                 <Phone className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                <span>{currentCustomer ? currentCustomer.phone : '+964 7XX XXX XXXX'}</span>
+                <span>{currentCustomer?.phone || (language === 'ar' ? 'التسجيل برقم الهاتف' : 'Sign in via phone')}</span>
               </p>
 
               <div className="flex items-center gap-2 text-[11px] text-slate-300 mt-1">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3 text-amber-300 shrink-0" />
-                  <span className="truncate">{state} • {city || (language === 'ar' ? 'العراق' : 'Iraq')}</span>
+                  <span className="truncate">{city ? `${state} • ${city}` : state}</span>
                 </span>
               </div>
             </div>
