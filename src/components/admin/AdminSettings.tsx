@@ -19,7 +19,12 @@ import {
   DollarSign,
   ShieldCheck,
   Check,
-  Download
+  Download,
+  Bell,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  MessageCircle
 } from 'lucide-react';
 
 export const AdminSettings: React.FC = () => {
@@ -37,7 +42,10 @@ export const AdminSettings: React.FC = () => {
     isConvexConnected,
     isCloudflareConfigured,
     addToast,
-    setAdminTab
+    setAdminTab,
+    updateNotificationSettings,
+    playNotificationSound,
+    requestBrowserNotifications
   } = useStore();
 
   const [formSettings, setFormSettings] = useState({
@@ -404,6 +412,137 @@ export const AdminSettings: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* New Order Notifications & Alert Settings */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shadow-xs">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">
+                    {language === 'ar' ? 'إشعارات وتنبيهات الطلبات الجديدة' : 'New Order Alerts & Notifications'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {language === 'ar'
+                      ? 'تنبيهك فوراً بنغمة صوتية وإشعارات سطح المكتب عند تقديم أي عميل لطلب جديد في متجرك'
+                      : 'Get alerted instantly with audio chimes & desktop push notifications whenever an order is submitted'}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{language === 'ar' ? 'نظام التنبيهات نشط' : 'Alerts Active'}</span>
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {/* Sound Chime Alert Option */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-2xs mt-0.5 sm:mt-0">
+                    {activeStore.settings.notificationSettings?.soundEnabled !== false ? (
+                      <Volume2 className="w-4.5 h-4.5 text-emerald-600" />
+                    ) : (
+                      <VolumeX className="w-4.5 h-4.5 text-slate-400" />
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">
+                      {language === 'ar' ? 'صوت التنبيه الموسيقي للطلبات (Sound Chime)' : 'Melodic Order Arrival Chime'}
+                    </span>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      {language === 'ar'
+                        ? 'تشغيل نغمة كاشير تنبيهية مميزة تلقائياً فور تأكيد أي طلب جديد عبر المتجر'
+                        : 'Play a crisp melodic cash register chime automatically upon each order confirmation'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={playNotificationSound}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-2xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{language === 'ar' ? 'تجربة الصوت 🔊' : 'Test Sound 🔊'}</span>
+                  </button>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={activeStore.settings.notificationSettings?.soundEnabled !== false}
+                      onChange={(e) => updateNotificationSettings({ soundEnabled: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 relative" />
+                  </label>
+                </div>
+              </div>
+
+              {/* Desktop Browser Push Notifications */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 shadow-2xs mt-0.5 sm:mt-0">
+                    <Bell className="w-4.5 h-4.5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">
+                      {language === 'ar' ? 'إشعارات سطح المكتب للمتصفح (Web Push)' : 'Desktop Browser Notifications'}
+                    </span>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      {language === 'ar'
+                        ? 'إرسال إشعار فوري لسطح المكتب برقم وتفاصيل الطلب حتى لو كانت لوحة التحكم مصغرة'
+                        : 'Receive desktop banners with order number & details even when the browser is minimized'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 self-end sm:self-center">
+                  {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted' ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{language === 'ar' ? 'مفعّلة بالمتصفح' : 'Active in Browser'}</span>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={requestBrowserNotifications}
+                      className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs"
+                    >
+                      {language === 'ar' ? 'تفعيل إشعارات المتصفح' : 'Enable Browser Push'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* WhatsApp Notification Number */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-emerald-600" />
+                  <span className="text-xs font-bold text-slate-900">
+                    {language === 'ar' ? 'رقم الواتساب لاستقبال إشعارات وتفاصيل الطلبات' : 'WhatsApp Order Alert Phone'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-2">
+                  <input
+                    type="tel"
+                    dir="ltr"
+                    placeholder="9647XXXXXXXX"
+                    value={activeStore.settings.notificationSettings?.whatsappAlertPhone || activeStore.ownerPhone || ''}
+                    onChange={(e) => updateNotificationSettings({ whatsappAlertPhone: e.target.value })}
+                    className="w-full sm:flex-1 p-2 bg-white border border-slate-200 rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 font-bold"
+                  />
+                  <span className="text-[11px] text-slate-400">
+                    {language === 'ar' ? 'يُستخدم لتوجيه ملخص الطلب ورابط الإدارة' : 'Receives order summaries & admin link'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Store Owner Password & Security */}

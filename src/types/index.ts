@@ -132,6 +132,30 @@ export interface Coupon {
   description: string;
 }
 
+export interface NotificationSettings {
+  soundEnabled: boolean;
+  browserNotificationsEnabled: boolean;
+  notifyOnNewOrder: boolean;
+  notifyOnLowStock: boolean;
+  whatsappAlertPhone?: string;
+  emailAlertAddress?: string;
+}
+
+export interface AdminNotification {
+  id: string;
+  type: 'new_order' | 'low_stock' | 'system';
+  title: string;
+  titleAr: string;
+  message: string;
+  messageAr: string;
+  orderId?: string;
+  orderNumber?: string;
+  amount?: number;
+  customerName?: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export interface StoreSettings {
   storeName: string;
   supportEmail: string;
@@ -147,6 +171,7 @@ export interface StoreSettings {
     applePay: boolean;
   };
   bankDetails?: string;
+  notificationSettings?: NotificationSettings;
 }
 
 export type StoreThemeColor = 'emerald' | 'indigo' | 'amber' | 'rose' | 'cyan' | 'violet';
@@ -305,6 +330,7 @@ export interface HostedStore {
   customers: Customer[];
   coupons: Coupon[];
   reviews?: ProductReview[];
+  adminNotifications?: AdminNotification[];
 }
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';

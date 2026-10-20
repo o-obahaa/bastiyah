@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
 import { AdminTab } from '../../types';
+import { AdminNotificationBell } from './AdminNotificationBell';
 
 export const AdminLayout: React.FC = () => {
   const { 
@@ -197,6 +198,9 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Admin Notification Bell */}
+          <AdminNotificationBell />
+
           <button
             onClick={() => setCurrentPage('home')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-colors"
@@ -437,6 +441,9 @@ export const AdminLayout: React.FC = () => {
 
           {/* Right Header Quick Controls */}
           <div className="flex items-center gap-3">
+            {/* Admin Notification Bell */}
+            <AdminNotificationBell />
+
             {/* Direct Storefront Preview Button */}
             <button
               onClick={() => setCurrentPage('home')}

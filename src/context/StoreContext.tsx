@@ -19,7 +19,9 @@ import {
   StoreThemeColor,
   StoreLayoutStyle,
   ProductReview,
-  CustomerUser
+  CustomerUser,
+  AdminNotification,
+  NotificationSettings
 } from '../types';
 import { 
   INITIAL_HOSTED_STORES,
@@ -36,6 +38,11 @@ import {
   getStorePathLabel, 
   getPlatformDisplayUrl 
 } from '../utils/urlUtils';
+import {
+  playNotificationChime,
+  sendBrowserNotification,
+  requestBrowserNotificationPermission
+} from '../utils/notificationUtils';
 import { convexClient, isConvexConfigured } from '../convexClient';
 import { api } from '../convexApi';
 
@@ -194,6 +201,16 @@ interface StoreContextType {
   toasts: ToastMessage[];
   addToast: (title: string, type?: ToastType, message?: string) => void;
   removeToast: (id: string) => void;
+
+  // Admin Order & System Notifications
+  adminNotifications: AdminNotification[];
+  unreadNotificationsCount: number;
+  markNotificationAsRead: (notificationId: string) => void;
+  markAllNotificationsAsRead: () => void;
+  clearAllNotifications: () => void;
+  updateNotificationSettings: (settings: Partial<NotificationSettings>) => void;
+  playNotificationSound: () => void;
+  requestBrowserNotifications: () => Promise<boolean>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -1851,13 +1868,53 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updatedCustomers = [newCust, ...store.customers];
       }
 
+      // Create Admin Notification for the newly submitted order
+      const newAdminNotification: AdminNotification = {
+        id: `notif-${Date.now()}`,
+        type: 'new_order',
+        title: 'New Order Received!',
+        titleAr: 'طلب جديد وارد!',
+        message: `Order #${orderNumber} received from ${shippingInfo.fullName} (${store.settings.currency}${cartTotal.toFixed(0)})`,
+        messageAr: `طلب جديد رقم #${orderNumber} من ${shippingInfo.fullName} بقيمة ${store.settings.currency}${cartTotal.toFixed(0)}`,
+        orderId: newOrder.id,
+        orderNumber,
+        amount: cartTotal,
+        customerName: shippingInfo.fullName,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+
       return {
         ...store,
         products: updatedProducts,
         orders: [newOrder, ...store.orders],
         customers: updatedCustomers,
+        adminNotifications: [newAdminNotification, ...(store.adminNotifications || [])],
       };
     });
+
+    // Play chime sound notification for the merchant
+    const soundEnabled = activeStore.settings.notificationSettings?.soundEnabled ?? true;
+    if (soundEnabled) {
+      playNotificationChime();
+    }
+
+    // Native browser push notification if permitted
+    const browserNotifEnabled = activeStore.settings.notificationSettings?.browserNotificationsEnabled ?? false;
+    if (browserNotifEnabled) {
+      sendBrowserNotification(
+        language === 'ar' ? `🔔 طلب جديد وارد (#${orderNumber})` : `🔔 New Order Received (#${orderNumber})`,
+        language === 'ar'
+          ? `طلب بقيمة ${activeStore.settings.currency}${cartTotal.toFixed(0)} من العميل ${shippingInfo.fullName}`
+          : `Order of ${activeStore.settings.currency}${cartTotal.toFixed(0)} from ${shippingInfo.fullName}`,
+        {
+          onClick: () => {
+            setCurrentPage('admin');
+            setAdminTab('orders');
+          }
+        }
+      );
+    }
 
     setLastPlacedOrder(newOrder);
 
@@ -1952,6 +2009,77 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       settings: { ...store.settings, ...newSettings },
     }));
     addToast(language === 'ar' ? 'تم حفظ إعدادات المتجر' : 'Store settings saved', 'success');
+  };
+
+  // Admin Order & System Notifications
+  const adminNotifications: AdminNotification[] = activeStore.adminNotifications || [];
+  const unreadNotificationsCount = adminNotifications.filter((n) => !n.read).length;
+
+  const markNotificationAsRead = (notificationId: string) => {
+    mutateActiveStore((store) => ({
+      ...store,
+      adminNotifications: (store.adminNotifications || []).map((n) =>
+        n.id === notificationId ? { ...n, read: true } : n
+      ),
+    }));
+  };
+
+  const markAllNotificationsAsRead = () => {
+    mutateActiveStore((store) => ({
+      ...store,
+      adminNotifications: (store.adminNotifications || []).map((n) => ({ ...n, read: true })),
+    }));
+    addToast(language === 'ar' ? 'تم تحديد جميع الإشعارات كمقروءة' : 'All notifications marked as read', 'info');
+  };
+
+  const clearAllNotifications = () => {
+    mutateActiveStore((store) => ({
+      ...store,
+      adminNotifications: [],
+    }));
+    addToast(language === 'ar' ? 'تم مسح سجل الإشعارات' : 'Notifications cleared', 'info');
+  };
+
+  const updateNotificationSettings = (settingsUpdates: Partial<NotificationSettings>) => {
+    mutateActiveStore((store) => ({
+      ...store,
+      settings: {
+        ...store.settings,
+        notificationSettings: {
+          soundEnabled: true,
+          browserNotificationsEnabled: false,
+          notifyOnNewOrder: true,
+          notifyOnLowStock: true,
+          ...store.settings.notificationSettings,
+          ...settingsUpdates,
+        },
+      },
+    }));
+    addToast(
+      language === 'ar' ? 'تم تحديث إعدادات التنبيهات' : 'Notification settings updated',
+      'success'
+    );
+  };
+
+  const playNotificationSound = () => {
+    playNotificationChime();
+  };
+
+  const requestBrowserNotifications = async (): Promise<boolean> => {
+    const granted = await requestBrowserNotificationPermission();
+    if (granted) {
+      updateNotificationSettings({ browserNotificationsEnabled: true });
+      addToast(
+        language === 'ar' ? 'تم تفعيل إشعارات المتصفح بنجاح' : 'Browser notifications enabled',
+        'success'
+      );
+    } else {
+      addToast(
+        language === 'ar' ? 'لم يتم منح إذن إشعارات المتصفح' : 'Notification permission not granted',
+        'warning'
+      );
+    }
+    return granted;
   };
 
   return (
@@ -2060,6 +2188,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toasts,
         addToast,
         removeToast,
+        adminNotifications,
+        unreadNotificationsCount,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        clearAllNotifications,
+        updateNotificationSettings,
+        playNotificationSound,
+        requestBrowserNotifications,
       }}
     >
       {children}
