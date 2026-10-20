@@ -98,7 +98,18 @@ export const Footer: React.FC = () => {
               >
                 <Globe className="w-3.5 h-3.5 text-indigo-400" />
                 <span>
-                  {language === 'ar' ? 'مستضاف عبر منصة بسطية (Bastiyah)' : 'Hosted on Bastiyah Platform'}
+                  {language === 'ar' ? 'مستضاف عبر بسطية' : 'Hosted on Bastiyah'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setCurrentPage('admin')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors"
+                title={language === 'ar' ? 'لوحة تحكم وإدارة المتجر' : 'Store Admin Portal'}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>
+                  {language === 'ar' ? 'إدارة المتجر' : 'Store Admin'}
                 </span>
               </button>
             </div>
