@@ -97,13 +97,15 @@ export interface Order {
 export interface Customer {
   id: string;
   name: string;
-  email: string;
+  phone?: string;
+  email?: string;
   avatar: string;
   city: string;
   country: string;
   ordersCount: number;
   totalSpent: number;
   joinedDate: string;
+  isPhoneVerified?: boolean;
 }
 
 export interface CustomerUser {
@@ -114,7 +116,7 @@ export interface CustomerUser {
   city?: string;
   address?: string;
   avatar?: string;
-  authenticatedVia: 'whatsapp';
+  authenticatedVia: 'whatsapp' | 'sms' | 'phone_auth';
   authenticatedAt: string;
 }
 

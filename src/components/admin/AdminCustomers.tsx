@@ -13,7 +13,9 @@ import {
   Calendar,
   X,
   ExternalLink,
-  DollarSign
+  DollarSign,
+  Phone,
+  CheckCircle2
 } from 'lucide-react';
 
 export const AdminCustomers: React.FC = () => {
@@ -28,7 +30,8 @@ export const AdminCustomers: React.FC = () => {
     const q = searchTerm.toLowerCase();
     const matchesSearch =
       c.name.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
+      (c.phone || '').toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q) ||
       c.city.toLowerCase().includes(q);
 
     const isVip = c.totalSpent >= 500;
@@ -41,18 +44,19 @@ export const AdminCustomers: React.FC = () => {
   });
 
   const openWhatsApp = (customer: Customer) => {
-    // Look up customer phone from recent orders if available
+    // Look up customer phone directly or from recent orders
+    const directPhone = customer.phone || '';
     const customerOrder = orders.find(
-      (o) => o.customer.email.toLowerCase() === customer.email.toLowerCase() ||
+      (o) => (customer.email && o.customer.email.toLowerCase() === customer.email.toLowerCase()) ||
              o.customer.fullName.toLowerCase() === customer.name.toLowerCase()
     );
 
-    const phone = customerOrder?.customer.phone || '';
+    const phone = directPhone || customerOrder?.customer.phone || '';
     const cleanPhone = phone.replace(/[^0-9]/g, '');
 
     if (!cleanPhone) {
       addToast(
-        language === 'ar' ? 'رقم الهاتف غير مسجل في طلبات هذا العميل' : 'Phone number not on record',
+        language === 'ar' ? 'رقم الهاتف غير مسجل لهذا العميل' : 'Phone number not on record',
         'info'
       );
       return;
@@ -72,11 +76,12 @@ export const AdminCustomers: React.FC = () => {
       return;
     }
 
-    const headers = ['ID', 'Name', 'Email', 'City', 'Country', 'Orders Count', 'Total Spent', 'Tier', 'Joined Date'];
+    const headers = ['ID', 'Name', 'Phone', 'Email', 'City', 'Country', 'Orders Count', 'Total Spent', 'Tier', 'Joined Date'];
     const rows = customers.map((c) => [
       c.id,
       `"${c.name}"`,
-      `"${c.email}"`,
+      `"${c.phone || ''}"`,
+      `"${c.email || ''}"`,
       `"${c.city}"`,
       `"${c.country}"`,
       c.ordersCount,
@@ -99,7 +104,8 @@ export const AdminCustomers: React.FC = () => {
 
   // Find orders belonging to inspecting customer
   const customerOrders = inspectingCustomer ? orders.filter(
-    (o) => o.customer.email.toLowerCase() === inspectingCustomer.email.toLowerCase() ||
+    (o) => (inspectingCustomer.phone && o.customer.phone && inspectingCustomer.phone.replace(/\D/g, '').endsWith(o.customer.phone.replace(/\D/g, '').slice(-8))) ||
+           (inspectingCustomer.email && o.customer.email.toLowerCase() === inspectingCustomer.email.toLowerCase()) ||
            o.customer.fullName.toLowerCase() === inspectingCustomer.name.toLowerCase()
   ) : [];
 
@@ -243,9 +249,14 @@ export const AdminCustomers: React.FC = () => {
                             <span className="font-bold text-slate-900 block text-xs sm:text-sm truncate">
                               {customer.name}
                             </span>
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono truncate">
-                              <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                              {customer.email}
+                            <span className="text-[11px] text-emerald-700 flex items-center gap-1 font-mono font-bold truncate" dir="ltr">
+                              <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>{customer.phone || customer.email}</span>
+                              {customer.isPhoneVerified && (
+                                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-sans px-1.5 py-0.2 rounded font-bold ms-1">
+                                  {language === 'ar' ? 'موثق ✓' : 'Verified ✓'}
+                                </span>
+                              )}
                             </span>
                           </div>
                         </div>

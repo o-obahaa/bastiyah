@@ -156,12 +156,12 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
             </div>
             <div>
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 text-[10px] font-bold text-emerald-200 uppercase tracking-wider mb-1">
-                <span>{language === 'ar' ? 'التحقق السريع عبر واتساب' : 'WhatsApp Verification'}</span>
+                <span>{language === 'ar' ? 'التسجيل والتحقق بالهاتف حصراً' : 'Phone Authentication Only'}</span>
                 <span>•</span>
                 <span>العراق 🇮🇶</span>
               </div>
               <h3 className="text-lg font-black text-white">
-                {language === 'ar' ? `تسجيل الدخول إلى ${storeTitle}` : `Sign In to ${storeTitle}`}
+                {language === 'ar' ? `تسجيل الدخول والتحقق برقم الهاتف` : `Shopper Phone Sign-In & Registration`}
               </h3>
             </div>
           </div>
@@ -172,14 +172,14 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
           {step === 'phone' ? (
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                <p className="text-xs text-slate-600 leading-relaxed mb-4 bg-emerald-50/70 p-3 rounded-xl border border-emerald-100">
                   {language === 'ar'
-                    ? 'أدخل رقم هاتفك لتسجيل الدخول أو إنشاء حسابك فوراً. سنرسل لك رمز تحقق سريعاً مكوناً من 4 أرقام عبر تطبيق واتساب.'
-                    : 'Enter your phone number to sign in or create your shopper account. We will send a 4-digit verification code directly via WhatsApp.'}
+                    ? 'التسجيل والدخول للعملاء يتم حصرياً عبر رقم الهاتف المحمول؛ سنرسل لك رمز تحقق سريعاً مكوناً من 4 أرقام عبر واتساب لتسجيل حسابك فوراً دون الحاجة لكلمات مرور.'
+                    : 'Customer registration and login is exclusively handled via mobile phone number. We dispatch a 4-digit verification code via WhatsApp to authenticate your shopper account.'}
                 </p>
 
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'ar' ? 'رقم الهاتف (واتساب)' : 'Mobile Phone (WhatsApp)'} *
+                  {language === 'ar' ? 'رقم الهاتف العراقي (وسيلة التسجيل والتحقق الوحيدة) *' : 'Iraqi Mobile Phone (Exclusive Registration Method) *'}
                 </label>
                 <div className="flex gap-2" dir="ltr">
                   <div className="px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 shrink-0 select-none">

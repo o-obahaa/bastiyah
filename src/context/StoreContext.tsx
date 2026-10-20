@@ -48,7 +48,7 @@ export interface CreateStoreInput {
   category: string;
   categoryAr?: string;
   ownerName: string;
-  ownerEmail: string;
+  ownerEmail?: string;
   ownerPhone?: string;
   adminPassword?: string;
   plan: 'Starter' | 'Growth' | 'Enterprise';
@@ -100,6 +100,7 @@ interface StoreContextType {
   goToPlatform: (targetPage?: 'landing' | 'admin') => void;
   createHostedStore: (input: CreateStoreInput) => HostedStore;
   updateHostedStore: (storeId: string, updates: Partial<HostedStore>) => void;
+  registerStoreMerchantByOwner: (storeId: string, merchant: { name: string; phone: string; password?: string }) => void;
   updateStoreDesign: (designUpdates: Partial<StoreDesign>, storeId?: string) => void;
   deleteHostedStore: (storeId: string) => void;
 
@@ -721,6 +722,46 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPendingCustomerOtp(null);
     setIsCustomerAuthModalOpen(false);
 
+    // Register or update customer profile in activeStore with verified phone
+    setStores((prevStores) =>
+      prevStores.map((st) => {
+        if (st.id !== activeStore.id) return st;
+        const existingCust = st.customers.find((c) => {
+          if (c.phone) {
+            const cp = c.phone.replace(/\D/g, '');
+            if (cp.slice(-8) === normalized.slice(-8)) return true;
+          }
+          return false;
+        });
+
+        let updatedCusts: Customer[];
+        if (existingCust) {
+          updatedCusts = st.customers.map((c) =>
+            c.id === existingCust.id
+              ? { ...c, name: customerName, phone: fullFormattedPhone, isPhoneVerified: true }
+              : c
+          );
+        } else {
+          const newCustomerEntry: Customer = {
+            id: `cust-${Date.now()}`,
+            name: customerName,
+            phone: fullFormattedPhone,
+            email: matchedPastOrder?.customer.email || `${normalized.slice(-4)}@customer.iq`,
+            avatar: customerUser.avatar || '',
+            city: matchedPastOrder?.customer.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+            country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
+            ordersCount: matchedPastOrder ? 1 : 0,
+            totalSpent: matchedPastOrder ? matchedPastOrder.total : 0,
+            joinedDate: new Date().toISOString().split('T')[0],
+            isPhoneVerified: true,
+          };
+          updatedCusts = [newCustomerEntry, ...st.customers];
+        }
+
+        return { ...st, customers: updatedCusts };
+      })
+    );
+
     addToast(
       language === 'ar'
         ? `✅ تم تسجيل الدخول بنجاح عبر واتساب! مرحباً بك يا ${customerName}.`
@@ -1197,7 +1238,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       category: input.category,
       categoryAr: input.categoryAr || input.category,
       ownerName: input.ownerName.trim() || 'Store Owner',
-      ownerEmail: input.ownerEmail.trim() || `admin@${cleanSlug}.com`,
+      ownerEmail: input.ownerEmail?.trim() || `admin@${cleanSlug}.com`,
       ownerPhone: input.ownerPhone?.trim() || '+964 770 123 4567',
       adminPassword: input.adminPassword?.trim() || 'merchant123',
       status: 'active',
@@ -1212,7 +1253,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
       settings: {
         storeName: input.name.trim(),
-        supportEmail: input.ownerEmail.trim() || `support@${cleanSlug}.com`,
+        supportEmail: input.ownerEmail?.trim() || `support@${cleanSlug}.com`,
         currency: input.currency || 'د.ع',
         freeShippingThreshold: 50000,
         standardShippingFee: 5000,
@@ -1250,6 +1291,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
     addToast(
       language === 'ar' ? 'تم تحديث بيانات المتجر بنجاح' : 'Store details updated successfully',
+      'success'
+    );
+  };
+
+  const registerStoreMerchantByOwner = (
+    storeId: string,
+    merchant: { name: string; phone: string; password?: string }
+  ) => {
+    setStores((prev) =>
+      prev.map((s) => {
+        if (s.id !== storeId) return s;
+        return {
+          ...s,
+          ownerName: merchant.name.trim() || s.ownerName,
+          ownerPhone: merchant.phone.trim(),
+          adminPassword: merchant.password?.trim() || s.adminPassword || 'merchant123',
+          registeredBy: 'platform_owner',
+        };
+      })
+    );
+    addToast(
+      language === 'ar'
+        ? `✅ تم تسجيل واعتماد مدير المتجر (${merchant.name}) برقم الهاتف (${merchant.phone}) بنجاح بواسطة مالك المنصة.`
+        : `✅ Store admin (${merchant.name}) registered via phone (${merchant.phone}) by platform owner.`,
       'success'
     );
   };
@@ -1591,18 +1656,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return product;
       });
 
-      // Update customers
-      const existingCustomer = store.customers.find(
-        (c) => c.email.toLowerCase() === shippingInfo.email.toLowerCase()
-      );
+      // Update customers - strictly matched by phone number first
+      const existingCustomer = store.customers.find((c) => {
+        if (c.phone && shippingInfo.phone) {
+          const cp = c.phone.replace(/\D/g, '');
+          const sp = shippingInfo.phone.replace(/\D/g, '');
+          if (cp.slice(-8) === sp.slice(-8)) return true;
+        }
+        return Boolean(c.email && shippingInfo.email && c.email.toLowerCase() === shippingInfo.email.toLowerCase());
+      });
+
       let updatedCustomers: Customer[];
       if (existingCustomer) {
         updatedCustomers = store.customers.map((c) =>
           c.id === existingCustomer.id
             ? {
                 ...c,
+                phone: shippingInfo.phone || c.phone,
                 ordersCount: c.ordersCount + 1,
                 totalSpent: Number((c.totalSpent + cartTotal).toFixed(2)),
+                isPhoneVerified: c.isPhoneVerified || true,
               }
             : c
         );
@@ -1610,13 +1683,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const newCust: Customer = {
           id: `cust-${Date.now()}`,
           name: shippingInfo.fullName,
-          email: shippingInfo.email,
+          phone: shippingInfo.phone,
+          email: shippingInfo.email || `${shippingInfo.phone.replace(/\D/g, '').slice(-6)}@customer.iq`,
           avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
           city: shippingInfo.city,
           country: shippingInfo.country,
           ordersCount: 1,
           totalSpent: cartTotal,
           joinedDate: new Date().toISOString().split('T')[0],
+          isPhoneVerified: true,
         };
         updatedCustomers = [newCust, ...store.customers];
       }
@@ -1630,6 +1705,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
 
     setLastPlacedOrder(newOrder);
+
+    // Auto-register and persist customer profile via phone number if not logged in
+    if (!currentCustomer && shippingInfo.phone) {
+      const autoCustomer: CustomerUser = {
+        id: `cust-order-${Date.now()}`,
+        name: shippingInfo.fullName,
+        phone: shippingInfo.phone,
+        email: shippingInfo.email,
+        city: shippingInfo.city,
+        address: shippingInfo.address,
+        avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+        authenticatedVia: 'phone_auth',
+        authenticatedAt: new Date().toISOString(),
+      };
+      setCurrentCustomer(autoCustomer);
+      try {
+        localStorage.setItem('bastiyah_current_customer', JSON.stringify(autoCustomer));
+      } catch (e) {
+        // ignore
+      }
+    }
     clearCart();
     setAppliedCoupon(null);
     setCurrentPage('order-success');
@@ -1743,6 +1839,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         goToPlatform,
         createHostedStore,
         updateHostedStore,
+        registerStoreMerchantByOwner,
         updateStoreDesign,
         deleteHostedStore,
         products,

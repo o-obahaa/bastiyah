@@ -87,20 +87,29 @@ export const CustomerOrdersPage: React.FC = () => {
   ];
 
   const filteredOrders = orders.filter((order) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase().trim();
-    const orderNum = order.orderNumber.toLowerCase();
-    const phone = (order.customer.phone || '').toLowerCase();
-    const email = (order.customer.email || '').toLowerCase();
-    const name = (order.customer.fullName || '').toLowerCase();
-    const tracking = (order.trackingNumber || '').toLowerCase();
-    return (
-      orderNum.includes(q) ||
-      phone.includes(q) ||
-      email.includes(q) ||
-      name.includes(q) ||
-      tracking.includes(q)
-    );
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const orderNum = order.orderNumber.toLowerCase();
+      const phone = (order.customer.phone || '').toLowerCase();
+      const email = (order.customer.email || '').toLowerCase();
+      const name = (order.customer.fullName || '').toLowerCase();
+      const tracking = (order.trackingNumber || '').toLowerCase();
+      return (
+        orderNum.includes(q) ||
+        phone.includes(q) ||
+        email.includes(q) ||
+        name.includes(q) ||
+        tracking.includes(q)
+      );
+    }
+    if (currentCustomer) {
+      const custPhone = (currentCustomer.phone || '').replace(/\D/g, '');
+      const ordPhone = (order.customer.phone || '').replace(/\D/g, '');
+      if (custPhone && ordPhone) {
+        return ordPhone.slice(-8) === custPhone.slice(-8);
+      }
+    }
+    return true;
   });
 
   return (

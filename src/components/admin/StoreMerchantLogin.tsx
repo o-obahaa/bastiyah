@@ -289,6 +289,16 @@ export const StoreMerchantLogin: React.FC = () => {
               <ShieldCheck className="w-3.5 h-3.5" style={{ color: theme.hex }} />
               <span className="text-white font-bold">{getStorePathLabel(activeStore.slug, true)}</span>
             </div>
+
+            {/* Owner Authority Notice */}
+            <div className="mt-3 p-2 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>
+                {language === 'ar'
+                  ? 'تسجيل الدخول مخصص لمدراء المتاجر المضافين من قِبل مالك المنصة برقم الهاتف.'
+                  : 'Access restricted to store admins registered by platform owner via phone.'}
+              </span>
+            </div>
           </div>
 
           {/* Authentication Mode Switcher: SMS OTP vs Password */}

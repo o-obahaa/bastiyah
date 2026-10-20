@@ -3,6 +3,7 @@ import {
   Crown,
   Globe,
   Plus,
+  PlusCircle,
   ExternalLink,
   Settings,
   Palette,
@@ -87,6 +88,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     goToPlatform,
     createHostedStore,
     updateHostedStore,
+    registerStoreMerchantByOwner,
     updateStoreDesign,
     deleteHostedStore,
     setAdminTab,
@@ -165,6 +167,32 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [merchantSearch, setMerchantSearch] = useState('');
   const [merchantPlanFilter, setMerchantPlanFilter] = useState<'all' | 'Starter' | 'Growth' | 'Enterprise'>('all');
   const [revealedPasswordStoreId, setRevealedPasswordStoreId] = useState<string | null>(null);
+  const [showAddMerchantModal, setShowAddMerchantModal] = useState(false);
+  const [newMerchantStoreId, setNewMerchantStoreId] = useState(stores[0]?.id || '');
+  const [newMerchantName, setNewMerchantName] = useState('');
+  const [newMerchantPhone, setNewMerchantPhone] = useState('+964 770 123 4567');
+  const [newMerchantPassword, setNewMerchantPassword] = useState('merchant123');
+
+  const handleAddMerchantByOwner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMerchantStoreId) {
+      addToast(language === 'ar' ? 'يرجى اختيار المتجر' : 'Please select a store', 'error');
+      return;
+    }
+    if (!newMerchantPhone.trim() || newMerchantPhone.trim().length < 8) {
+      addToast(language === 'ar' ? 'يرجى إدخال رقم هاتف صالح لمدير المتجر' : 'Please provide a valid phone number', 'error');
+      return;
+    }
+    registerStoreMerchantByOwner(newMerchantStoreId, {
+      name: newMerchantName.trim() || 'Store Merchant',
+      phone: newMerchantPhone.trim(),
+      password: newMerchantPassword.trim() || 'merchant123',
+    });
+    setShowAddMerchantModal(false);
+    setNewMerchantName('');
+    setNewMerchantPhone('+964 770 123 4567');
+    setNewMerchantPassword('merchant123');
+  };
 
   // Orders Tab State
   const [orderSearch, setOrderSearch] = useState('');
@@ -1727,19 +1755,30 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-white font-brand">
-                    {language === 'ar' ? 'سجل التجار وأصحاب المتاجر' : 'Merchants & Store Owners Registry'}
+                    {language === 'ar' ? 'سجل مدراء المتاجر والتجار' : 'Merchants & Store Owners Registry'}
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {language === 'ar'
-                      ? 'قائمة بجميع التجار المسجلين في المنصة وبيانات التواصل وكلمات المرور الخاصة بهم.'
-                      : 'All registered store merchants, emails, direct login credentials, and managed stores.'}
+                      ? 'مدراء المتاجر يتم تسجيلهم وإضافتهم حصرياً من قِبل مالك المنصة عبر رقم الهاتف.'
+                      : 'Store admins are registered and authorized exclusively by the platform owner via phone number.'}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 font-bold">
-                    {processedMerchants.length} {language === 'ar' ? 'تاجر مسجل' : 'Merchants'}
+                  <span className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 font-bold">
+                    {processedMerchants.length} {language === 'ar' ? 'مدير متجر' : 'Store Admins'}
                   </span>
+
+                  <button
+                    onClick={() => {
+                      setNewMerchantStoreId(stores[0]?.id || '');
+                      setShowAddMerchantModal(true);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'إضافة مدير متجر برقم الهاتف' : 'Add Store Admin via Phone'}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1752,8 +1791,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     onChange={(e) => setMerchantSearch(e.target.value)}
                     placeholder={
                       language === 'ar'
-                        ? 'ابحث باسم التاجر، البريد الإلكتروني، أو رابط المتجر...'
-                        : 'Search by merchant name, email, or store subdomain...'
+                        ? 'ابحث باسم مدير المتجر، رقم الهاتف، أو رابط المتجر...'
+                        : 'Search by merchant name, phone number, or store...'
                     }
                     className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500"
                   />
@@ -1788,8 +1827,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <table className="w-full text-start text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'التاجر' : 'Merchant'}</th>
-                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'البريد الإلكتروني والاتصال' : 'Contact Email'}</th>
+                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'التاجر / مدير المتجر' : 'Store Admin'}</th>
+                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'رقم الهاتف (وسيلة التسجيل والدخول)' : 'Phone (Primary Registration)'}</th>
                       <th className="py-4 px-4 text-start">{language === 'ar' ? 'المتجر المرتبط' : 'Linked Store'}</th>
                       <th className="py-4 px-4 text-center">{language === 'ar' ? 'الباقة' : 'Plan'}</th>
                       <th className="py-4 px-4 text-center">{language === 'ar' ? 'كلمة المرور' : 'Password Key'}</th>
@@ -1813,7 +1852,12 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                 {store.ownerName.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <span className="font-bold text-white text-sm block">{store.ownerName}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-white text-sm block">{store.ownerName}</span>
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30 whitespace-nowrap">
+                                    {language === 'ar' ? 'مضاف من المالك' : 'Owner Added'}
+                                  </span>
+                                </div>
                                 <span className="text-[10px] text-slate-400">
                                   ID: <code className="font-mono text-slate-300">{store.id}</code>
                                 </span>
@@ -1822,9 +1866,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           </td>
 
                           <td className="py-4 px-4">
-                            <div className="space-y-1.5" dir="ltr">
+                            <div className="space-y-1" dir="ltr">
                               <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs text-emerald-400 font-bold flex items-center gap-1">
+                                <span className="font-mono text-xs text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-800/40">
                                   <Phone className="w-3.5 h-3.5 text-emerald-500" />
                                   <span>{store.ownerPhone || '+964 770 123 4567'}</span>
                                 </span>
@@ -1836,23 +1880,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                                   <Copy className="w-3 h-3" />
                                 </button>
                               </div>
-
-                              <div className="flex items-center gap-1.5">
-                                <a
-                                  href={`mailto:${store.ownerEmail}`}
-                                  className="font-mono text-[11px] text-slate-400 hover:text-amber-400 hover:underline flex items-center gap-1"
-                                >
-                                  <Mail className="w-3 h-3 text-slate-500" />
-                                  <span>{store.ownerEmail}</span>
-                                </a>
-                                <button
-                                  onClick={() => handleCopyText(store.ownerEmail, 'Merchant Email')}
-                                  className="text-slate-500 hover:text-slate-300 p-0.5 rounded"
-                                  title="Copy Email"
-                                >
-                                  <Copy className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
+                              <span className="text-[10px] text-slate-500 font-sans block">
+                                {language === 'ar' ? 'وسيلة التسجيل والدخول المعتمدة' : 'Official registration phone'}
+                              </span>
                             </div>
                           </td>
 
@@ -3240,6 +3270,128 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 {language === 'ar' ? 'تأكيد الحذف النهائي' : 'Yes, Delete Store'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 
+        ========================================================================
+        ADD STORE ADMIN / MERCHANT MODAL (EXCLUSIVE OWNER AUTHORITY)
+        ========================================================================
+      */}
+      {showAddMerchantModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-brand">
+                    {language === 'ar' ? 'إضافة مدير متجر برقم الهاتف' : 'Add Store Admin via Phone'}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {language === 'ar'
+                      ? 'صلاحية حصرية لمالك المنصة: تسجيل وإسناد مدير المتجر عبر رقم هاتفه.'
+                      : 'Exclusive Owner action: register and assign store admin using phone number.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddMerchantModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddMerchantByOwner} className="pt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  {language === 'ar' ? 'المتجر المراد تعيين المدير له' : 'Assign to Store'} *
+                </label>
+                <select
+                  required
+                  value={newMerchantStoreId}
+                  onChange={(e) => setNewMerchantStoreId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  {stores.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.design.logoEmoji} {language === 'ar' ? st.nameAr || st.name : st.name} ({st.slug}.bastiyah.com)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  {language === 'ar' ? 'اسم مدير المتجر / التاجر' : 'Store Admin Name'} *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newMerchantName}
+                  onChange={(e) => setNewMerchantName(e.target.value)}
+                  placeholder={language === 'ar' ? 'مثال: حيدر التميمي' : 'e.g. Haidar Al-Tamimi'}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{language === 'ar' ? 'رقم الهاتف (وسيلة التسجيل والدخول الوحيدة)' : 'Phone Number (Exclusive Registration Method)'} *</span>
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                    {language === 'ar' ? 'طريقة التسجيل الحصرية' : 'Exclusive'}
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  dir="ltr"
+                  value={newMerchantPhone}
+                  onChange={(e) => setNewMerchantPhone(e.target.value)}
+                  placeholder="+964 770 123 4567"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
+                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? 'كلمة المرور للدخول المباشر' : 'Direct Login Password'}</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newMerchantPassword}
+                  onChange={(e) => setNewMerchantPassword(e.target.value)}
+                  placeholder="merchant123"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMerchantModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold"
+                >
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black shadow-md flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'تسجيل واعتماد المدير' : 'Register Admin'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

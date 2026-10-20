@@ -339,11 +339,11 @@ export const Header: React.FC = () => {
                     ? 'bg-[#128C7E]/20 hover:bg-[#128C7E]/30 text-emerald-300 border-[#128C7E]/40'
                     : 'bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#075E54] border-[#25D366]/30'
                 }`}
-                title={language === 'ar' ? 'تسجيل الدخول عبر واتساب' : 'WhatsApp Login'}
+                title={language === 'ar' ? 'تسجيل الدخول والتحقق برقم الهاتف' : 'Sign In via Phone Number'}
               >
                 <MessageCircle className="w-3.5 h-3.5 text-[#25D366] fill-[#25D366]" />
-                <span className="hidden sm:inline">{language === 'ar' ? 'دخول واتساب' : 'WhatsApp Login'}</span>
-                <span className="sm:hidden">{language === 'ar' ? 'دخول' : 'Login'}</span>
+                <span className="hidden sm:inline">{language === 'ar' ? 'دخول بالهاتف' : 'Phone Sign In'}</span>
+                <span className="sm:hidden">{language === 'ar' ? 'دخول' : 'Sign In'}</span>
               </button>
             )}
 
@@ -474,7 +474,7 @@ export const Header: React.FC = () => {
                 className="w-full py-2.5 px-3 rounded-xl bg-[#25D366] text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-sm"
               >
                 <MessageCircle className="w-4 h-4 fill-slate-950" />
-                <span>{language === 'ar' ? 'تسجيل الدخول عبر واتساب' : 'WhatsApp Sign In'}</span>
+                <span>{language === 'ar' ? 'تسجيل الدخول برقم الهاتف' : 'Sign In via Phone Number'}</span>
               </button>
             )}
           </div>

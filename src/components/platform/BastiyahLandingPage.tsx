@@ -604,8 +604,8 @@ export const BastiyahLandingPage: React.FC = () => {
                 </h3>
                 <p className="text-sm text-stone-500 max-w-lg mt-1 font-normal leading-relaxed">
                   {language === 'ar'
-                    ? 'املأ بيانات متجرك للانضمام إلى منصة بسطية والحصول على رابط مخصص وهوية مستقلة ولوحة تحكم خاصة فوراً.'
-                    : 'Set up your dedicated storefront on Bastiyah with your own brand, custom subdomain, and direct management dashboard.'}
+                    ? 'املأ بيانات متجرك للانضمام إلى منصة بسطية؛ يتم اعتماد وإضافة مدراء المتاجر حصرياً عبر رقم الهاتف من قِبل إدارة المنصة.'
+                    : 'Submit your store details to join Bastiyah; store admins are onboarded and authorized exclusively via mobile phone.'}
                 </p>
               </div>
 
@@ -731,16 +731,20 @@ export const BastiyahLandingPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                        {language === 'ar' ? 'البريد أو رقم الهاتف *' : 'Email or Contact Phone *'}
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <span>{language === 'ar' ? 'رقم الهاتف المحمول (وسيلة التسجيل والاعتماد) *' : 'Mobile Phone (Registration Method) *'}</span>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {language === 'ar' ? 'اعتماد المالك' : 'Owner Approved'}
+                        </span>
                       </label>
                       <input
-                        type="text"
+                        type="tel"
                         required
+                        dir="ltr"
                         value={appContact}
                         onChange={(e) => setAppContact(e.target.value)}
-                        placeholder="merchant@domain.com / +964..."
-                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all"
+                        placeholder="+964 770 123 4567"
+                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all font-mono font-bold"
                       />
                     </div>
                   </div>
