@@ -469,9 +469,9 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Grid: Revenue Trend Chart & Low Stock Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7 items-stretch">
         {/* Sales Chart (8 Cols) */}
-        <div className="lg:col-span-8 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs space-y-6">
+        <div className="lg:col-span-8 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs space-y-6 overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base sm:text-lg text-slate-900">
@@ -488,11 +488,11 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Bar Chart Visualization */}
-          <div className="h-56 flex items-end justify-between gap-3 pt-6 border-b border-slate-100 pb-4">
+          <div className="h-56 flex items-end justify-between gap-2 sm:gap-3 pt-6 border-b border-slate-100 pb-4 w-full">
             {chartDays.map((d, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                {/* Tooltip on hover */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2 rounded-lg whitespace-nowrap shadow-md pointer-events-none mb-1 font-mono font-bold">
+              <div key={idx} className="flex-1 min-w-0 flex flex-col items-center gap-2 h-full justify-end group relative">
+                {/* Floating Tooltip on hover - positioned absolutely so it never forces column width */}
+                <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2 rounded-lg whitespace-nowrap shadow-md pointer-events-none z-20 font-mono font-bold start-1/2 -translate-x-1/2">
                   {d.amount.toLocaleString()} {currency} ({d.count} {language === 'ar' ? 'طلب' : 'orders'})
                 </div>
 
@@ -505,7 +505,7 @@ export const AdminDashboard: React.FC = () => {
                     }}
                   />
                 </div>
-                <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-900">
+                <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-900 truncate max-w-full text-center">
                   {d.day}
                 </span>
               </div>
@@ -525,7 +525,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Low Stock & Inventory Health Alerts (4 Cols) */}
-        <div className="lg:col-span-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between overflow-hidden">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2 text-rose-600">
