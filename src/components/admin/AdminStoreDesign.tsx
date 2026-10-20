@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Palette,
   Globe,
@@ -18,13 +18,18 @@ import {
   Radio,
   Eye,
   Megaphone,
-  QrCode
+  QrCode,
+  Upload,
+  X,
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
+import { uploadImageToR2, validateImageFile } from '../../utils/cloudflareR2';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
 
@@ -48,12 +53,18 @@ export const AdminStoreDesign: React.FC = () => {
   const [taglineAr, setTaglineAr] = useState(activeStore.taglineAr);
 
   // Social & announcement state
+  const [showAnnouncementBar, setShowAnnouncementBar] = useState<boolean>(activeStore.design.showAnnouncementBar ?? false);
   const [announcementText, setAnnouncementText] = useState(activeStore.design.announcementText || '');
   const [announcementTextAr, setAnnouncementTextAr] = useState(activeStore.design.announcementTextAr || '');
   const [whatsappNumber, setWhatsappNumber] = useState(activeStore.design.whatsappNumber || '');
   const [instagramUrl, setInstagramUrl] = useState(activeStore.design.instagramUrl || '');
   const [tiktokUrl, setTiktokUrl] = useState(activeStore.design.tiktokUrl || '');
   const [customLogoUrl, setCustomLogoUrl] = useState(activeStore.design.customLogoUrl || '');
+
+  // Direct Logo upload state
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [logoUploadProgress, setLogoUploadProgress] = useState(0);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
@@ -64,6 +75,7 @@ export const AdminStoreDesign: React.FC = () => {
     setNameAr(activeStore.nameAr);
     setTagline(activeStore.tagline);
     setTaglineAr(activeStore.taglineAr);
+    setShowAnnouncementBar(activeStore.design.showAnnouncementBar ?? false);
     setAnnouncementText(activeStore.design.announcementText || '');
     setAnnouncementTextAr(activeStore.design.announcementTextAr || '');
     setWhatsappNumber(activeStore.design.whatsappNumber || '');
@@ -71,6 +83,52 @@ export const AdminStoreDesign: React.FC = () => {
     setTiktokUrl(activeStore.design.tiktokUrl || '');
     setCustomLogoUrl(activeStore.design.customLogoUrl || '');
   }, [activeStore]);
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await processLogoUpload(e.target.files[0]);
+    }
+  };
+
+  const processLogoUpload = async (file: File) => {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      addToast(validation.error || 'الملف غير صالح', 'error');
+      return;
+    }
+
+    try {
+      setIsUploadingLogo(true);
+      setLogoUploadProgress(15);
+      const result = await uploadImageToR2(file, {
+        storeSlug: activeStore?.slug,
+        onProgress: (p) => setLogoUploadProgress(p),
+      });
+
+      setCustomLogoUrl(result.url);
+      updateStoreDesign({ customLogoUrl: result.url });
+      addToast(
+        language === 'ar' ? 'تم رفع وحفظ شعار المتجر بنجاح!' : 'Store logo uploaded and saved successfully!',
+        'success'
+      );
+    } catch (err: any) {
+      console.error('Logo upload failed:', err);
+      addToast(err.message || 'فشل رفع الشعار', 'error');
+    } finally {
+      setIsUploadingLogo(false);
+      setLogoUploadProgress(0);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setCustomLogoUrl('');
+    updateStoreDesign({ customLogoUrl: undefined });
+    addToast(
+      language === 'ar' ? 'تمت إزالة الشعار واستعادة أيقونة الإيموجي' : 'Logo removed, reverted to emoji icon',
+      'info'
+    );
+  };
 
   const normalizedSlug = slug
     .toLowerCase()
@@ -106,8 +164,9 @@ export const AdminStoreDesign: React.FC = () => {
     // Save design enhancements
     updateStoreDesign({
       customLogoUrl: customLogoUrl.trim() || undefined,
-      announcementText: announcementText.trim() || undefined,
-      announcementTextAr: announcementTextAr.trim() || undefined,
+      showAnnouncementBar,
+      announcementText: showAnnouncementBar ? announcementText.trim() || undefined : undefined,
+      announcementTextAr: showAnnouncementBar ? announcementTextAr.trim() || undefined : undefined,
       whatsappNumber: whatsappNumber.trim() || undefined,
       instagramUrl: instagramUrl.trim() || undefined,
       tiktokUrl: tiktokUrl.trim() || undefined,
@@ -314,20 +373,88 @@ export const AdminStoreDesign: React.FC = () => {
                 </div>
               </div>
 
-              {/* Announcement Bar text */}
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center gap-1.5">
-                  <Megaphone className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{language === 'ar' ? 'شريط الإعلانات أعلى المتجر (Announcement Bar)' : 'Top Announcement Banner'}</span>
-                </label>
-                <input
-                  type="text"
-                  dir="rtl"
-                  value={announcementTextAr}
-                  onChange={(e) => setAnnouncementTextAr(e.target.value)}
-                  placeholder="مثال: شحن مجاني لكافة الطلبات فوق 50 دولار بمناسبة الإطلاق!"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-xs"
-                />
+              {/* Optional Announcement Bar Card */}
+              <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/70 space-y-3.5 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-2 rounded-xl transition-colors ${showAnnouncementBar ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-500'}`}>
+                      <Megaphone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">
+                          {language === 'ar' ? 'شريط الإعلانات أعلى المتجر' : 'Top Announcement Bar'}
+                        </span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                          {language === 'ar' ? 'اختياري' : 'Optional'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        {language === 'ar' ? 'إظهار أو إخفاء شريط العروض والشحن المجاني أعلى المتجر' : 'Show or hide the promo banner at the top of your store'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !showAnnouncementBar;
+                      setShowAnnouncementBar(next);
+                      updateStoreDesign({ showAnnouncementBar: next });
+                    }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      showAnnouncementBar ? 'bg-emerald-500' : 'bg-slate-300'
+                    }`}
+                    role="switch"
+                    aria-checked={showAnnouncementBar}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        showAnnouncementBar
+                          ? (language === 'ar' ? '-translate-x-5' : 'translate-x-5')
+                          : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {showAnnouncementBar ? (
+                  <div className="space-y-3 pt-3 border-t border-slate-200/70 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'نص الإعلان (بالعربية)' : 'Announcement Text (Arabic)'}
+                      </label>
+                      <input
+                        type="text"
+                        dir="rtl"
+                        value={announcementTextAr}
+                        onChange={(e) => setAnnouncementTextAr(e.target.value)}
+                        placeholder="مثال: شحن مجاني لكافة الطلبات فوق 50 دولار بمناسبة الإطلاق!"
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'نص الإعلان (بالإنجليزية - اختياري)' : 'Announcement Text (English - Optional)'}
+                      </label>
+                      <input
+                        type="text"
+                        dir="ltr"
+                        value={announcementText}
+                        onChange={(e) => setAnnouncementText(e.target.value)}
+                        placeholder="e.g. Free express delivery on orders over $50!"
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 text-xs"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-slate-400 bg-white/60 p-2.5 rounded-xl border border-dashed border-slate-200 text-center">
+                    {language === 'ar' ? '🚫 شريط الإعلانات معطل حالياً ولن يظهر للعملاء' : '🚫 Announcement bar is currently disabled and hidden from customers'}
+                  </div>
+                )}
               </div>
 
               {/* Social Connections */}
@@ -485,35 +612,161 @@ export const AdminStoreDesign: React.FC = () => {
             </div>
           </div>
 
-          {/* Logo Emoji / Custom Logo */}
+          {/* Logo Upload & Brand Identity */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
-            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-              <Sparkles className="w-5 h-5 text-purple-600" />
-              <div>
-                <h3 className="font-bold text-base text-slate-900">
-                  {language === 'ar' ? 'أيقونة وشعار المتجر' : 'Store Logo & Icon'}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  {language === 'ar' ? 'اختر رمز الإيموجي أو أدخل رابط صورة الشعار' : 'Choose brand emoji or image URL'}
-                </p>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">
+                    {language === 'ar' ? 'شعار المتجر (رفع ملف مباشر)' : 'Store Logo (Direct File Upload)'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {language === 'ar' ? 'ارفع صورة الشعار الرسمية لمتجرك أو اختر أيقونة إيموجي' : 'Upload your official brand logo or use an emoji emblem'}
+                  </p>
+                </div>
               </div>
+
+              {customLogoUrl && (
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {language === 'ar' ? 'شعار مرفوع' : 'Uploaded'}
+                </span>
+              )}
             </div>
 
-            {/* Emoji Grid */}
-            <div>
-              <span className="text-xs font-semibold text-slate-700 block mb-2">
-                {language === 'ar' ? 'اختر رمز الإيموجي للمتجر:' : 'Select Storefront Emoji:'}
-              </span>
+            {/* Direct File Upload Zone */}
+            {customLogoUrl ? (
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700">
+                    {language === 'ar' ? 'الشعار المعتمد حالياً:' : 'Active Uploaded Logo:'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      className="px-3 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {language === 'ar' ? 'تغيير الشعار' : 'Replace'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors"
+                      title={language === 'ar' ? 'إزالة الشعار' : 'Remove Logo'}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Dual Background Preview: Light & Dark Header Contrast */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="p-3.5 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center gap-1.5 text-center shadow-xs">
+                    <div className="w-16 h-16 flex items-center justify-center p-1 bg-slate-50 rounded-lg border border-slate-100">
+                      <img
+                        src={customLogoUrl}
+                        alt="Store Logo Light"
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {language === 'ar' ? 'على شريط فاتح' : 'On light header'}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-900 flex flex-col items-center justify-center gap-1.5 text-center shadow-xs">
+                    <div className="w-16 h-16 flex items-center justify-center p-1 bg-slate-900 rounded-lg border border-slate-800">
+                      <img
+                        src={customLogoUrl}
+                        alt="Store Logo Dark"
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {language === 'ar' ? 'على شريط داكن' : 'On dark header'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                  isUploadingLogo
+                    ? 'border-purple-400 bg-purple-50/50'
+                    : 'border-slate-200 hover:border-purple-400 hover:bg-purple-50/20 bg-slate-50/50'
+                }`}
+              >
+                {isUploadingLogo ? (
+                  <div className="py-2 space-y-2">
+                    <Loader2 className="w-7 h-7 text-purple-600 animate-spin mx-auto" />
+                    <p className="text-xs font-bold text-slate-700">
+                      {language === 'ar' ? 'جاري رفع الشعار...' : 'Uploading logo...'}
+                    </p>
+                    <div className="w-36 mx-auto bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-purple-600 h-full rounded-full transition-all duration-300"
+                        style={{ width: `${logoUploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto shadow-sm">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <div className="text-xs font-bold text-slate-800">
+                      {language === 'ar' ? 'اضغط لرفع ملف الشعار من جهازك' : 'Click to upload your logo file'}
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      {language === 'ar'
+                        ? 'PNG (مفضل بخلفية شفافة), SVG, JPG, WebP (حتى 10MB)'
+                        : 'PNG (transparent recommended), SVG, JPG, WebP (up to 10MB)'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hidden native file input */}
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml,image/avif"
+              onChange={handleLogoFileChange}
+              className="hidden"
+            />
+
+            {/* Emoji Fallback Picker (When no logo image is uploaded) */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-700">
+                  {language === 'ar' ? 'أو استخدم أيقونة إيموجي كشعار:' : 'Or use an emoji emblem as logo:'}
+                </span>
+                {customLogoUrl && (
+                  <span className="text-[10px] text-slate-400">
+                    ({language === 'ar' ? 'الشعار المرفوع له الأولوية' : 'Uploaded logo takes priority'})
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-5 gap-2">
                 {EMOJI_CHOICES.map((emoji) => {
-                  const isSelected = activeStore.design.logoEmoji === emoji;
+                  const isSelected = activeStore.design.logoEmoji === emoji && !customLogoUrl;
                   return (
                     <button
                       key={emoji}
-                      onClick={() => updateStoreDesign({ logoEmoji: emoji })}
+                      type="button"
+                      onClick={() => {
+                        updateStoreDesign({ logoEmoji: emoji });
+                      }}
                       className={`h-11 rounded-xl text-xl flex items-center justify-center transition-all ${
                         isSelected
-                          ? 'bg-slate-900 text-white shadow-md scale-105'
+                          ? 'bg-slate-900 text-white shadow-md scale-105 ring-2 ring-purple-500'
                           : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
                       }`}
                     >
@@ -522,20 +775,6 @@ export const AdminStoreDesign: React.FC = () => {
                   );
                 })}
               </div>
-            </div>
-
-            {/* Custom Logo Image URL (Optional) */}
-            <div className="pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                {language === 'ar' ? 'رابط صورة الشعار (اختياري)' : 'Custom Logo Image URL (Optional)'}
-              </label>
-              <input
-                type="url"
-                value={customLogoUrl}
-                onChange={(e) => setCustomLogoUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500"
-              />
             </div>
           </div>
 
@@ -658,13 +897,15 @@ export const AdminStoreDesign: React.FC = () => {
 
               {/* Mock Storefront Screen */}
               <div className="bg-slate-50 rounded-xl overflow-hidden text-slate-900 shadow-sm">
-                {/* Announcement Bar */}
-                <div 
-                  className="py-1 px-3 text-[10px] text-white text-center font-bold truncate transition-colors"
-                  style={{ backgroundColor: theme.hex }}
-                >
-                  {announcementTextAr || announcementText || (language === 'ar' ? 'شحن مجاني لكافة الطلبات فوق 50$!' : 'Free shipping on orders over $50!')}
-                </div>
+                {/* Announcement Bar (Optional) */}
+                {showAnnouncementBar && (
+                  <div 
+                    className="py-1 px-3 text-[10px] text-white text-center font-bold truncate transition-colors animate-in fade-in"
+                    style={{ backgroundColor: theme.hex }}
+                  >
+                    {announcementTextAr || announcementText || (language === 'ar' ? 'شحن مجاني لكافة الطلبات فوق 50$!' : 'Free shipping on orders over $50!')}
+                  </div>
+                )}
 
                 {/* Header */}
                 <div className={`p-3 border-b border-slate-200/80 flex items-center justify-between ${
@@ -676,7 +917,7 @@ export const AdminStoreDesign: React.FC = () => {
                       style={{ backgroundColor: `${theme.hex}20` }}
                     >
                       {customLogoUrl ? (
-                        <img src={customLogoUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={customLogoUrl} alt="" className="w-full h-full object-contain p-0.5" />
                       ) : (
                         <span>{activeStore.design.logoEmoji}</span>
                       )}

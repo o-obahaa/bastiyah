@@ -70,26 +70,28 @@ export const Header: React.FC = () => {
           : 'bg-white/95 border-slate-200/80 text-slate-900'
       }`}
     >
-      {/* Store announcement micro banner */}
-      <div
-        className="text-white text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2"
-        style={{ backgroundColor: theme.hex }}
-      >
-        <Sparkles className="w-3.5 h-3.5 text-white shrink-0" />
-        <span>
-          {language === 'ar'
-            ? activeStore.design.announcementTextAr || `شحن مجاني للطلبات فوق ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} في ${displayStoreName}`
-            : activeStore.design.announcementText || `Free express shipping on orders over ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} at ${displayStoreName}`}
-        </span>
-        <span className="hidden md:inline-block opacity-60">|</span>
-        <button 
-          onClick={() => { setCurrentPage('shop'); setSelectedCategory('All'); }}
-          className="hidden md:inline-flex items-center gap-1 underline hover:opacity-90 transition-opacity font-bold"
+      {/* Store announcement micro banner (Optional) */}
+      {activeStore.design.showAnnouncementBar && (
+        <div
+          className="text-white text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2"
+          style={{ backgroundColor: theme.hex }}
         >
-          <span>{t.shopNow}</span>
-          <ArrowRight className={`w-3 h-3 ${language === 'ar' ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
+          <Sparkles className="w-3.5 h-3.5 text-white shrink-0" />
+          <span>
+            {language === 'ar'
+              ? activeStore.design.announcementTextAr || activeStore.design.announcementText || `شحن مجاني للطلبات فوق ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} في ${displayStoreName}`
+              : activeStore.design.announcementText || activeStore.design.announcementTextAr || `Free express shipping on orders over ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} at ${displayStoreName}`}
+          </span>
+          <span className="hidden md:inline-block opacity-60">|</span>
+          <button 
+            onClick={() => { setCurrentPage('shop'); setSelectedCategory('All'); }}
+            className="hidden md:inline-flex items-center gap-1 underline hover:opacity-90 transition-opacity font-bold"
+          >
+            <span>{t.shopNow}</span>
+            <ArrowRight className={`w-3 h-3 ${language === 'ar' ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4">

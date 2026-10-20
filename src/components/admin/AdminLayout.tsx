@@ -186,7 +186,7 @@ export const AdminLayout: React.FC = () => {
               style={{ borderColor: `${theme.hex}55` }}
             >
               {activeStore.design.customLogoUrl ? (
-                <img src={activeStore.design.customLogoUrl} alt="" className="w-full h-full object-cover rounded-xl" />
+                <img src={activeStore.design.customLogoUrl} alt="" className="w-full h-full object-contain p-0.5 rounded-xl" />
               ) : (
                 <span>{activeStore.design.logoEmoji}</span>
               )}
@@ -242,7 +242,7 @@ export const AdminLayout: React.FC = () => {
                 style={{ borderColor: `${theme.hex}66` }}
               >
                 {activeStore.design.customLogoUrl ? (
-                  <img src={activeStore.design.customLogoUrl} alt="" className="w-full h-full object-cover rounded-2xl" />
+                  <img src={activeStore.design.customLogoUrl} alt="" className="w-full h-full object-contain p-1 rounded-2xl" />
                 ) : (
                   <span>{activeStore.design.logoEmoji}</span>
                 )}

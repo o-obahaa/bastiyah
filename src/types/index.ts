@@ -155,6 +155,7 @@ export interface StoreDesign {
   cardRadius: 'rounded' | 'pill' | 'sharp';
   heroBannerUrl?: string;
   customLogoUrl?: string;
+  showAnnouncementBar?: boolean;
   announcementText?: string;
   announcementTextAr?: string;
   whatsappNumber?: string;
