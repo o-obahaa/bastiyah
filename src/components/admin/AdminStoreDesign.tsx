@@ -31,6 +31,7 @@ import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCu
 import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
 import { uploadImageToR2, validateImageFile } from '../../utils/cloudflareR2';
 import { HeroSectionEditor } from './HeroSectionEditor';
+import { TrustBadgesEditor } from './TrustBadgesEditor';
 import { StoreHeroSlider } from '../store/StoreHeroSlider';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
@@ -570,6 +571,9 @@ export const AdminStoreDesign: React.FC = () => {
 
           {/* Hero Section / Banner Slider Section Editor */}
           <HeroSectionEditor />
+
+          {/* Storefront Trust Badges & Value Props Editor */}
+          <TrustBadgesEditor />
         </div>
 
         {/* Right Column: Theme Color, Logo Emoji/Image, and Header Style */}

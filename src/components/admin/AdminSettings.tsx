@@ -36,7 +36,8 @@ export const AdminSettings: React.FC = () => {
     activeStore,
     isConvexConnected,
     isCloudflareConfigured,
-    addToast
+    addToast,
+    setAdminTab
   } = useStore();
 
   const [formSettings, setFormSettings] = useState({
@@ -287,6 +288,30 @@ export const AdminSettings: React.FC = () => {
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold"
                   />
                 </div>
+              </div>
+
+              {/* Trust Badges Notice & Shortcut */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block">
+                      {language === 'ar' ? 'شارات الثقة ومميزات المتجر (Trust Badges)' : 'Trust Badges & Guarantees'}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {language === 'ar' ? 'تخصيص نصوص وأيقونات الشحن، الإرجاع، والضمان الظاهرة بالفوتر' : 'Customize icons & text for shipping, returns, warranty and support'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAdminTab('design')}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                >
+                  {language === 'ar' ? 'تعديل الشارات في التصميم ←' : 'Edit Badges in Design →'}
+                </button>
               </div>
 
               {/* Payment Gateways / Methods Configuration */}

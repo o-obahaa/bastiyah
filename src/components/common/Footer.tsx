@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
-import { Truck, RotateCcw, Headphones, ShieldCheck } from 'lucide-react';
 import { getStorePathLabel } from '../../utils/urlUtils';
+import { renderBadgeIcon, getDefaultTrustBadges } from '../admin/TrustBadgesEditor';
 
 export const Footer: React.FC = () => {
   const { 
@@ -19,55 +19,42 @@ export const Footer: React.FC = () => {
   // Dynamically derive unique categories from this store's products
   const storeCategories = Array.from(new Set(activeStore.products.map((p) => p.category)));
 
+  // Trust Badges resolution (Store customized or defaults)
+  const showTrustBadges = activeStore.design.showTrustBadges ?? true;
+  const badges = (activeStore.design.trustBadges && activeStore.design.trustBadges.length > 0)
+    ? activeStore.design.trustBadges.filter(b => b.enabled)
+    : getDefaultTrustBadges(
+        activeStore.settings.currency,
+        activeStore.settings.freeShippingThreshold,
+        activeStore.settings.supportEmail
+      ).filter(b => b.enabled);
+
   return (
     <footer className="bg-slate-950 text-slate-300 pt-16 pb-12 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Value props banner */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pb-12 border-b border-slate-800">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800" style={{ color: theme.hex }}>
-              <Truck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-white">{t.deliveryGuarantee}</h4>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {language === 'ar'
-                  ? `توصيل مجاني للطلبات فوق ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold}`
-                  : `Complimentary delivery over ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold}`}
-              </p>
-            </div>
+        {showTrustBadges && badges.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pb-12 border-b border-slate-800">
+            {badges.map((badge) => (
+              <div key={badge.id} className="flex items-start gap-3">
+                <div
+                  className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 shrink-0"
+                  style={{ color: theme.hex }}
+                >
+                  {renderBadgeIcon(badge.icon, 'w-5 h-5')}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">
+                    {language === 'ar' ? badge.titleAr || badge.title : badge.title}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {language === 'ar' ? badge.descriptionAr || badge.description : badge.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800" style={{ color: theme.hex }}>
-              <RotateCcw className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-white">{t.returnGuarantee}</h4>
-              <p className="text-xs text-slate-400 mt-0.5">{language === 'ar' ? 'إرجاع واستبدال مرن' : 'Hassle-free return & exchanges'}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800" style={{ color: theme.hex }}>
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-white">{t.warrantyGuarantee}</h4>
-              <p className="text-xs text-slate-400 mt-0.5">{language === 'ar' ? 'ضمان رسمي معتمد' : 'Full coverage protection'}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800" style={{ color: theme.hex }}>
-              <Headphones className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-white">{t.conciergeGuarantee}</h4>
-              <p className="text-xs text-slate-400 mt-0.5">{activeStore.settings.supportEmail}</p>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Main Footer Links */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10 py-12">
@@ -84,9 +71,6 @@ export const Footer: React.FC = () => {
               <div>
                 <span className="font-black text-xl tracking-wider text-white block">
                   {displayStoreName}
-                </span>
-                <span className="font-mono text-xs" style={{ color: theme.hex }} dir="ltr">
-                  {getStorePathLabel(activeStore.slug)}
                 </span>
               </div>
             </div>

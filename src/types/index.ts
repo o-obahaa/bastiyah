@@ -235,6 +235,31 @@ export interface HeroSectionConfig {
   slides: HeroSlide[];
 }
 
+export type BadgeIconType =
+  | 'truck'
+  | 'rotate-ccw'
+  | 'shield-check'
+  | 'headphones'
+  | 'award'
+  | 'credit-card'
+  | 'clock'
+  | 'gift'
+  | 'check-circle'
+  | 'sparkles'
+  | 'lock'
+  | 'heart'
+  | 'zap';
+
+export interface TrustBadge {
+  id: string;
+  icon: BadgeIconType;
+  title: string;
+  titleAr: string;
+  description: string;
+  descriptionAr: string;
+  enabled: boolean;
+}
+
 export interface StoreDesign {
   themeColor: StoreThemeColor;
   layoutStyle: StoreLayoutStyle;
@@ -251,6 +276,8 @@ export interface StoreDesign {
   tiktokUrl?: string;
   snapchatUrl?: string;
   heroConfig?: HeroSectionConfig;
+  trustBadges?: TrustBadge[];
+  showTrustBadges?: boolean;
 }
 
 export interface HostedStore {
