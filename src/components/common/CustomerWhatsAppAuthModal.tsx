@@ -134,13 +134,14 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   const BackArrow = language === 'ar' ? ArrowRight : ArrowLeft;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
       <div 
-        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-200 text-slate-800 flex flex-col relative"
+        dir={language === 'ar' ? 'rtl' : 'ltr'}
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-200 text-slate-800 relative mx-auto my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header with WhatsApp styling */}
-        <div className="bg-gradient-to-r from-[#128C7E] to-[#075E54] p-5 sm:p-6 text-white relative">
+        <div className="w-full bg-gradient-to-r from-[#128C7E] to-[#075E54] p-5 sm:p-6 text-white relative">
           <button
             onClick={handleClose}
             className="absolute top-4 end-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-colors"
@@ -153,13 +154,13 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
             <div className="w-12 h-12 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-[#25D366]/30 shrink-0">
               <MessageCircle className="w-6 h-6 fill-white" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 text-[10px] font-bold text-emerald-200 uppercase tracking-wider mb-1">
                 <span>{language === 'ar' ? 'التسجيل والتحقق بالهاتف حصراً' : 'Phone Authentication Only'}</span>
                 <span>•</span>
                 <span>العراق 🇮🇶</span>
               </div>
-              <h3 className="text-lg font-black text-white">
+              <h3 className="text-base sm:text-lg font-black text-white leading-tight">
                 {language === 'ar' ? `تسجيل الدخول والتحقق برقم الهاتف` : `Shopper Phone Sign-In & Registration`}
               </h3>
             </div>
@@ -167,7 +168,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 sm:p-7 space-y-6">
+        <div className="w-full p-5 sm:p-7 space-y-5">
           {step === 'phone' ? (
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
@@ -185,15 +186,14 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                     <span className="text-base">🇮🇶</span>
                     <span>+964</span>
                   </div>
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 min-w-0">
                     <input
                       type="tel"
                       required
-                      autoFocus
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="0770 123 4567"
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
                     />
                     <Smartphone className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
                   </div>
@@ -213,7 +213,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder={language === 'ar' ? 'مثال: حيدر علي' : 'e.g. Haidar Ali'}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
                   />
                   <User className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
                 </div>
@@ -287,7 +287,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-2 text-center">
                   {language === 'ar' ? 'أدخل رمز التحقق (4 أرقام)' : 'Enter 4-Digit WhatsApp Code'}
                 </label>
-                <div className="flex justify-center gap-3" dir="ltr">
+                <div className="flex justify-center gap-2.5 sm:gap-3" dir="ltr">
                   {[0, 1, 2, 3].map((idx) => (
                     <input
                       key={idx}
@@ -298,7 +298,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                       value={otpCode[idx]}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className={`w-13 h-14 text-center text-2xl font-mono font-black rounded-2xl border transition-all focus:outline-none ${
+                      className={`w-12 sm:w-14 h-14 text-center text-2xl font-mono font-black rounded-2xl border transition-all focus:outline-none shrink-0 ${
                         otpCode[idx]
                           ? 'border-[#25D366] bg-[#25D366]/10 text-slate-900 ring-2 ring-[#25D366]/30'
                           : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#25D366]'
