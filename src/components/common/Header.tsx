@@ -18,7 +18,8 @@ import {
   Check,
   ChevronDown,
   MapPin,
-  Edit3
+  Edit3,
+  Package
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -198,11 +199,11 @@ export const Header: React.FC = () => {
           </nav>
 
           {/* Actions: Store Design, Store Admin, Wishlist, Cart */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Search Icon Button */}
             <button
               onClick={() => setIsSearchOpen((prev) => !prev)}
-              className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
+              className={`p-2 rounded-xl border transition-all ${
                 isSearchOpen
                   ? (isDarkHeader ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900')
                   : (isDarkHeader ? 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs')
@@ -212,10 +213,11 @@ export const Header: React.FC = () => {
             >
               {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
-            {/* Language Switcher */}
+
+            {/* Language Switcher - on desktop/tablet */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-all ${
                 isDarkHeader
                   ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                   : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
@@ -226,161 +228,163 @@ export const Header: React.FC = () => {
               <span>{language === 'en' ? 'العربية' : 'EN'}</span>
             </button>
 
-            {/* Customer User Account Button / Dropdown */}
-            {currentCustomer ? (
-              <div className="relative">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                    isDarkHeader
-                      ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-750'
-                      : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-2xs'
-                  }`}
-                  title={currentCustomer.name}
-                >
-                  <div className="relative">
-                    <img
-                      src={currentCustomer.avatar}
-                      alt={currentCustomer.name}
-                      className="w-7 h-7 rounded-xl object-cover bg-emerald-100"
-                    />
-                    <span className="absolute -bottom-1 -end-1 w-3.5 h-3.5 bg-[#25D366] text-white rounded-full flex items-center justify-center text-[8px] font-black shadow-xs ring-1 ring-white">
-                      ✓
-                    </span>
-                  </div>
-                  <div className="hidden sm:flex flex-col text-start leading-tight">
-                    <span className="font-bold text-xs truncate max-w-[110px]">{currentCustomer.name}</span>
-                    <span className="text-[10px] text-slate-400 font-normal truncate max-w-[110px]">
-                      {currentCustomer.city || currentCustomer.state || (language === 'ar' ? 'العراق' : 'Iraq')}
-                    </span>
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </button>
+            {/* Customer User Account Button / Dropdown - on desktop */}
+            <div className="hidden sm:block">
+              {currentCustomer ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      isDarkHeader
+                        ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-750'
+                        : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-2xs'
+                    }`}
+                    title={currentCustomer.name}
+                  >
+                    <div className="relative">
+                      <img
+                        src={currentCustomer.avatar}
+                        alt={currentCustomer.name}
+                        className="w-7 h-7 rounded-xl object-cover bg-emerald-100"
+                      />
+                      <span className="absolute -bottom-1 -end-1 w-3.5 h-3.5 bg-[#25D366] text-white rounded-full flex items-center justify-center text-[8px] font-black shadow-xs ring-1 ring-white">
+                        ✓
+                      </span>
+                    </div>
+                    <div className="hidden sm:flex flex-col text-start leading-tight">
+                      <span className="font-bold text-xs truncate max-w-[110px]">{currentCustomer.name}</span>
+                      <span className="text-[10px] text-slate-400 font-normal truncate max-w-[110px]">
+                        {currentCustomer.city || currentCustomer.state || (language === 'ar' ? 'العراق' : 'Iraq')}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </button>
 
-                {/* User Dropdown Menu with Shipping Location Details */}
-                {userMenuOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setUserMenuOpen(false)} 
-                    />
-                    <div className="absolute end-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-2.5 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-                      {/* Customer Identity Card */}
-                      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 rounded-t-xl">
-                        <div className="flex items-center gap-2.5">
-                          <img
-                            src={currentCustomer.avatar}
-                            alt=""
-                            className="w-9 h-9 rounded-xl object-cover bg-emerald-100 shrink-0 border border-slate-200"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-slate-900 truncate">{currentCustomer.name}</p>
-                            <p className="text-[11px] font-mono text-emerald-700 flex items-center gap-1 font-semibold" dir="ltr">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
-                              <span>{currentCustomer.phone}</span>
+                  {/* User Dropdown Menu with Shipping Location Details */}
+                  {userMenuOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setUserMenuOpen(false)} 
+                      />
+                      <div className="absolute end-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-2.5 z-50 text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                        {/* Customer Identity Card */}
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 rounded-t-xl">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={currentCustomer.avatar}
+                              alt=""
+                              className="w-9 h-9 rounded-xl object-cover bg-emerald-100 shrink-0 border border-slate-200"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-slate-900 truncate">{currentCustomer.name}</p>
+                              <p className="text-[11px] font-mono text-emerald-700 flex items-center gap-1 font-semibold" dir="ltr">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
+                                <span>{currentCustomer.phone}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Shipping Location Details Card */}
+                          <div className="mt-2.5 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs text-[11px]">
+                            <div className="flex items-center justify-between text-slate-700 font-bold mb-0.5">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span>{language === 'ar' ? 'موقع التوصيل المعتمد:' : 'Shipping Address:'}</span>
+                              </span>
+                              <span className="text-[9px] bg-emerald-50 text-emerald-800 px-1.5 py-0.2 rounded font-mono">
+                                {currentCustomer.state || 'العراق'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-medium truncate">
+                              {currentCustomer.address 
+                                ? `${currentCustomer.city ? currentCustomer.city + ' - ' : ''}${currentCustomer.address}` 
+                                : (language === 'ar' ? 'لم يتم حفظ تفاصيل الشارع بعد' : 'No street address saved')}
                             </p>
                           </div>
                         </div>
 
-                        {/* Shipping Location Details Card */}
-                        <div className="mt-2.5 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs text-[11px]">
-                          <div className="flex items-center justify-between text-slate-700 font-bold mb-0.5">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                              <span>{language === 'ar' ? 'موقع التوصيل المعتمد:' : 'Shipping Address:'}</span>
-                            </span>
-                            <span className="text-[9px] bg-emerald-50 text-emerald-800 px-1.5 py-0.2 rounded font-mono">
-                              {currentCustomer.state || 'العراق'}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-500 font-medium truncate">
-                            {currentCustomer.address 
-                              ? `${currentCustomer.city ? currentCustomer.city + ' - ' : ''}${currentCustomer.address}` 
-                              : (language === 'ar' ? 'لم يتم حفظ تفاصيل الشارع بعد' : 'No street address saved')}
-                          </p>
+                        {/* Dropdown Options */}
+                        <div className="py-1 text-xs">
+                          {/* Manage Account & Shipping Location button */}
+                          <button
+                            onClick={() => {
+                              setUserMenuOpen(false);
+                              setIsCustomerAccountModalOpen(true);
+                            }}
+                            className="w-full px-4 py-2.5 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-800 font-bold"
+                          >
+                            <MapPin className="w-4 h-4 text-emerald-600" />
+                            <span>{language === 'ar' ? 'بيانات الحساب وموقع التوصيل' : 'Account & Shipping Details'}</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setCurrentPage('orders');
+                              setUserMenuOpen(false);
+                            }}
+                            className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
+                          >
+                            <ShoppingBag className="w-4 h-4 text-slate-500" />
+                            <span>{t.navMyOrders}</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setCurrentPage('wishlist');
+                              setUserMenuOpen(false);
+                            }}
+                            className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
+                          >
+                            <Heart className="w-4 h-4 text-rose-500" />
+                            <span>{t.navWishlist}</span>
+                          </button>
+                        </div>
+
+                        <div className="pt-1 border-t border-slate-100">
+                          <button
+                            onClick={() => {
+                              logoutCustomer();
+                              setUserMenuOpen(false);
+                            }}
+                            className="w-full px-4 py-2 text-start text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-bold transition-colors"
+                          >
+                            <LogOut className="w-3.5 h-3.5" />
+                            <span>{language === 'ar' ? 'تسجيل الخروج' : 'Log Out'}</span>
+                          </button>
                         </div>
                       </div>
-
-                      {/* Dropdown Options */}
-                      <div className="py-1 text-xs">
-                        {/* Manage Account & Shipping Location button */}
-                        <button
-                          onClick={() => {
-                            setUserMenuOpen(false);
-                            setIsCustomerAccountModalOpen(true);
-                          }}
-                          className="w-full px-4 py-2.5 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-800 font-bold"
-                        >
-                          <MapPin className="w-4 h-4 text-emerald-600" />
-                          <span>{language === 'ar' ? 'بيانات الحساب وموقع التوصيل' : 'Account & Shipping Details'}</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setCurrentPage('orders');
-                            setUserMenuOpen(false);
-                          }}
-                          className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
-                        >
-                          <ShoppingBag className="w-4 h-4 text-slate-500" />
-                          <span>{t.navMyOrders}</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setCurrentPage('wishlist');
-                            setUserMenuOpen(false);
-                          }}
-                          className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
-                        >
-                          <Heart className="w-4 h-4 text-rose-500" />
-                          <span>{t.navWishlist}</span>
-                        </button>
-                      </div>
-
-                      <div className="pt-1 border-t border-slate-100">
-                        <button
-                          onClick={() => {
-                            logoutCustomer();
-                            setUserMenuOpen(false);
-                          }}
-                          className="w-full px-4 py-2 text-start text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-bold transition-colors"
-                        >
-                          <LogOut className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? 'تسجيل الخروج' : 'Log Out'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              /* User Account trigger when not logged in */
-              <button
-                onClick={() => setIsCustomerAuthModalOpen(true)}
-                className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
-                  isDarkHeader
-                    ? 'bg-slate-800/90 hover:bg-slate-750 text-white border-slate-700'
-                    : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
-                }`}
-                title={language === 'ar' ? 'تسجيل الدخول / إنشاء حساب بالهاتف' : 'Sign In / Register'}
-              >
-                <div 
-                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${theme.hex}18`, color: theme.hex }}
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* User Account trigger when not logged in */
+                <button
+                  onClick={() => setIsCustomerAuthModalOpen(true)}
+                  className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
+                    isDarkHeader
+                      ? 'bg-slate-800/90 hover:bg-slate-750 text-white border-slate-700'
+                      : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+                  }`}
+                  title={language === 'ar' ? 'تسجيل الدخول / إنشاء حساب بالهاتف' : 'Sign In / Register'}
                 >
-                  <User className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex flex-col text-start leading-none">
-                  <span className="font-bold text-xs">{language === 'ar' ? 'حسابي' : 'Account'}</span>
-                </div>
-              </button>
-            )}
+                  <div 
+                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${theme.hex}18`, color: theme.hex }}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex flex-col text-start leading-none">
+                    <span className="font-bold text-xs">{language === 'ar' ? 'حسابي' : 'Account'}</span>
+                  </div>
+                </button>
+              )}
+            </div>
 
-            {/* Wishlist Button */}
+            {/* Wishlist Button - on desktop/tablet */}
             <button
               onClick={() => setCurrentPage('wishlist')}
-              className={`relative p-2.5 rounded-full transition-colors ${
+              className={`hidden md:flex relative p-2.5 rounded-full transition-colors ${
                 isDarkHeader
                   ? 'text-slate-300 hover:text-rose-400 hover:bg-slate-800'
                   : 'text-slate-600 hover:text-rose-600 hover:bg-slate-100'
@@ -398,12 +402,13 @@ export const Header: React.FC = () => {
             {/* Cart Button */}
             <button
               onClick={() => setIsCartDrawerOpen(true)}
-              className="relative flex items-center gap-2 px-3 sm:px-4 py-2 text-white rounded-xl shadow-md transition-all active:scale-95"
+              className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-white rounded-xl shadow-md transition-all active:scale-95 shrink-0"
               style={{ backgroundColor: theme.hex }}
+              title={t.navBag}
             >
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               <span className="text-xs sm:text-sm font-bold">
-                {cartCount > 0 ? `${cartCount}` : t.navBag}
+                {cartCount > 0 ? `${cartCount}` : <span className="hidden xs:inline">{t.navBag}</span>}
               </span>
               {cartSubtotal > 0 && (
                 <span className="hidden md:inline-block text-white/90 text-xs border-s border-white/30 ps-2 font-semibold">
@@ -415,9 +420,14 @@ export const Header: React.FC = () => {
             {/* Mobile menu hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-slate-100/10"
+              className={`md:hidden p-2 rounded-xl border transition-colors shrink-0 ${
+                isDarkHeader 
+                  ? 'bg-slate-800/80 border-slate-700/80 text-white hover:bg-slate-700' 
+                  : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'
+              }`}
+              aria-label="Open mobile menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -470,37 +480,90 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className={`lg:hidden border-b px-4 pt-2 pb-6 space-y-2 ${
+        <div className={`md:hidden border-b px-4 pt-3 pb-6 space-y-3 shadow-lg ${
           isDarkHeader ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          <button
-            onClick={() => {
-              setCurrentPage('shop');
-              setSelectedCategory('All');
-              setMobileMenuOpen(false);
-            }}
-            className="block w-full text-start py-2 px-3 text-base font-semibold rounded-lg"
-          >
-            {t.navShopAll}
-          </button>
-          {storeCategories.map((cat) => (
+          {/* Main Navigation Links */}
+          <div className="space-y-1">
             <button
-              key={cat}
               onClick={() => {
                 setCurrentPage('shop');
-                setSelectedCategory(cat);
+                setSelectedCategory('All');
                 setMobileMenuOpen(false);
               }}
-              className="block w-full text-start py-2 px-3 text-base font-medium rounded-lg"
+              className="block w-full text-start py-2.5 px-3 text-base font-semibold rounded-xl hover:bg-slate-100/10 transition-colors"
             >
-              {getCategoryName(cat)}
+              {t.navShopAll}
             </button>
-          ))}
+            {storeCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setCurrentPage('shop');
+                  setSelectedCategory(cat);
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 transition-colors"
+              >
+                {getCategoryName(cat)}
+              </button>
+            ))}
+
+            <button
+              onClick={() => {
+                setCurrentPage('orders');
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 flex items-center gap-2.5 transition-colors"
+            >
+              <Package className="w-4 h-4 text-slate-400" />
+              <span>{t.navMyOrders}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setCurrentPage('wishlist');
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <Heart className={`w-4 h-4 ${wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
+                <span>{t.navWishlist}</span>
+              </div>
+              {wishlist.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-xs font-bold font-mono">
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Language Switcher in Mobile Drawer */}
+          <div className="pt-2.5 border-t border-slate-200/50 flex items-center justify-between px-1">
+            <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" style={{ color: theme.hex }} />
+              <span>{language === 'ar' ? 'لغة العرض' : 'Display Language'}</span>
+            </span>
+            <button
+              onClick={() => {
+                setLanguage(language === 'en' ? 'ar' : 'en');
+                setMobileMenuOpen(false);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                isDarkHeader
+                  ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-750'
+                  : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'
+              }`}
+            >
+              <span>{language === 'en' ? 'العربية' : 'English'}</span>
+            </button>
+          </div>
 
           {/* Mobile User Account & Location */}
-          <div className="pt-3 border-t border-slate-200/60 mt-3">
+          <div className="pt-2.5 border-t border-slate-200/50">
             {currentCustomer ? (
-              <div className="p-3 bg-emerald-50 rounded-xl space-y-2.5">
+              <div className="p-3 bg-emerald-50/80 rounded-xl space-y-2.5 border border-emerald-100/80">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0">
                     <span className="font-bold text-xs text-slate-900 block truncate">{currentCustomer.name}</span>
@@ -511,7 +574,7 @@ export const Header: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-600 bg-white/80 p-1.5 rounded-lg border border-emerald-100">
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-600 bg-white/90 p-1.5 rounded-lg border border-emerald-100">
                   <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
                   <span className="truncate">{currentCustomer.state || 'بغداد'} • {currentCustomer.city || 'الكرخ'}</span>
                 </div>
@@ -544,7 +607,7 @@ export const Header: React.FC = () => {
                   setIsCustomerAuthModalOpen(true);
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-2.5 px-3.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-between shadow-sm"
+                className="w-full py-2.5 px-3.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-between shadow-sm hover:bg-slate-800 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <div 

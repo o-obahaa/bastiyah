@@ -135,7 +135,7 @@ export function App() {
 
   // 4. Hosted Storefront ((storename).bastiyah.vercel.app)
   return (
-    <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-800 ${language === 'ar' ? 'font-arabic' : ''}`}>
+    <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-800 overflow-x-hidden w-full max-w-full ${language === 'ar' ? 'font-arabic' : ''}`}>
       {/* Notifications and Modals */}
       <ProductQuickViewModal />
       <CartDrawer />
