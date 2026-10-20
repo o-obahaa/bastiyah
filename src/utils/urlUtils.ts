@@ -2,7 +2,7 @@
  * Utility helpers for Bastiyah multi-store URLs
  * Canonical Domain: bastiyah.com
  * - Platform: https://bastiyah.com
- * - Platform Admin: https://bastiyah.com/owner or https://owner.bastiyah.com
+ * - Platform Owner Admin: https://bastiyah.com/owner (Strictly accessed via /owner)
  * - Independent Stores: https://(slug).bastiyah.com
  * - Merchant Admin: https://(slug).bastiyah.com/admin
  */
@@ -91,7 +91,7 @@ export const getPlatformDisplayUrl = (page: 'landing' | 'owner-admin' = 'landing
   const root = getCustomDomainRoot();
   const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
   if (page === 'owner-admin') {
-    return `${protocol}//owner.${root}`;
+    return `${protocol}//${root}/owner`;
   }
   return `${protocol}//${root}/`;
 };

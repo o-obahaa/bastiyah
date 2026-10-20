@@ -78,7 +78,7 @@ export const BastiyahTopBar: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span className="font-mono text-[11px] text-stone-400 hidden sm:inline">https://</span>
                 {currentPage === 'bastiyah-admin' ? (
-                  <span className="font-mono text-[11px] font-bold text-amber-700">owner.bastiyah.com</span>
+                  <span className="font-mono text-[11px] font-bold text-amber-700">bastiyah.com/owner</span>
                 ) : currentPage === 'bastiyah-landing' ? (
                   <span className="font-mono text-[11px] font-bold text-stone-900">bastiyah.com</span>
                 ) : (

@@ -99,7 +99,7 @@ export function App() {
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
   const displayDesc = language === 'ar' ? activeStore.descriptionAr || activeStore.description : activeStore.description;
 
-  // 1. Main Bastiyah Platform Owner Admin Panel (owner.bastiyah.com or /owner or ?platform=admin)
+  // 1. Main Bastiyah Platform Owner Admin Panel (strictly bastiyah.com/owner)
   // Protected strictly behind Platform Admin Authentication
   if (currentPage === 'bastiyah-admin') {
     return (

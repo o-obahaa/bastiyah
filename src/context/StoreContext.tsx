@@ -206,15 +206,19 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   const searchParams = new URLSearchParams(window.location.search);
   const pathname = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
 
-  // 1. Platform Super Admin (/owner or /owner/admin or /platform-admin or owner.subdomain or ?platform=admin)
-  if (
-    pathname === '/owner' ||
-    pathname === '/owner/admin' ||
-    pathname === '/platform-admin' ||
-    hostname.startsWith('owner.') ||
-    searchParams.get('platform') === 'admin' ||
-    searchParams.get('page') === 'bastiyah-admin'
-  ) {
+  // 1. Platform Super Admin (Strictly entered via bastiyah.com/owner or /owner)
+  if (pathname === '/owner') {
+    return {
+      storeId: allStores[0]?.id || 'store-panda',
+      page: 'bastiyah-admin',
+    };
+  }
+
+  // If someone lands on old aliases like owner.bastiyah.com, redirect canonically to bastiyah.com/owner
+  if (hostname.startsWith('owner.')) {
+    const root = hostname.replace(/^owner\./, '');
+    const protocol = window.location.protocol;
+    window.location.replace(`${protocol}//${root}/owner`);
     return {
       storeId: allStores[0]?.id || 'store-panda',
       page: 'bastiyah-admin',
@@ -276,6 +280,9 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   if (!isLocalOrVercel && hostParts.length >= 3 && hostParts[0] !== 'www') {
     const sub = hostParts[0];
     if (sub === 'owner') {
+      const root = hostParts.slice(1).join('.');
+      const protocol = window.location.protocol;
+      window.location.replace(`${protocol}//${root}/owner`);
       return {
         storeId: allStores[0]?.id || 'store-panda',
         page: 'bastiyah-admin',
@@ -997,8 +1004,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     let targetPath = '/';
 
     if (isOwnerSubdomain) {
-      targetPath = '/';
+      const root = hostParts.slice(1).join('.');
+      const protocol = window.location.protocol;
+      window.location.replace(`${protocol}//${root}/owner`);
+      return;
     } else if (isStoreSubdomain) {
+      if (currentPage === 'bastiyah-admin') {
+        const root = hostParts.slice(1).join('.');
+        const protocol = window.location.protocol;
+        window.location.href = `${protocol}//${root}/owner`;
+        return;
+      }
       if (currentPage === 'admin') {
         targetPath = '/admin';
       } else if (currentPage === 'home') {
