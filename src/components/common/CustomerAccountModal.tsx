@@ -1,0 +1,433 @@
+import React, { useState, useEffect } from 'react';
+import { useStore } from '../../context/StoreContext';
+import { IRAQ_GOVERNORATES } from '../store/CheckoutPage';
+import {
+  X,
+  User,
+  Phone,
+  MapPin,
+  CheckCircle2,
+  Package,
+  Heart,
+  LogOut,
+  Save,
+  MessageCircle,
+  Building,
+  Navigation,
+  Compass,
+  Sparkles,
+  ExternalLink,
+  ShieldCheck,
+  RefreshCw,
+} from 'lucide-react';
+
+export const CustomerAccountModal: React.FC = () => {
+  const {
+    isCustomerAccountModalOpen,
+    setIsCustomerAccountModalOpen,
+    setIsCustomerAuthModalOpen,
+    currentCustomer,
+    updateCustomerProfile,
+    logoutCustomer,
+    setCurrentPage,
+    activeStore,
+    language,
+    theme,
+    addToast,
+  } = useStore();
+
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [state, setState] = useState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Sync state when currentCustomer changes or modal opens
+  useEffect(() => {
+    if (currentCustomer) {
+      setName(currentCustomer.name || '');
+      setPhone(currentCustomer.phone || '');
+      setState(currentCustomer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'));
+      setCity(currentCustomer.city || (language === 'ar' ? 'الكرخ / المنصور' : 'Al-Mansour'));
+      setAddress(currentCustomer.address || (language === 'ar' ? 'شارع 14 رمضان، زقاق 12' : '14th Ramadan St'));
+      setLandmark(currentCustomer.landmark || (language === 'ar' ? 'قرب تقاطع الرواد' : 'Near Al-Ruwwad'));
+    } else {
+      setName(language === 'ar' ? 'ضيف بسطية' : 'Shopper Guest');
+      setPhone('+964 770 123 4567');
+      setState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
+      setCity(language === 'ar' ? 'حي المنصور' : 'Al-Mansour');
+      setAddress('');
+      setLandmark('');
+    }
+  }, [currentCustomer, isCustomerAccountModalOpen, language]);
+
+  if (!isCustomerAccountModalOpen) return null;
+
+  const handleSaveShippingDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      addToast(language === 'ar' ? 'يرجى إدخال اسم المستلم' : 'Please provide recipient name', 'error');
+      return;
+    }
+
+    updateCustomerProfile({
+      name: name.trim(),
+      phone: phone.trim() || undefined,
+      state: state.trim(),
+      city: city.trim(),
+      address: address.trim(),
+      landmark: landmark.trim(),
+    });
+
+    setIsEditing(false);
+  };
+
+  const handleOpenAuth = () => {
+    setIsCustomerAccountModalOpen(false);
+    setIsCustomerAuthModalOpen(true);
+  };
+
+  const handleRandomizeAvatar = () => {
+    const randomId = Math.floor(1500000000000 + Math.random() * 50000000);
+    const newAvatar = `https://images.unsplash.com/photo-${randomId}?auto=format&fit=crop&w=150&q=80`;
+    updateCustomerProfile({ avatar: newAvatar });
+  };
+
+  const storeTitle = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl border border-slate-200 text-slate-800 flex flex-col relative max-h-[92vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Header Banner with Store Theme Gradient */}
+        <div 
+          className="p-5 sm:p-6 text-white relative select-none"
+          style={{
+            background: `linear-gradient(135deg, ${theme.hex} 0%, #0f172a 100%)`,
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={() => setIsCustomerAccountModalOpen(false)}
+            className="absolute top-4 end-4 p-2 rounded-full bg-black/20 hover:bg-black/35 text-white/90 hover:text-white transition-colors"
+            title={language === 'ar' ? 'إغلاق' : 'Close'}
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          {/* User Identity Header Card */}
+          <div className="flex items-center gap-3.5 sm:gap-4 pe-8">
+            <div className="relative group shrink-0">
+              <img
+                src={currentCustomer?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                alt={name}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-white/60 shadow-md bg-white/20"
+              />
+              {currentCustomer && (
+                <button
+                  type="button"
+                  onClick={handleRandomizeAvatar}
+                  className="absolute -bottom-1 -end-1 p-1 rounded-full bg-slate-900 text-white text-[10px] hover:bg-slate-800 shadow-md transition-transform hover:scale-110"
+                  title={language === 'ar' ? 'تغيير الصورة الرمزية' : 'Change avatar'}
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-white truncate">
+                  {currentCustomer ? currentCustomer.name : (language === 'ar' ? 'حساب الزبون' : 'Customer Account')}
+                </h3>
+                {currentCustomer ? (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-[10px] font-bold text-emerald-200 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[#25D366]" />
+                    <span>{language === 'ar' ? 'موثّق بالهاتف' : 'Verified'}</span>
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-slate-200">
+                    {language === 'ar' ? 'غير مسجل' : 'Guest'}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-slate-200/90 font-mono mt-0.5 flex items-center gap-1.5" dir="ltr">
+                <Phone className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                <span>{currentCustomer ? currentCustomer.phone : '+964 7XX XXX XXXX'}</span>
+              </p>
+
+              <div className="flex items-center gap-2 text-[11px] text-slate-300 mt-1">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-amber-300 shrink-0" />
+                  <span className="truncate">{state} • {city || (language === 'ar' ? 'العراق' : 'Iraq')}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Scrollable Content */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-6">
+          {/* Quick Shortcuts: My Orders & My Wishlist */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => {
+                setIsCustomerAccountModalOpen(false);
+                setCurrentPage('orders');
+              }}
+              className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-start flex items-center gap-3 transition-all group shadow-2xs"
+            >
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                style={{ backgroundColor: `${theme.hex}18`, color: theme.hex }}
+              >
+                <Package className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 group-hover:text-black">
+                  {language === 'ar' ? 'طلباتي وشحناتي' : 'My Orders'}
+                </p>
+                <p className="text-[11px] text-slate-500 truncate">
+                  {language === 'ar' ? 'متابعة مراحل التوصيل' : 'Track deliveries'}
+                </p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsCustomerAccountModalOpen(false);
+                setCurrentPage('wishlist');
+              }}
+              className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-start flex items-center gap-3 transition-all group shadow-2xs"
+            >
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                <Heart className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 group-hover:text-black">
+                  {language === 'ar' ? 'قائمة المفضلة' : 'My Wishlist'}
+                </p>
+                <p className="text-[11px] text-slate-500 truncate">
+                  {language === 'ar' ? 'المنتجات المحفوظة' : 'Saved products'}
+                </p>
+              </div>
+            </button>
+          </div>
+
+          {/* Unauthenticated Shopper Phone Login Notice */}
+          {!currentCustomer && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <MessageCircle className="w-5 h-5 fill-white" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {language === 'ar' ? 'ربط الحساب بالهاتف والواتساب' : 'Link Account via Phone & WhatsApp'}
+                  </h4>
+                  <p className="text-[11px] text-slate-600">
+                    {language === 'ar'
+                      ? 'سجّل برقم هاتفك لحفظ موقع توصيلك المعتمد ومزامنة فواتيرك تلقائياً.'
+                      : 'Verify your phone to permanently link your shipping address & receipts.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenAuth}
+                className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs shrink-0 shadow-md shadow-[#25D366]/20 transition-all hover:scale-102 flex items-center justify-center gap-1.5"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'التحقق والمصادقة بالهاتف' : 'Verify Phone'}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Section: Shipping Location Details (تفاصيل موقع وعنوان التوصيل) */}
+          <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/90 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200/70 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-emerald-700" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-slate-900">
+                    {language === 'ar' ? 'بيانات وموقع التوصيل المعتمد' : 'Default Delivery Location'}
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    {language === 'ar' ? 'تُعبّأ هذه البيانات تلقائياً في صفحة الشراء لسرعة الطلب' : 'Auto-fills in checkout for instant 1-click ordering'}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                العراق 🇮🇶
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveShippingDetails} className="space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'اسم المستلم الثلاثي' : 'Recipient Name'} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setIsEditing(true);
+                    }}
+                    placeholder={language === 'ar' ? 'مثال: حيدر علي العراقي' : 'Full Name'}
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                  />
+                </div>
+
+                {/* Mobile Phone */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'رقم هاتف المستلم (واتساب)' : 'Delivery Phone'} *</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    dir="ltr"
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setIsEditing(true);
+                    }}
+                    placeholder="0770 123 4567"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Governorate Selection (المحافظة) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <Compass className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'المحافظة' : 'Governorate'} *</span>
+                  </label>
+                  <select
+                    required
+                    value={state}
+                    onChange={(e) => {
+                      setState(e.target.value);
+                      setIsEditing(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                  >
+                    {IRAQ_GOVERNORATES.map((g) => (
+                      <option key={g.code} value={language === 'ar' ? g.ar : g.en}>
+                        {language === 'ar' ? g.ar : g.en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* District / City (المدينة / القضاء / المنطقة) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <Building className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'المدينة / المنطقة / الحي' : 'City / District'} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => {
+                      setCity(e.target.value);
+                      setIsEditing(true);
+                    }}
+                    placeholder={language === 'ar' ? 'مثال: المنصور، الكرادة، الجادرية...' : 'e.g. Al-Mansour'}
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Street Address & Details (تفاصيل الشارع والدار) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <Navigation className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{language === 'ar' ? 'تفاصيل العنوان (الشارع، الزقاق، رقم الدار أو العمارة)' : 'Street & Building Details'} *</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setIsEditing(true);
+                  }}
+                  placeholder={language === 'ar' ? 'مثال: شارع 14 رمضان، محلة 603، زقاق 12، دار 8' : 'Street name, building #, apartment'}
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                />
+              </div>
+
+              {/* Nearest Landmark (أقرب نقطة دالة) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{language === 'ar' ? 'أقرب نقطة دالة لتسهيل وصول المندوب' : 'Nearest Landmark'}</span>
+                </label>
+                <input
+                  type="text"
+                  value={landmark}
+                  onChange={(e) => {
+                    setLandmark(e.target.value);
+                    setIsEditing(true);
+                  }}
+                  placeholder={language === 'ar' ? 'مثال: قرب جامع الرحمن، مقابل صيدلية الرواد' : 'e.g. Near Al-Rahman Mosque, opposite pharmacy'}
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                />
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-2 flex items-center justify-end">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
+                  style={{ backgroundColor: theme.hex }}
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'حفظ وتحديث موقع التوصيل' : 'Save Shipping Location'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Account Footer Options: Log Out or Switch */}
+          {currentCustomer && (
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-[11px] text-slate-400">
+                {language === 'ar' ? `مسجل كـ: ${currentCustomer.phone}` : `Signed in as: ${currentCustomer.phone}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  logoutCustomer();
+                  setIsCustomerAccountModalOpen(false);
+                }}
+                className="px-3 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200/60 font-bold flex items-center gap-1.5 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'تسجيل الخروج' : 'Log Out'}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

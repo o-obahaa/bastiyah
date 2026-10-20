@@ -114,7 +114,9 @@ export interface CustomerUser {
   phone: string;
   email?: string;
   city?: string;
+  state?: string;
   address?: string;
+  landmark?: string;
   avatar?: string;
   authenticatedVia: 'whatsapp' | 'sms' | 'phone_auth';
   authenticatedAt: string;

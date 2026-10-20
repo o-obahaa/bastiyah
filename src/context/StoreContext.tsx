@@ -75,10 +75,13 @@ interface StoreContextType {
   verifyStoreAdminOtp: (storeId: string, phone: string, code: string) => boolean;
   logoutStoreAdmin: (storeId?: string) => void;
 
-  // Customer User Authentication via WhatsApp
+  // Customer User Authentication & Account Management
   currentCustomer: CustomerUser | null;
   isCustomerAuthModalOpen: boolean;
   setIsCustomerAuthModalOpen: (open: boolean) => void;
+  isCustomerAccountModalOpen: boolean;
+  setIsCustomerAccountModalOpen: (open: boolean) => void;
+  updateCustomerProfile: (updates: Partial<CustomerUser>) => void;
   sendCustomerWhatsAppOtp: (rawPhone: string) => { success: boolean; code: string; message: string; fullPhone: string };
   verifyCustomerWhatsAppOtp: (phone: string, code: string, name?: string) => boolean;
   logoutCustomer: () => void;
@@ -640,6 +643,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [isCustomerAuthModalOpen, setIsCustomerAuthModalOpen] = useState(false);
+  const [isCustomerAccountModalOpen, setIsCustomerAccountModalOpen] = useState(false);
   const [pendingCustomerOtp, setPendingCustomerOtp] = useState<{ phone: string; code: string; expiresAt: number } | null>(null);
 
   const sendCustomerWhatsAppOtp = (rawPhone: string) => {
@@ -788,6 +792,84 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // ignore
     }
     addToast(language === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
+  };
+
+  const updateCustomerProfile = (updates: Partial<CustomerUser>) => {
+    setCurrentCustomer((prev) => {
+      const updated: CustomerUser = prev
+        ? { ...prev, ...updates }
+        : {
+            id: `cust-${Date.now()}`,
+            name: updates.name || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer'),
+            phone: updates.phone || '+964 770 123 4567',
+            state: updates.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'),
+            city: updates.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+            address: updates.address || '',
+            landmark: updates.landmark || '',
+            avatar: updates.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+            authenticatedVia: 'phone_auth',
+            authenticatedAt: new Date().toISOString(),
+          };
+
+      try {
+        localStorage.setItem('bastiyah_current_customer', JSON.stringify(updated));
+      } catch (e) {
+        // ignore
+      }
+
+      // Also sync to activeStore.customers
+      mutateActiveStore((store) => {
+        const custPhone = (updated.phone || '').replace(/\D/g, '');
+        const existing = store.customers.find((c) => {
+          if (c.phone) {
+            const cp = c.phone.replace(/\D/g, '');
+            if (cp.slice(-8) === custPhone.slice(-8)) return true;
+          }
+          return false;
+        });
+
+        if (existing) {
+          return {
+            ...store,
+            customers: store.customers.map((c) =>
+              c.id === existing.id
+                ? {
+                    ...c,
+                    name: updated.name || c.name,
+                    phone: updated.phone || c.phone,
+                    city: `${updated.state || ''} ${updated.city || ''}`.trim() || c.city,
+                  }
+                : c
+            ),
+          };
+        } else {
+          const newRec: Customer = {
+            id: `cust-${Date.now()}`,
+            name: updated.name,
+            phone: updated.phone,
+            email: `${custPhone.slice(-6)}@customer.iq`,
+            avatar: updated.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+            city: `${updated.state || ''} ${updated.city || ''}`.trim() || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+            country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
+            ordersCount: 0,
+            totalSpent: 0,
+            joinedDate: new Date().toISOString().split('T')[0],
+            isPhoneVerified: true,
+          };
+          return {
+            ...store,
+            customers: [newRec, ...store.customers],
+          };
+        }
+      });
+
+      return updated;
+    });
+
+    addToast(
+      language === 'ar' ? '✅ تم حفظ وتحديث بيانات حسابك وموقع التوصيل بنجاح!' : '✅ Account & shipping details saved!',
+      'success'
+    );
   };
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
@@ -1825,10 +1907,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         verifyStoreAdminOtp,
         logoutStoreAdmin,
 
-        // Customer WhatsApp Auth
+        // Customer WhatsApp Auth & Account Profile
         currentCustomer,
         isCustomerAuthModalOpen,
         setIsCustomerAuthModalOpen,
+        isCustomerAccountModalOpen,
+        setIsCustomerAccountModalOpen,
+        updateCustomerProfile,
         sendCustomerWhatsAppOtp,
         verifyCustomerWhatsAppOtp,
         logoutCustomer,

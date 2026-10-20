@@ -13,7 +13,8 @@ import {
   MapPin,
   CheckCircle2,
   Phone,
-  MessageCircle
+  MessageCircle,
+  User
 } from 'lucide-react';
 
 export const IRAQ_GOVERNORATES = [
@@ -53,7 +54,8 @@ export const CheckoutPage: React.FC = () => {
     language,
     getProductName,
     currentCustomer,
-    setIsCustomerAuthModalOpen
+    setIsCustomerAuthModalOpen,
+    setIsCustomerAccountModalOpen
   } = useStore();
 
   const currency = activeStore.settings.currency || 'د.ع';
@@ -162,40 +164,51 @@ export const CheckoutPage: React.FC = () => {
               </span>
             </div>
 
-            {/* WhatsApp Customer Sign-In / Account Status */}
+            {/* Customer Account & Saved Delivery Location Status */}
             {currentCustomer ? (
-              <div className="flex items-center justify-between p-3.5 bg-[#25D366]/10 border border-[#25D366]/30 rounded-2xl text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-xs gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[#25D366] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    <MessageCircle className="w-4 h-4 fill-white" />
+                  <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    <User className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <span className="font-bold text-slate-900 block">
-                      {language === 'ar' ? `مسجل دخول عبر واتساب: ${currentCustomer.name}` : `Signed in via WhatsApp: ${currentCustomer.name}`}
+                      {language === 'ar' ? `المستلم: ${currentCustomer.name}` : `Recipient: ${currentCustomer.name}`}
                     </span>
-                    <span className="text-[11px] font-mono text-emerald-800" dir="ltr">{currentCustomer.phone}</span>
+                    <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span>{currentCustomer.state || 'بغداد'} • {currentCustomer.city || ''} ({currentCustomer.phone})</span>
+                    </span>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-[#075E54] bg-white px-2.5 py-1 rounded-lg border border-[#25D366]/30 shadow-2xs">
-                  {language === 'ar' ? 'تمت تعبئة بياناتك تلقائياً ✓' : 'Auto-filled ✓'}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomerAccountModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs shrink-0 transition-all flex items-center justify-center gap-1 shadow-2xs"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{language === 'ar' ? 'تعديل موقع التوصيل' : 'Edit Location'}</span>
+                </button>
               </div>
             ) : (
               <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs gap-3">
                 <div className="flex items-center gap-2.5">
-                  <MessageCircle className="w-5 h-5 text-[#25D366] shrink-0" />
+                  <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                    <User className="w-4 h-4 text-slate-600" />
+                  </div>
                   <span className="text-slate-600 text-xs">
                     {language === 'ar'
-                      ? 'لديك حساب سابق؟ سجّل الدخول عبر واتساب لتعبئة بياناتك تلقائياً بنقرة واحدة.'
-                      : 'Have an account? Sign in with WhatsApp to auto-fill your delivery info.'}
+                      ? 'لديك حساب وموقع توصيل محفوظ؟ افتح حسابك لتعبئة العنوان تلقائياً.'
+                      : 'Have an account or saved location? Open your account to auto-fill.'}
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsCustomerAuthModalOpen(true)}
-                  className="px-3.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-bold text-xs rounded-xl shrink-0 transition-all shadow-sm"
+                  onClick={() => setIsCustomerAccountModalOpen(true)}
+                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shrink-0 transition-all shadow-sm flex items-center gap-1.5"
                 >
-                  {language === 'ar' ? 'دخول واتساب' : 'WhatsApp Login'}
+                  <User className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? 'حسابي وموقع التوصيل' : 'My Account'}</span>
                 </button>
               </div>
             )}

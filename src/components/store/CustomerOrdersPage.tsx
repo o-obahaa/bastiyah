@@ -10,7 +10,9 @@ import {
   Check,
   FileText,
   AlertCircle,
-  MessageCircle
+  MessageCircle,
+  User,
+  MapPin
 } from 'lucide-react';
 
 export const CustomerOrdersPage: React.FC = () => {
@@ -21,7 +23,8 @@ export const CustomerOrdersPage: React.FC = () => {
     t, 
     language, 
     currentCustomer, 
-    setIsCustomerAuthModalOpen 
+    setIsCustomerAuthModalOpen,
+    setIsCustomerAccountModalOpen 
   } = useStore();
   const currency = activeStore.settings.currency || 'د.ع';
 
@@ -146,54 +149,61 @@ export const CustomerOrdersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* WhatsApp Customer Auth Banner */}
+      {/* Customer Account & Shipping Location Banner */}
       {currentCustomer ? (
         <div className="p-4 bg-emerald-50/80 border border-emerald-200/90 rounded-2xl flex items-center justify-between flex-wrap gap-3 mb-6 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center shadow-md shadow-[#25D366]/20 shrink-0">
-              <MessageCircle className="w-5 h-5 fill-white" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 shrink-0">
+              <User className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-xs sm:text-sm text-slate-900">
-                  {language === 'ar' ? `أهلاً بك، ${currentCustomer.name}` : `Welcome back, ${currentCustomer.name}`}
+                  {language === 'ar' ? `أهلاً بك، ${currentCustomer.name}` : `Welcome, ${currentCustomer.name}`}
                 </span>
                 <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <span>WhatsApp Verified ✓</span>
                 </span>
               </div>
-              <p className="text-[11px] font-mono text-emerald-700 mt-0.5" dir="ltr">
-                {currentCustomer.phone}
-              </p>
-            </div>
-          </div>
-          <span className="text-[11px] text-emerald-800 font-semibold bg-white px-3 py-1 rounded-xl border border-emerald-200">
-            {language === 'ar' ? 'يتم عرض طلباتك المسجلة تلقائياً' : 'Showing orders linked to your WhatsApp'}
-          </span>
-        </div>
-      ) : (
-        <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/90 rounded-2xl flex items-center justify-between flex-wrap gap-4 mb-6 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center shadow-md shadow-[#25D366]/25 shrink-0">
-              <MessageCircle className="w-5 h-5 fill-white" />
-            </div>
-            <div>
-              <h4 className="font-bold text-xs sm:text-sm text-slate-900">
-                {language === 'ar' ? 'سجّل الدخول عبر واتساب لمتابعة طلباتك تلقائياً' : 'Sign in via WhatsApp to track your orders'}
-              </h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {language === 'ar'
-                  ? 'تحقق بنقرة واحدة برقم هاتفك العراقي لاستعراض فواتيرك وتتبع مراحل الشحن والتسليم المباشرة دون الحاجة للبحث كل مرة.'
-                  : 'Fast WhatsApp verification using your Iraqi phone number to track orders and receipts automatically.'}
+              <p className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                <span className="font-mono text-emerald-700 font-bold" dir="ltr">{currentCustomer.phone}</span>
+                <span>•</span>
+                <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
+                <span>{currentCustomer.state || 'بغداد'} {currentCustomer.city ? `(${currentCustomer.city})` : ''}</span>
               </p>
             </div>
           </div>
           <button
-            onClick={() => setIsCustomerAuthModalOpen(true)}
-            className="px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs rounded-xl shadow-md shadow-[#25D366]/20 transition-all hover:scale-102 flex items-center gap-1.5"
+            onClick={() => setIsCustomerAccountModalOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-all"
           >
-            <MessageCircle className="w-3.5 h-3.5 fill-slate-950" />
-            <span>{language === 'ar' ? 'تسجيل الدخول عبر واتساب' : 'WhatsApp Sign In'}</span>
+            <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{language === 'ar' ? 'تعديل موقع التوصيل' : 'Edit Location'}</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-4 bg-slate-100 border border-slate-200 rounded-2xl flex items-center justify-between flex-wrap gap-4 mb-6 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0">
+              <User className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-xs sm:text-sm text-slate-900">
+                {language === 'ar' ? 'حساب المستخدم وبيانات موقع التوصيل' : 'Customer Account & Shipping Location'}
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {language === 'ar'
+                  ? 'سجّل أو اضبط موقع التوصيل المفضل لديك لمتابعة شحناتك وتعبئة العنوان تلقائياً.'
+                  : 'Manage your saved delivery location and review your past order receipts.'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsCustomerAccountModalOpen(true)}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5"
+          >
+            <User className="w-3.5 h-3.5 text-amber-400" />
+            <span>{language === 'ar' ? 'حسابي وموقع التوصيل' : 'My Account'}</span>
           </button>
         </div>
       )}

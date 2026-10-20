@@ -8,6 +8,7 @@ import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { ToastContainer } from './components/common/ToastContainer';
 import { CustomerWhatsAppAuthModal } from './components/common/CustomerWhatsAppAuthModal';
+import { CustomerAccountModal } from './components/common/CustomerAccountModal';
 import { HeroBanner } from './components/store/HeroBanner';
 import { CategoryFilter } from './components/store/CategoryFilter';
 import { ProductCard } from './components/store/ProductCard';
@@ -139,6 +140,7 @@ export function App() {
       <ProductQuickViewModal />
       <CartDrawer />
       <CustomerWhatsAppAuthModal />
+      <CustomerAccountModal />
       <ToastContainer />
 
       {/* Hosted Store Header */}
