@@ -31,6 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleCardClick = () => {
     setSelectedProductId(product.id);
     setCurrentPage('product-detail');
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   };
 
   const getBadgeLabel = (badge?: string) => {

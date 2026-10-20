@@ -36,6 +36,7 @@ export const INITIAL_COUPONS: Coupon[] = [
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-1',
+    sku: 'PND-AUD-01',
     name: 'Aura Studio Wireless ANC Headphones',
     tagline: 'Precision acoustic engineering with 40-hour hybrid active noise cancellation.',
     description: 'Immerse yourself in pristine sonic fidelity with custom 40mm titanium drivers, ultra-soft memory foam earcups, multi-point Bluetooth 5.4 connectivity, and crystal-clear spatial audio.',
@@ -63,6 +64,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-2',
+    sku: 'PND-WRK-02',
     name: 'Chronos V4 Titanium Smartwatch',
     tagline: 'Aerospace-grade titanium chassis with dual-band GPS & biometric tracking.',
     description: 'Engineered for athletes and creators alike. Features an edge-to-edge sapphire AMOLED display, 100m water resistance, ECG cardiac analysis, and 14-day battery reserve.',
@@ -89,6 +91,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-3',
+    sku: 'PND-KEY-03',
     name: 'Horizon Pro Mechanical Keyboard',
     tagline: 'Hot-swappable custom lubricated linear switches in CNC anodized aluminum.',
     description: 'Typing perfection. Built with brass acoustic dampening layers, south-facing RGB backlighting, gasket mount structure, and seamless tri-mode wireless connectivity.',
@@ -115,6 +118,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-4',
+    sku: 'PND-SPK-04',
     name: 'SonicSphere Spatial Home Speaker',
     tagline: '360° omnidirectional acoustic projection with woven acoustic fabric.',
     description: 'Fill any living space with room-calibrating Hi-Fi audio. Compatible with AirPlay 2, Spotify Connect, and multi-room stereo pairing.',
@@ -141,6 +145,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-5',
+    sku: 'PND-LTH-05',
     name: 'Voyager Full-Grain Leather Duffel',
     tagline: 'Handcrafted vegetable-tanned Italian leather designed for enduring journeys.',
     description: 'Equipped with solid brass YKK zippers, dedicated shoe compartment, waterproof nylon lining, and detachable ergonomic shoulder strap.',
@@ -167,6 +172,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-6',
+    sku: 'PND-LMP-06',
     name: 'Lumina Magnetic Balance Desk Lamp',
     tagline: 'Sculptural levitating magnetic switch with flicker-free circadian lighting.',
     description: 'A conversation masterpiece for modern workstations. Seamlessly cycle between warm reading tones (2700K) to focus daylight (5500K) with touch-sensitive dimming.',
@@ -193,6 +199,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-7',
+    sku: 'PND-MAT-07',
     name: 'Aero Minimalist Desk Mat & Cable Tray',
     tagline: 'Premium vegan micro-felt with integrated magnetic cable organizers.',
     description: 'Transform your desktop aesthetics. Water-resistant, anti-fray stitched borders, and smooth tracking surface optimized for optical precision mice.',
@@ -218,6 +225,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-8',
+    sku: 'PND-CHG-08',
     name: 'Orbit 3-in-1 Fast Magnetic Charging Stand',
     tagline: 'Effortless simultaneous fast charging for Phone, Watch, and Earbuds.',
     description: 'Precision CNC-machined weighted aluminum alloy base prevents slipping. Supports 15W Qi2 fast magnetic alignment and standby landscape nightstand mode.',
@@ -243,6 +251,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-9',
+    sku: 'PND-GLS-09',
     name: 'Zenith Handcrafted Matte Sunglasses',
     tagline: 'Lightweight Japanese titanium frames with polarized anti-glare lenses.',
     description: '100% UVA/UVB Category 3 optical clarity. Scratch-resistant hydrophobic coating ensures immaculate field of view in any lighting conditions.',
@@ -268,6 +277,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-10',
+    sku: 'PND-AIR-10',
     name: 'Aura Smart Air Purifier & Diffuser',
     tagline: 'HEPA-14 silent air filtration with essential oil aroma dispersion.',
     description: 'Captures 99.97% of airborne pollutants, allergens, and micro-particles. Whisper-quiet night mode (< 21dB) and app-controllable ambient light ring.',
@@ -294,6 +304,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-11',
+    sku: 'PND-BAK-11',
     name: 'Nomad Expandable Commuter Backpack',
     tagline: 'Weatherproof Cordura fabric with ergonomic weight distribution.',
     description: 'Features a dedicated suspended 16" laptop sleeve, magnetic Fidlock quick-release buckles, hidden passport compartment, and luggage pass-through.',
@@ -319,6 +330,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-12',
+    sku: 'PND-LGT-12',
     name: 'Prism Ambient Smart Light Bar',
     tagline: 'Dynamic screen-mirroring and music-synchronized ambient lighting.',
     description: '16 million colors with customizable gradient flow patterns. Enhances home theater and gaming setups with zero latency ambient backlight immersion.',
@@ -347,6 +359,7 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const OUD_PRODUCTS: Product[] = [
   {
     id: 'oud-1',
+    sku: 'ROY-OUD-01',
     name: 'Royal Cambodian Aged Oud Extrait',
     tagline: '30-year aged pure agarwood oil blended with Taif damask rose and royal amber.',
     description: 'Hand-distilled in small artisan batches, this regal extrait de parfum opens with warm saffron and settles into deep, smoky Cambodian oud and velvety musk.',
@@ -373,6 +386,7 @@ export const OUD_PRODUCTS: Product[] = [
   },
   {
     id: 'oud-2',
+    sku: 'ROY-BKH-02',
     name: 'Sultani Malaki Incense & Bakhoor Set',
     tagline: 'Handcrafted sinking-grade agarwood chips infused with pure musk and sandalwood.',
     description: 'Presented in an inlaid mother-of-pearl wooden chest with a brass mabkhara burner. Fills majlis and living spaces with majestic Arabian warmth.',
@@ -398,6 +412,7 @@ export const OUD_PRODUCTS: Product[] = [
   },
   {
     id: 'oud-3',
+    sku: 'ROY-AMB-03',
     name: 'Velvet Amber & Saffron Elixir',
     tagline: 'Warm golden ambergris layered with Iranian saffron and Madagascar vanilla.',
     description: 'An intoxicating unisex signature scent crafted for evening elegance. Rich, luminous, and unforgettable.',
@@ -423,6 +438,7 @@ export const OUD_PRODUCTS: Product[] = [
   },
   {
     id: 'oud-4',
+    sku: 'ROY-MSK-04',
     name: 'Imperial White Musk Crystal Tola',
     tagline: 'Silky pure Tahara white musk with delicate white lotus and cashmere wood.',
     description: 'Housed in a collectible hand-carved crystal tola applicator bottle. Skin-softening, alcohol-free pure perfume oil.',
@@ -450,6 +466,7 @@ export const OUD_PRODUCTS: Product[] = [
 export const FASHION_PRODUCTS: Product[] = [
   {
     id: 'fash-1',
+    sku: 'VLV-ABY-01',
     name: 'Milano Hand-Stitched Silk Abaya & Trench',
     tagline: 'Flowing mulberry silk crepe with architectural tailoring and pearl cuffs.',
     description: 'Designed between Milan and Dubai, this limited-edition couture layering coat features hand-embroidered tonal seams and breathable luxury silk lining.',
@@ -475,6 +492,7 @@ export const FASHION_PRODUCTS: Product[] = [
   },
   {
     id: 'fash-2',
+    sku: 'VLV-BAG-02',
     name: 'Siena Woven Calfskin Crossbody Bag',
     tagline: 'Artisanal intrecciato woven Italian leather with brushed gold hardware.',
     description: 'Hand-braided by master leather artisans in Florence. Features suede-lined dual compartments and an adjustable knotted shoulder strap.',
@@ -500,6 +518,7 @@ export const FASHION_PRODUCTS: Product[] = [
   },
   {
     id: 'fash-3',
+    sku: 'VLV-SHW-03',
     name: 'Lumiere Cashmere & Merino Wrap Shawl',
     tagline: 'Featherlight Inner Mongolian cashmere spun with luster silk borders.',
     description: 'Effortless warmth and drape for travel or evening occasions. Ethically sourced grade-A cashmere fibers.',

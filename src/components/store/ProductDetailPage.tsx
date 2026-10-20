@@ -61,6 +61,7 @@ export const ProductDetailPage: React.FC = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     if (product) {
       setSelectedSize(product.variants?.sizes?.[0] || '');
       setSelectedColor(product.variants?.colors?.[0] || '');
@@ -86,9 +87,24 @@ export const ProductDetailPage: React.FC = () => {
     .filter((p) => p.id !== product.id && p.category === product.category)
     .slice(0, 4);
 
+  const getSpecifiedProductUrl = () => {
+    if (typeof window === 'undefined') return '';
+    const hostParts = window.location.hostname.split('.');
+    const isLocalOrVercel = window.location.hostname.includes('localhost') || 
+                            window.location.hostname.includes('127.0.0.1') || 
+                            window.location.hostname.endsWith('.vercel.app');
+    const isStoreSubdomain = !isLocalOrVercel && hostParts.length >= 3 && hostParts[0] === activeStore.slug;
+    
+    if (isStoreSubdomain) {
+      return `${window.location.origin}/product/${product.id}`;
+    }
+    return `${window.location.origin}/store/${activeStore.slug}/product/${product.id}`;
+  };
+
   const handleShare = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    addToast(language === 'ar' ? 'تم نسخ رابط المنتج إلى الحافظة!' : 'Product link copied to clipboard!', 'info');
+    const url = getSpecifiedProductUrl() || window.location.href;
+    navigator.clipboard?.writeText(url);
+    addToast(language === 'ar' ? 'تم نسخ رابط المنتج المخصص إلى الحافظة بنجاح!' : 'Specified product link copied to clipboard!', 'info');
   };
 
   const handleAddReview = (e: React.FormEvent) => {
@@ -343,6 +359,22 @@ export const ProductDetailPage: React.FC = () => {
                 title={t.share}
               >
                 <Share2 className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Specified Product Link Pill */}
+            <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl border border-slate-200/90 flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <Share2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="shrink-0 font-bold text-slate-700">{language === 'ar' ? 'رابط المنتج المخصص:' : 'Product Link:'}</span>
+                <span className="font-mono text-[11px] text-slate-500 truncate" dir="ltr">{getSpecifiedProductUrl()}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-bold text-[11px] shrink-0 transition-colors shadow-2xs"
+              >
+                {language === 'ar' ? 'نسخ' : 'Copy'}
               </button>
             </div>
           </div>

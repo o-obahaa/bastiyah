@@ -12,6 +12,8 @@ export type ProductCategory =
 
 export interface Product {
   id: string;
+  sku?: string; // Internal management item code (رمز إدارة المنتج / كود الصنف الداخلي - not visible for customers)
+  itemCode?: string;
   name: string;
   nameAr?: string;
   tagline: string;

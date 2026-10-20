@@ -48,6 +48,7 @@ export const AdminProducts: React.FC = () => {
   const currency = activeStore.settings.currency || '$';
 
   const [formData, setFormData] = useState({
+    sku: '',
     name: '',
     nameAr: '',
     tagline: '',
@@ -91,6 +92,8 @@ export const AdminProducts: React.FC = () => {
     const q = searchTerm.toLowerCase();
     const matchesSearch = pName.toLowerCase().includes(q) ||
                           pNameAr.toLowerCase().includes(q) ||
+                          (p.sku && p.sku.toLowerCase().includes(q)) ||
+                          (p.id && p.id.toLowerCase().includes(q)) ||
                           p.category.toLowerCase().includes(q) ||
                           (p.tags && p.tags.some(t => t.toLowerCase().includes(q)));
     const matchesCat = selectedCat === 'All' || p.category === selectedCat;
@@ -104,7 +107,9 @@ export const AdminProducts: React.FC = () => {
   });
 
   const handleOpenAdd = () => {
+    const defaultSku = `${(activeStore.slug || 'SKU').toUpperCase().slice(0, 3)}-${Math.floor(100 + Math.random() * 900)}`;
     setFormData({
+      sku: defaultSku,
       name: '',
       nameAr: '',
       tagline: '',
@@ -129,6 +134,7 @@ export const AdminProducts: React.FC = () => {
   const handleOpenEdit = (p: Product) => {
     setEditingProduct(p);
     setFormData({
+      sku: p.sku || p.id,
       name: p.name,
       nameAr: p.nameAr || '',
       tagline: p.tagline,
@@ -167,6 +173,7 @@ export const AdminProducts: React.FC = () => {
     const hasDiscount = origPriceNum !== undefined && !isNaN(origPriceNum) && origPriceNum > Number(formData.price);
 
     const payload = {
+      sku: formData.sku.trim() || undefined,
       name: formData.name.trim(),
       nameAr: formData.nameAr.trim() || formData.name.trim(),
       tagline: formData.tagline.trim() || formData.name.trim(),
@@ -585,7 +592,13 @@ export const AdminProducts: React.FC = () => {
                             <span className="font-bold text-slate-900 block text-xs sm:text-sm truncate">
                               {pName}
                             </span>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded-md font-bold">
+                                {language === 'ar' ? 'كود الإدارة:' : 'SKU:'} {p.sku || p.id}
+                              </span>
+                              <span className="text-[10px] text-slate-400">({language === 'ar' ? 'خاص بالإدارة' : 'Internal'})</span>
+                            </div>
+                            <span className="text-[11px] text-slate-400 block truncate mt-0.5">
                               {p.tagline}
                             </span>
                           </div>
@@ -723,6 +736,36 @@ export const AdminProducts: React.FC = () => {
 
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
+              {/* Product SKU Management Code (Hidden from Customers) */}
+              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-800 block text-xs">
+                    {language === 'ar' ? 'كود إدارة المنتج الداخلي (رمز الصنف SKU) *' : 'Internal Management SKU Code *'}
+                  </label>
+                  <span className="text-[10px] text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200 font-bold shadow-2xs">
+                    {language === 'ar' ? 'خاص بالإدارة فقط — لا يظهر للزبائن' : 'Management only — hidden from customers'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    dir="ltr"
+                    placeholder="e.g. PND-AUD-01"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                    className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono font-bold text-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, sku: `${(activeStore.slug || 'SKU').toUpperCase().slice(0, 3)}-${Math.floor(100 + Math.random() * 900)}` })}
+                    className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0 shadow-2xs"
+                  >
+                    {language === 'ar' ? 'توليد كود تلقائي' : 'Generate Code'}
+                  </button>
+                </div>
+              </div>
+
               {/* Product Names (AR & EN) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

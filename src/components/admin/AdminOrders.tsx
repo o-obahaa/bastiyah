@@ -26,6 +26,7 @@ import {
 export const AdminOrders: React.FC = () => {
   const { 
     orders, 
+    products,
     updateOrderStatus, 
     updateOrder, 
     activeStore, 
@@ -520,22 +521,32 @@ export const AdminOrders: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {inspectingOrder.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td className="py-2 px-3 font-semibold text-slate-900">
-                              <div>{item.productName}</div>
-                              {(item.selectedSize || item.selectedColor) && (
-                                <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                                  {item.selectedSize && <span className="me-2">{language === 'ar' ? 'المقاس:' : 'Size:'} {item.selectedSize}</span>}
-                                  {item.selectedColor && <span>{language === 'ar' ? 'اللون:' : 'Color:'} {item.selectedColor}</span>}
+                        {inspectingOrder.items.map((item, idx) => {
+                          const matchedProd = products.find((p) => p.id === item.productId);
+                          return (
+                            <tr key={idx}>
+                              <td className="py-2 px-3 font-semibold text-slate-900">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span>{item.productName}</span>
+                                  {matchedProd?.sku && (
+                                    <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded font-bold">
+                                      {language === 'ar' ? 'كود الصنف:' : 'SKU:'} {matchedProd.sku}
+                                    </span>
+                                  )}
                                 </div>
-                              )}
-                            </td>
-                            <td className="py-2 px-3 text-center text-slate-600">{item.quantity}</td>
-                            <td className="py-2 px-3 text-end text-slate-600">{currency}{item.price.toFixed(2)}</td>
-                            <td className="py-2 px-3 text-end font-bold text-slate-900">{currency}{(item.price * item.quantity).toFixed(2)}</td>
-                          </tr>
-                        ))}
+                                {(item.selectedSize || item.selectedColor) && (
+                                  <div className="text-[10px] text-slate-500 font-normal mt-0.5">
+                                    {item.selectedSize && <span className="me-2">{language === 'ar' ? 'المقاس:' : 'Size:'} {item.selectedSize}</span>}
+                                    {item.selectedColor && <span>{language === 'ar' ? 'اللون:' : 'Color:'} {item.selectedColor}</span>}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-2 px-3 text-center text-slate-600">{item.quantity}</td>
+                              <td className="py-2 px-3 text-end text-slate-600">{currency}{item.price.toFixed(2)}</td>
+                              <td className="py-2 px-3 text-end font-bold text-slate-900">{currency}{(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
