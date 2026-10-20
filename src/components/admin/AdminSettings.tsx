@@ -24,8 +24,12 @@ import {
   Volume2,
   VolumeX,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  ExternalLink,
+  Laptop,
+  CheckCircle
 } from 'lucide-react';
+import { generateWhatsAppAlertUrl } from '../../utils/notificationUtils';
 
 export const AdminSettings: React.FC = () => {
   const { 
@@ -520,14 +524,20 @@ export const AdminSettings: React.FC = () => {
                 </div>
               </div>
 
-              {/* WhatsApp Notification Number */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs font-bold text-slate-900">
-                    {language === 'ar' ? 'رقم الواتساب لاستقبال إشعارات وتفاصيل الطلبات' : 'WhatsApp Order Alert Phone'}
+              {/* WhatsApp Notification Number & Instant Test */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-slate-900">
+                      {language === 'ar' ? 'رقم الواتساب لتلقي تنبيهات الطلبات الفورية' : 'WhatsApp Order Alert Phone'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                    {language === 'ar' ? 'يعمل حتى عند إغلاق الموقع' : 'Works even when site is closed'}
                   </span>
                 </div>
+
                 <div className="flex flex-col sm:flex-row items-center gap-2">
                   <input
                     type="tel"
@@ -537,9 +547,48 @@ export const AdminSettings: React.FC = () => {
                     onChange={(e) => updateNotificationSettings({ whatsappAlertPhone: e.target.value })}
                     className="w-full sm:flex-1 p-2 bg-white border border-slate-200 rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 font-bold"
                   />
-                  <span className="text-[11px] text-slate-400">
-                    {language === 'ar' ? 'يُستخدم لتوجيه ملخص الطلب ورابط الإدارة' : 'Receives order summaries & admin link'}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const targetPhone = activeStore.settings.notificationSettings?.whatsappAlertPhone || activeStore.ownerPhone || '9647701234567';
+                      const testUrl = generateWhatsAppAlertUrl(
+                        targetPhone,
+                        'TEST-88120',
+                        'عميل تجريبي',
+                        '+964 770 000 0000',
+                        `${activeStore.settings.currency}125,000`,
+                        2,
+                        activeStore.nameAr || activeStore.name
+                      );
+                      window.open(testUrl, '_blank');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 w-full sm:w-auto justify-center"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'تجربة إرسال تنبيه واتساب 📲' : 'Test WhatsApp Alert 📲'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Offline & Closed-Website Background Notification Explainer */}
+              <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200/80 space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-indigo-900 font-bold">
+                  <Laptop className="w-4 h-4 text-indigo-600" />
+                  <span>{language === 'ar' ? 'كيف تعمل التنبيهات عندما يكون الموقع أو المتصفح مغلقاً؟' : 'How alerts work when the website is closed'}</span>
+                </div>
+                <div className="text-[11px] text-slate-600 space-y-1.5 leading-relaxed">
+                  <p className="flex items-start gap-1.5">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>{language === 'ar' ? 'خدمة خلفية المتصفح (Service Worker):' : 'Background Service Worker:'}</strong> {language === 'ar' ? 'تم تسجيل ملف الخلفية بنجاح، حيث يستمر المتصفح في الاستماع وإظهار إشعارات النظام المباشرة.' : 'Background service worker is registered and triggers OS system notifications.'}</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>{language === 'ar' ? 'تنبيهات الواتساب الفورية (WhatsApp Direct):' : 'Instant WhatsApp Alerts:'}</strong> {language === 'ar' ? 'أضمن وسيلة لاستقبال الطلبات على هاتفك المحمول 24/7 حتى وإن كان جهاز الكمبيوتر مطفأً تماماً.' : 'Most reliable way to get order pings on your phone 24/7 even if your PC is powered off.'}</span>
+                  </p>
+                  <p className="flex items-start gap-1.5">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>{language === 'ar' ? 'تطبيق الويب المستقل (PWA App):' : 'Standalone Web App (PWA):'}</strong> {language === 'ar' ? 'يمكنك تثبيت لوحة التحكم كتطبيق مستقل من خيارات المتصفح (Install App) لتعمل كتطبيق هاتف أو حاسوب دائم.' : 'Install the admin panel as an app from browser menu for dedicated OS integration.'}</span>
+                  </p>
                 </div>
               </div>
             </div>

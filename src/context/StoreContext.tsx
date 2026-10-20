@@ -41,7 +41,9 @@ import {
 import {
   playNotificationChime,
   sendBrowserNotification,
-  requestBrowserNotificationPermission
+  requestBrowserNotificationPermission,
+  showServiceWorkerNotification,
+  generateWhatsAppAlertUrl
 } from '../utils/notificationUtils';
 import { convexClient, isConvexConfigured } from '../convexClient';
 import { api } from '../convexApi';
@@ -1915,6 +1917,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       );
     }
+
+    // Background Service Worker notification (delivered even if website/tab is closed)
+    showServiceWorkerNotification(
+      language === 'ar' ? `🔔 طلب جديد وارد (#${orderNumber})` : `🔔 New Order Received (#${orderNumber})`,
+      language === 'ar'
+        ? `طلب جديد بقيمة ${activeStore.settings.currency}${cartTotal.toFixed(0)} من ${shippingInfo.fullName}`
+        : `New order of ${activeStore.settings.currency}${cartTotal.toFixed(0)} from ${shippingInfo.fullName}`,
+      orderNumber
+    );
 
     setLastPlacedOrder(newOrder);
 

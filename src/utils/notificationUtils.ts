@@ -160,3 +160,82 @@ export const formatTimeAgo = (isoDate: string, language: 'ar' | 'en' = 'ar'): st
     return isoDate;
   }
 };
+
+/**
+ * Registers the background service worker for offline / closed-tab push notifications.
+ */
+export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/',
+    });
+    return registration;
+  } catch (err) {
+    console.warn('Service Worker registration error:', err);
+    return null;
+  }
+};
+
+/**
+ * Sends a background notification through the Service Worker (runs even if the tab is inactive).
+ */
+export const showServiceWorkerNotification = async (
+  title: string,
+  body: string,
+  orderNumber?: string
+): Promise<void> => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    if (registration && 'showNotification' in registration) {
+      await registration.showNotification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon-32x32.png',
+        tag: orderNumber ? `order-${orderNumber}` : `bastiyah-${Date.now()}`,
+        requireInteraction: true,
+        data: {
+          url: '/admin',
+          orderNumber,
+        },
+      } as NotificationOptions);
+    }
+  } catch (e) {
+    console.warn('Could not display service worker notification:', e);
+  }
+};
+
+/**
+ * Constructs a pre-formatted WhatsApp order notification link to deliver instant alerts
+ * directly to the store owner's WhatsApp on their mobile phone (active 24/7 even if PC is off).
+ */
+export const generateWhatsAppAlertUrl = (
+  merchantPhone: string,
+  orderNumber: string,
+  customerName: string,
+  customerPhone: string,
+  totalAmount: string,
+  itemsCount: number,
+  storeName: string
+): string => {
+  const cleanPhone = merchantPhone.replace(/\D/g, '');
+  const text = encodeURIComponent(
+    `🚨 *طلب جديد وارد عبر متجر ${storeName}*\n` +
+    `--------------------------------\n` +
+    `📦 *رقم الطلب:* #${orderNumber}\n` +
+    `👤 *العميل:* ${customerName}\n` +
+    `📞 *رقم العميل:* ${customerPhone}\n` +
+    `🛍️ *عدد المنتجات:* ${itemsCount}\n` +
+    `💰 *الإجمالي:* ${totalAmount}\n` +
+    `--------------------------------\n` +
+    `🔗 يمكنك مراجعة وإدارة الطلب فوراً من لوحة تحكم بسطية.`
+  );
+
+  return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${text}`;
+};
+
