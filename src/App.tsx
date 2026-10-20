@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from './context/StoreContext';
-import { PlatformSwitcherPill } from './components/common/PlatformSwitcherPill';
 import { BastiyahOwnerAdmin } from './components/platform/BastiyahOwnerAdmin';
 import { BastiyahPlatformAdminLogin } from './components/platform/BastiyahPlatformAdminLogin';
 import { StoreMerchantLogin } from './components/admin/StoreMerchantLogin';
@@ -141,9 +140,6 @@ export function App() {
       <CartDrawer />
       <CustomerWhatsAppAuthModal />
       <ToastContainer />
-
-      {/* Discrete Floating Platform Switcher for preview & testing */}
-      <PlatformSwitcherPill />
 
       {/* Hosted Store Header */}
       <Header />

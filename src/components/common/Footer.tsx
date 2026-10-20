@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
-import { ShieldCheck, Truck, RotateCcw, Headphones, Crown, Globe } from 'lucide-react';
+import { Truck, RotateCcw, Headphones, ShieldCheck } from 'lucide-react';
 import { getStorePathLabel } from '../../utils/urlUtils';
 
 export const Footer: React.FC = () => {
@@ -11,7 +11,6 @@ export const Footer: React.FC = () => {
     setSelectedCategory, 
     t, 
     language,
-    goToPlatform,
     getCategoryName
   } = useStore();
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
@@ -94,29 +93,6 @@ export const Footer: React.FC = () => {
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
               {displayDesc}
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              <button
-                onClick={() => goToPlatform('landing')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-950/90 text-indigo-300 border border-indigo-700/50 hover:bg-indigo-900 transition-colors"
-                title={language === 'ar' ? 'الذهاب لموقع المنصة الرئيسي' : 'Visit Bastiyah Platform'}
-              >
-                <Globe className="w-3.5 h-3.5 text-indigo-400" />
-                <span>
-                  {language === 'ar' ? 'مستضاف عبر بسطية' : 'Hosted on Bastiyah'}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setCurrentPage('admin')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors"
-                title={language === 'ar' ? 'لوحة تحكم وإدارة المتجر' : 'Store Admin Portal'}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>
-                  {language === 'ar' ? 'إدارة المتجر' : 'Store Admin'}
-                </span>
-              </button>
-            </div>
           </div>
 
           {/* Catalog Categories (Scoped to this store) */}

@@ -34,7 +34,6 @@ export const StoreMerchantLogin: React.FC = () => {
     sendStoreAdminOtp,
     verifyStoreAdminOtp,
     setCurrentPage, 
-    goToPlatform,
     stores,
     addToast
   } = useStore();
@@ -250,14 +249,6 @@ export const StoreMerchantLogin: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => goToPlatform('landing')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 text-xs font-bold transition-colors"
-          >
-            <Globe className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{language === 'ar' ? 'منصة بسطية' : 'Bastiyah Platform'}</span>
-          </button>
-
           <button
             onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-bold transition-colors"

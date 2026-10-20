@@ -47,7 +47,6 @@ export const AdminLayout: React.FC = () => {
     t, 
     language,
     setLanguage,
-    goToPlatform,
     logoutStoreAdmin,
     addToast,
   } = useStore();
@@ -454,16 +453,6 @@ export const AdminLayout: React.FC = () => {
             >
               <Globe className="w-3.5 h-3.5 text-emerald-600" />
               <span>{language === 'en' ? 'العربية' : 'English'}</span>
-            </button>
-
-            {/* Platform Super Admin Quick Link (if platform admin) */}
-            <button
-              onClick={() => goToPlatform('admin')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold transition-all shadow-xs"
-              title={language === 'ar' ? 'لوحة تحكم منصة بسطية الرئيسية' : 'Bastiyah Platform Owner'}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden xl:inline">{language === 'ar' ? 'المنصة الرئيسية' : 'Platform'}</span>
             </button>
           </div>
         </header>
