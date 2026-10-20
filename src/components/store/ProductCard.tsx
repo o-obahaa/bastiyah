@@ -124,66 +124,66 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Product Content Details */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3">
+      <div className="p-3 sm:p-5 flex flex-col flex-1 justify-between gap-2.5 sm:gap-3">
         <div>
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-bold tracking-wide uppercase text-[11px]" style={{ color: theme.hex }}>
+            <span className="font-bold tracking-wide uppercase text-[10px] sm:text-[11px]" style={{ color: theme.hex }}>
               {categoryName}
             </span>
             <div className="flex items-center gap-1 text-slate-600 font-medium">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span>{product.rating}</span>
-              <span className="text-slate-400 text-[10px]">({product.reviewCount})</span>
+              <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs">{product.rating}</span>
+              <span className="text-slate-400 text-[9px] sm:text-[10px]">({product.reviewCount})</span>
             </div>
           </div>
 
           <h3
             onClick={handleCardClick}
-            className="font-bold text-sm sm:text-base text-slate-900 line-clamp-1 transition-colors cursor-pointer"
+            className="font-bold text-xs sm:text-sm md:text-base text-slate-900 line-clamp-1 transition-colors cursor-pointer"
             title={productName}
           >
             {productName}
           </h3>
 
-          <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+          <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
             {productTagline}
           </p>
         </div>
 
         {/* Price and Cart button footer */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 sm:gap-2">
           <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-black text-slate-900">
+            <div className="flex items-baseline gap-1 sm:gap-1.5">
+              <span className="text-sm sm:text-base md:text-lg font-black text-slate-900">
                 {activeStore.settings.currency}{product.price}
               </span>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-xs text-slate-400 line-through">
+                <span className="text-[10px] sm:text-xs text-slate-400 line-through">
                   {activeStore.settings.currency}{product.originalPrice}
                 </span>
               )}
             </div>
 
             {isOutOfStock ? (
-              <span className="text-[10px] font-bold text-rose-500 block">{t.outOfStock}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold text-rose-500 block">{t.outOfStock}</span>
             ) : isLowStock ? (
-              <span className="text-[10px] font-bold text-amber-600 block">{t.onlyLeft.replace('{count}', String(product.stock))}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold text-amber-600 block">{t.onlyLeft.replace('{count}', String(product.stock))}</span>
             ) : (
-              <span className="text-[10px] font-semibold block" style={{ color: theme.hex }}>{t.inStock}</span>
+              <span className="text-[9px] sm:text-[10px] font-semibold block" style={{ color: theme.hex }}>{t.inStock}</span>
             )}
           </div>
 
           <button
             onClick={() => addToCart(product)}
             disabled={isOutOfStock}
-            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 ${
+            className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 shrink-0 ${
               isOutOfStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                 : 'text-white shadow-md hover:opacity-95'
             }`}
             style={!isOutOfStock ? { backgroundColor: theme.hex } : undefined}
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
+            <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             <span>{t.addToBag}</span>
           </button>
         </div>

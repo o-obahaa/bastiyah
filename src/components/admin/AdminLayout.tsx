@@ -180,7 +180,7 @@ export const AdminLayout: React.FC = () => {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <div
               className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-lg shadow-inner shrink-0"
               style={{ borderColor: `${theme.hex}55` }}
@@ -191,27 +191,27 @@ export const AdminLayout: React.FC = () => {
                 <span>{activeStore.design.logoEmoji}</span>
               )}
             </div>
-            <span className="font-black text-sm text-white truncate max-w-[140px]">
+            <span className="font-black text-sm text-white truncate max-w-[100px] xs:max-w-[140px]">
               {displayStoreName}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Admin Notification Bell */}
           <AdminNotificationBell />
 
           <button
             onClick={() => setCurrentPage('home')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold border border-slate-800 transition-colors"
           >
             <Store className="w-3.5 h-3.5 text-amber-400" />
-            <span>{language === 'ar' ? 'المتجر' : 'Store'}</span>
+            <span className="hidden xs:inline">{language === 'ar' ? 'المتجر' : 'Store'}</span>
           </button>
 
           <button
             onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-            className="px-2.5 py-1.5 rounded-xl bg-slate-900 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold transition-colors"
+            className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-900 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold transition-colors"
           >
             {language === 'en' ? 'العربية' : 'EN'}
           </button>

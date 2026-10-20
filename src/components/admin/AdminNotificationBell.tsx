@@ -110,7 +110,7 @@ export const AdminNotificationBell: React.FC = () => {
       {/* Notifications Dropdown Menu */}
       {isOpen && (
         <div 
-          className="absolute end-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-slate-800"
+          className="absolute end-0 mt-2 w-[calc(100vw-32px)] max-w-sm sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-slate-800"
           dir={language === 'ar' ? 'rtl' : 'ltr'}
         >
           {/* Header */}

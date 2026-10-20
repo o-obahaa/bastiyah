@@ -134,9 +134,9 @@ export const Header: React.FC = () => {
                   </span>
                 )}
               </div>
-              <div>
+              <div className="min-w-0">
                 <span
-                  className={`font-black text-lg sm:text-xl tracking-tight block leading-tight ${
+                  className={`font-black text-base sm:text-xl tracking-tight block leading-tight truncate max-w-[110px] xs:max-w-[150px] sm:max-w-xs ${
                     isDarkHeader ? 'text-white' : 'text-slate-900'
                   }`}
                 >
@@ -198,7 +198,7 @@ export const Header: React.FC = () => {
           </nav>
 
           {/* Actions: Store Design, Store Admin, Wishlist, Cart */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Search Icon Button */}
             <button
               onClick={() => setIsSearchOpen((prev) => !prev)}
