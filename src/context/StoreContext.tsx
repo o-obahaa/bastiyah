@@ -1086,7 +1086,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Toast System
   const addToast = (title: string, type: ToastType = 'success', message?: string) => {
     const id = Date.now().toString() + Math.random().toString().slice(2, 6);
-    setToasts((prev) => [...prev, { id, type, title, message }]);
+    setToasts((prev) => [...prev.slice(-3), { id, type, title, message }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((item) => item.id !== id));
     }, 4000);

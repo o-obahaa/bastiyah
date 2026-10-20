@@ -105,8 +105,8 @@ export function App() {
   if (currentPage === 'bastiyah-admin') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
-        <ToastContainer />
         {isPlatformAdminAuthenticated ? <BastiyahOwnerAdmin /> : <BastiyahPlatformAdminLogin />}
+        <ToastContainer />
       </div>
     );
   }
@@ -115,8 +115,8 @@ export function App() {
   if (currentPage === 'bastiyah-landing') {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
-        <ToastContainer />
         <BastiyahLandingPage />
+        <ToastContainer />
       </div>
     );
   }
@@ -127,8 +127,8 @@ export function App() {
     const isAuthorized = isStoreAdminAuthenticated(activeStore.id);
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
-        <ToastContainer />
         {isAuthorized ? <AdminLayout /> : <StoreMerchantLogin />}
+        <ToastContainer />
       </div>
     );
   }
@@ -137,10 +137,10 @@ export function App() {
   return (
     <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-800 ${language === 'ar' ? 'font-arabic' : ''}`}>
       {/* Notifications and Modals */}
-      <ToastContainer />
       <ProductQuickViewModal />
       <CartDrawer />
       <CustomerWhatsAppAuthModal />
+      <ToastContainer />
 
       {/* Discrete Floating Platform Switcher for preview & testing */}
       <PlatformSwitcherPill />
