@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCategory } from '../../types';
 import { 
@@ -20,7 +20,6 @@ import {
   MapPin,
   Edit3
 } from 'lucide-react';
-import { getStorePathLabel } from '../../utils/urlUtils';
 
 export const Header: React.FC = () => {
   const { 
@@ -50,6 +49,14 @@ export const Header: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,50 +142,12 @@ export const Header: React.FC = () => {
                 >
                   {displayStoreName}
                 </span>
-                <span
-                  className="font-mono text-[11px] font-bold block"
-                  style={{ color: theme.hex }}
-                  dir="ltr"
-                >
-                  {getStorePathLabel(activeStore.slug)}
-                </span>
               </div>
             </button>
           </div>
 
-          {/* Desktop Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4">
-            <form onSubmit={handleSearchSubmit} className="relative w-full">
-              <input
-                type="text"
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full py-2 text-sm rounded-full border focus:outline-none transition-all ${
-                  isDarkHeader
-                    ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-white'
-                    : 'bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-900 border-slate-200 placeholder:text-slate-400'
-                } ${language === 'ar' ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
-              />
-              <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 ${
-                language === 'ar' ? 'right-3.5' : 'left-3.5'
-              }`} />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-0.5 ${
-                    language === 'ar' ? 'left-3' : 'right-3'
-                  }`}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </form>
-          </div>
-
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-5">
+          <nav className="hidden md:flex items-center gap-5 sm:gap-6">
             <button
               onClick={() => {
                 setCurrentPage('shop');
@@ -230,6 +199,19 @@ export const Header: React.FC = () => {
 
           {/* Actions: Store Design, Store Admin, Wishlist, Cart */}
           <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Search Icon Button */}
+            <button
+              onClick={() => setIsSearchOpen((prev) => !prev)}
+              className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
+                isSearchOpen
+                  ? (isDarkHeader ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900')
+                  : (isDarkHeader ? 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs')
+              }`}
+              title={language === 'ar' ? 'البحث عن المنتجات' : 'Search products'}
+              aria-label={language === 'ar' ? 'البحث عن المنتجات' : 'Search products'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
@@ -440,25 +422,50 @@ export const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Search Input */}
-        <div className="md:hidden pb-3">
-          <form onSubmit={handleSearchSubmit} className="relative w-full">
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full py-2 text-sm rounded-lg border focus:outline-none ${
-                isDarkHeader
-                  ? 'bg-slate-800 border-slate-700 text-white'
-                  : 'bg-slate-100 border-slate-200 text-slate-900'
-              } ${language === 'ar' ? 'pr-9 pl-4' : 'pl-9 pr-4'}`}
-            />
-            <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 ${
-              language === 'ar' ? 'right-3' : 'left-3'
-            }`} />
-          </form>
-        </div>
+        {/* Toggleable Search Bar (Desktop & Mobile when Search Icon is active) */}
+        {isSearchOpen && (
+          <div className="pb-3.5 pt-1 transition-all">
+            <form onSubmit={handleSearchSubmit} className="relative w-full max-w-xl mx-auto">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={t.searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full py-2.5 text-sm rounded-2xl border shadow-sm focus:outline-none transition-all ${
+                  isDarkHeader
+                    ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-white'
+                    : 'bg-white hover:bg-slate-50 focus:bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 focus:border-slate-400'
+                } ${language === 'ar' ? 'pr-11 pl-10' : 'pl-11 pr-10'}`}
+              />
+              <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
+                language === 'ar' ? 'right-4' : 'left-4'
+              }`} />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-1 rounded-full ${
+                    language === 'ar' ? 'left-3' : 'right-3'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                  className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-1 rounded-full ${
+                    language === 'ar' ? 'left-3' : 'right-3'
+                  }`}
+                  title={language === 'ar' ? 'إغلاق' : 'Close'}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </form>
+          </div>
+        )}
       </div>
 
       {/* Mobile Drawer Menu */}
