@@ -271,7 +271,22 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                     {simulatedCode}
                   </strong>
                 </div>
-                <div className="flex items-center justify-end">
+                <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+                  <a
+                    href={`https://wa.me/9647700104813?text=${encodeURIComponent(
+                      language === 'ar'
+                        ? `مرحباً بسطية، كود تسجيل دخولي في متجر ${storeTitle} هو: ${simulatedCode}`
+                        : `Hello Bastiyah, my login code for ${storeTitle} is: ${simulatedCode}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold text-[#075E54] hover:underline inline-flex items-center gap-1.5 bg-[#25D366]/25 hover:bg-[#25D366]/35 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 fill-[#075E54]" />
+                    <span>{language === 'ar' ? 'فتح واتساب' : 'Open WhatsApp'}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
                   <button
                     type="button"
                     onClick={handleAutoFillCode}
