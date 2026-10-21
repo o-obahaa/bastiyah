@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "whatsapp:gateway": "node scripts/whatsapp-gateway/server.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1151.0",

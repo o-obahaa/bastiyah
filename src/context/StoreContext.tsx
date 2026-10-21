@@ -737,6 +737,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       'success'
     );
 
+    // 1. Attempt sending through the custom QR-code WhatsApp Gateway (100% free, zero-Meta-restrictions)
+    const gatewayUrl = (import.meta.env.VITE_WHATSAPP_GATEWAY_URL || 'http://localhost:3001').trim();
+    fetch(`${gatewayUrl}/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: `964${normalized}`,
+        code,
+        storeName: storeTitle,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          console.log('✅ Real WhatsApp message dispatched via WhatsApp Gateway:', data);
+        }
+      })
+      .catch(() => {
+        // Gateway offline or not running locally, silently ignore
+      });
+
+    // 2. Also dispatch via Convex action if configured
     if (convexClient) {
       convexClient
         .action(api.whatsapp.sendWhatsAppOtp, {
