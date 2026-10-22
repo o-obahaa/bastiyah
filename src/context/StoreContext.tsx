@@ -930,6 +930,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     ...c,
                     name: updated.name || c.name,
                     phone: updated.phone || c.phone,
+                    email: updated.email || c.email,
                     city: `${updated.state || ''} ${updated.city || ''}`.trim() || c.city,
                   }
                 : c
@@ -940,7 +941,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             id: `cust-${Date.now()}`,
             name: updated.name,
             phone: updated.phone,
-            email: `${custPhone.slice(-6)}@customer.iq`,
+            email: updated.email || `${custPhone.slice(-6)}@customer.iq`,
             avatar: updated.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
             city: `${updated.state || ''} ${updated.city || ''}`.trim() || (language === 'ar' ? 'بغداد' : 'Baghdad'),
             country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',

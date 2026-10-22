@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { IRAQ_GOVERNORATES } from '../store/CheckoutPage';
 import { 
   X, 
   MessageCircle, 
@@ -11,7 +12,14 @@ import {
   Sparkles,
   ExternalLink,
   RotateCcw,
-  ShieldCheck
+  ShieldCheck,
+  Mail,
+  MapPin,
+  Building,
+  Navigation,
+  Compass,
+  Save,
+  Check
 } from 'lucide-react';
 
 export const CustomerWhatsAppAuthModal: React.FC = () => {
@@ -21,6 +29,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
     setIsCustomerAccountModalOpen,
     sendCustomerWhatsAppOtp,
     verifyCustomerWhatsAppOtp,
+    updateCustomerProfile,
     currentCustomer,
     activeStore,
     language,
@@ -28,9 +37,15 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
     addToast
   } = useStore();
 
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp' | 'details'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [state, setState] = useState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+  const [landmark, setLandmark] = useState('');
+
   const [otpCode, setOtpCode] = useState(['', '', '', '']);
   const [simulatedCode, setSimulatedCode] = useState<string>('');
   const [formattedPhone, setFormattedPhone] = useState('');
@@ -55,11 +70,19 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
     setStep('phone');
     setPhoneNumber('');
     setFullName('');
+    setEmail('');
+    setCity('');
+    setAddress('');
+    setLandmark('');
     setOtpCode(['', '', '', '']);
   };
 
   const handleSendCode = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!fullName.trim()) {
+      addToast(language === 'ar' ? 'يرجى إدخال اسمك الكامل للمتابعة' : 'Please provide your full name', 'error');
+      return;
+    }
     if (!phoneNumber.trim()) {
       addToast(language === 'ar' ? 'يرجى إدخال رقم هاتفك المحمول' : 'Please provide mobile phone number', 'error');
       return;
@@ -116,10 +139,31 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
       const ok = verifyCustomerWhatsAppOtp(phoneNumber, code, fullName.trim() || undefined);
       setIsVerifying(false);
       if (ok) {
-        handleClose();
-        setIsCustomerAccountModalOpen(true);
+        // Authentication completed! Transition to details step for email and shipping info
+        setStep('details');
       }
     }, 500);
+  };
+
+  const handleSaveAdditionalDetails = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    updateCustomerProfile({
+      name: fullName.trim() || currentCustomer?.name,
+      phone: formattedPhone || phoneNumber.trim() || currentCustomer?.phone,
+      email: email.trim() || undefined,
+      state: state.trim(),
+      city: city.trim() || undefined,
+      address: address.trim() || undefined,
+      landmark: landmark.trim() || undefined,
+    });
+
+    addToast(
+      language === 'ar' 
+        ? '✅ تم حفظ بيانات التوصيل والبريد الإلكتروني بنجاح!' 
+        : '✅ Shipping and email details saved successfully!', 
+      'success'
+    );
+    handleClose();
   };
 
   const handleAutoFillCode = () => {
@@ -137,11 +181,11 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
       <div 
         dir={language === 'ar' ? 'rtl' : 'ltr'}
-        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-200 text-slate-800 relative mx-auto my-auto"
+        className={`bg-white rounded-3xl w-full ${step === 'details' ? 'max-w-xl' : 'max-w-md'} overflow-hidden shadow-2xl border border-slate-200 text-slate-800 relative mx-auto my-auto transition-all duration-200 max-h-[92vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header with WhatsApp styling */}
-        <div className="w-full bg-gradient-to-r from-[#128C7E] to-[#075E54] p-5 sm:p-6 text-white relative">
+        <div className="w-full bg-gradient-to-r from-[#128C7E] to-[#075E54] p-5 sm:p-6 text-white relative shrink-0">
           <button
             onClick={handleClose}
             className="absolute top-4 end-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-colors"
@@ -156,30 +200,57 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
             </div>
             <div className="min-w-0 flex-1">
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 text-[10px] font-bold text-emerald-200 uppercase tracking-wider mb-1">
-                <span>{language === 'ar' ? 'التسجيل والتحقق بالهاتف حصراً' : 'Phone Authentication Only'}</span>
+                <span>
+                  {step === 'details'
+                    ? (language === 'ar' ? 'اكتمل التحقق بنجاح' : 'Authentication Verified')
+                    : (language === 'ar' ? 'التسجيل والتحقق بالهاتف' : 'Phone Authentication')}
+                </span>
                 <span>•</span>
                 <span>العراق 🇮🇶</span>
               </div>
               <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                {language === 'ar' ? `تسجيل الدخول والتحقق برقم الهاتف` : `Shopper Phone Sign-In & Registration`}
+                {step === 'details'
+                  ? (language === 'ar' ? 'إكمال بيانات الشحن والبريد الإلكتروني' : 'Complete Shipping & Email Details')
+                  : (language === 'ar' ? 'تسجيل حساب زبون جديد' : 'Shopper Registration & Sign-In')}
               </h3>
             </div>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="w-full p-5 sm:p-7 space-y-5">
+        <div className="w-full p-5 sm:p-7 space-y-5 overflow-y-auto">
           {step === 'phone' ? (
             <form onSubmit={handleSendCode} className="space-y-4">
-              <div>
-                <p className="text-xs text-slate-600 leading-relaxed mb-4 bg-emerald-50/70 p-3 rounded-xl border border-emerald-100">
-                  {language === 'ar'
-                    ? 'التسجيل والدخول للعملاء يتم حصرياً عبر رقم الهاتف المحمول؛ سنرسل لك رمز تحقق سريعاً مكوناً من 4 أرقام عبر واتساب لتسجيل حسابك فوراً دون الحاجة لكلمات مرور.'
-                    : 'Customer registration and login is exclusively handled via mobile phone number. We dispatch a 4-digit verification code via WhatsApp to authenticate your shopper account.'}
-                </p>
+              <p className="text-xs text-slate-600 leading-relaxed bg-emerald-50/70 p-3 rounded-xl border border-emerald-100">
+                {language === 'ar'
+                  ? 'يرجى إدخال اسمك ورقم هاتفك المحمول؛ سنرسل لك رمز تحقق سريعاً مكوناً من 4 أرقام عبر واتساب. بعد اكتمال التحقق ستتمكن من إضافة البريد الإلكتروني وبيانات التوصيل.'
+                  : 'Please enter your name and phone number. We will send you a 4-digit code via WhatsApp. Once verified, you will be able to complete your email and shipping address.'}
+              </p>
 
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'ar' ? 'رقم الهاتف العراقي (وسيلة التسجيل والتحقق الوحيدة) *' : 'Iraqi Mobile Phone (Exclusive Registration Method) *'}
+              {/* 1. Full Name (Required) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{language === 'ar' ? 'الاسم الكامل *' : 'Full Name *'}</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل اسمك الثلاثي (مثال: حيدر علي العراقي)' : 'e.g. Haidar Ali'}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                  />
+                  <User className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* 2. Phone Number (Required) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{language === 'ar' ? 'رقم الهاتف العراقي *' : 'Iraqi Mobile Phone *'}</span>
                 </label>
                 <div className="flex gap-2" dir="ltr">
                   <div className="px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 shrink-0 select-none">
@@ -203,25 +274,9 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'ar' ? 'الاسم الكامل (اختياري لربط حسابك)' : 'Full Name (Optional)'}
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder={language === 'ar' ? 'مثال: حيدر علي' : 'e.g. Haidar Ali'}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
-                  />
-                  <User className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
-                </div>
-              </div>
-
               <button
                 type="submit"
-                disabled={isSending || !phoneNumber.trim()}
+                disabled={isSending || !phoneNumber.trim() || !fullName.trim()}
                 className="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#20bd5a] disabled:opacity-50 text-slate-950 font-black text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/25 transition-all hover:scale-101 active:scale-99"
               >
                 {isSending ? (
@@ -234,7 +289,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                 )}
               </button>
             </form>
-          ) : (
+          ) : step === 'otp' ? (
             <div className="space-y-5">
               {/* Target phone banner with back button */}
               <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
@@ -252,7 +307,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                 </button>
               </div>
 
-              {/* Realistic Simulated WhatsApp Notification Card */}
+              {/* Realistic WhatsApp Notification Card */}
               <div className="p-3.5 rounded-2xl bg-[#DCF8C6]/50 border border-[#25D366]/40 space-y-2">
                 <div className="flex items-center justify-between text-[11px]">
                   <div className="flex items-center gap-1.5 font-bold text-[#075E54]">
@@ -335,7 +390,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                    <span>{language === 'ar' ? 'تأكيد الرمز وتسجيل الدخول' : 'Verify & Sign In'}</span>
+                    <span>{language === 'ar' ? 'تأكيد الرمز وإكمال البيانات' : 'Verify & Complete Details'}</span>
                   </>
                 )}
               </button>
@@ -360,6 +415,126 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                 )}
               </div>
             </div>
+          ) : (
+            /* Step 3: Complete Details (Email & Shipping Info) */
+            <form onSubmit={handleSaveAdditionalDetails} className="space-y-4">
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-emerald-950">
+                    {language === 'ar' 
+                      ? `تم توثيق الحساب بنجاح! مرحباً بك يا ${fullName || currentCustomer?.name}`
+                      : `Phone verified! Welcome, ${fullName || currentCustomer?.name}`}
+                  </h4>
+                  <p className="text-[11px] text-emerald-800">
+                    {language === 'ar'
+                      ? 'يرجى إكمال البريد الإلكتروني وتفاصيل عنوان الشحن لحفظها لطلباتك القادمة.'
+                      : 'Please provide your email & delivery address to auto-populate future orders.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Email Address */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{language === 'ar' ? 'البريد الإلكتروني (لتلقي إشعارات وفواتير الشراء)' : 'Email Address (For invoices & updates)'}</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="customer@example.com"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                />
+              </div>
+
+              {/* Shipping Governorate & City */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'المحافظة' : 'Governorate'} *</span>
+                  </label>
+                  <select
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                  >
+                    {IRAQ_GOVERNORATES.map((g) => (
+                      <option key={g.code} value={language === 'ar' ? g.ar : g.en}>
+                        {language === 'ar' ? g.ar : g.en}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'المدينة / المنطقة / الحي' : 'City / District'} *</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder={language === 'ar' ? 'مثال: المنصور، الكرادة، الجادرية...' : 'e.g. Al-Mansour'}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Detailed Address */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Navigation className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{language === 'ar' ? 'تفاصيل العنوان (الشارع، الزقاق، رقم الدار)' : 'Street & Building Details'} *</span>
+                </label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder={language === 'ar' ? 'مثال: شارع 14 رمضان، محلة 603، زقاق 12، دار 8' : 'Street name, building #, apartment'}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                />
+              </div>
+
+              {/* Landmark */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{language === 'ar' ? 'أقرب نقطة دالة (اختياري لتسهيل التوصيل)' : 'Nearest Landmark'}</span>
+                </label>
+                <input
+                  type="text"
+                  value={landmark}
+                  onChange={(e) => setLandmark(e.target.value)}
+                  placeholder={language === 'ar' ? 'مثال: قرب جامع الرحمن، مقابل صيدلية الرواد' : 'e.g. Near Al-Rahman Mosque'}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="submit"
+                  className="w-full sm:flex-1 py-3 px-4 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 transition-all hover:scale-101 active:scale-99"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'حفظ البيانات ومتابعة التسوق' : 'Save Details & Continue'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="w-full sm:w-auto py-3 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  {language === 'ar' ? 'إكمال لاحقاً' : 'Complete Later'}
+                </button>
+              </div>
+            </form>
           )}
 
           {/* Trust and privacy footer note */}

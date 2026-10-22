@@ -5,6 +5,7 @@ import {
   X,
   User,
   Phone,
+  Mail,
   MapPin,
   CheckCircle2,
   Package,
@@ -38,6 +39,7 @@ export const CustomerAccountModal: React.FC = () => {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [state, setState] = useState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
@@ -49,6 +51,7 @@ export const CustomerAccountModal: React.FC = () => {
     if (currentCustomer) {
       setName(currentCustomer.name || '');
       setPhone(currentCustomer.phone || '');
+      setEmail(currentCustomer.email || '');
       setState(currentCustomer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'));
       setCity(currentCustomer.city || '');
       setAddress(currentCustomer.address || '');
@@ -56,6 +59,7 @@ export const CustomerAccountModal: React.FC = () => {
     } else {
       setName('');
       setPhone('');
+      setEmail('');
       setState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
       setCity('');
       setAddress('');
@@ -75,6 +79,7 @@ export const CustomerAccountModal: React.FC = () => {
     updateCustomerProfile({
       name: name.trim(),
       phone: phone.trim() || undefined,
+      email: email.trim() || undefined,
       state: state.trim(),
       city: city.trim(),
       address: address.trim(),
@@ -82,6 +87,7 @@ export const CustomerAccountModal: React.FC = () => {
     });
 
     setIsEditing(false);
+    addToast(language === 'ar' ? '✅ تم تحديث بيانات الشحن والبريد بنجاح' : '✅ Shipping details and email updated', 'success');
   };
 
   const handleOpenAuth = () => {
@@ -162,11 +168,17 @@ export const CustomerAccountModal: React.FC = () => {
                 <span>{currentCustomer?.phone || (language === 'ar' ? 'التسجيل برقم الهاتف' : 'Sign in via phone')}</span>
               </p>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-300 mt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-300 mt-1">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3 text-amber-300 shrink-0" />
                   <span className="truncate">{city ? `${state} • ${city}` : state}</span>
                 </span>
+                {currentCustomer?.email && (
+                  <span className="flex items-center gap-1 text-slate-200/90 truncate">
+                    <Mail className="w-3 h-3 text-emerald-300 shrink-0" />
+                    <span className="truncate">{currentCustomer.email}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -309,6 +321,24 @@ export const CustomerAccountModal: React.FC = () => {
                     }}
                     placeholder="0770 123 4567"
                     className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{language === 'ar' ? 'البريد الإلكتروني (لتلقي إشعارات وفواتير الشراء)' : 'Email Address (For receipts & invoices)'}</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setIsEditing(true);
+                    }}
+                    placeholder={language === 'ar' ? 'customer@example.com (اختياري)' : 'customer@example.com (optional)'}
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
                   />
                 </div>
               </div>

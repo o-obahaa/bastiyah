@@ -79,6 +79,7 @@ export const CheckoutPage: React.FC = () => {
         email: currentCustomer.email || prev.email,
         address: currentCustomer.address || prev.address,
         city: currentCustomer.city || prev.city,
+        state: currentCustomer.state || prev.state,
       }));
     }
   }, [currentCustomer]);
