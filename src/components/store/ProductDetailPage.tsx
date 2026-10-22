@@ -48,7 +48,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'specs' | 'reviews' | 'shipping'>('specs');
+  const [activeTab, setActiveTab] = useState<'specs' | 'reviews'>('specs');
 
   const availableSizes = product?.variants?.sizes || [];
   const availableColors = product?.variants?.colors || [];
@@ -441,16 +441,6 @@ export const ProductDetailPage: React.FC = () => {
           >
             {t.customerReviews} ({productReviews.length})
           </button>
-          <button
-            onClick={() => setActiveTab('shipping')}
-            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${
-              activeTab === 'shipping'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {t.shippingPolicy}
-          </button>
         </div>
 
         <div className="py-6">
@@ -640,30 +630,6 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'shipping' && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 max-w-3xl space-y-4 text-sm text-slate-600">
-              <h3 className="font-bold text-base text-slate-900">{t.shippingPolicy}</h3>
-              <p>
-                {language === 'ar'
-                  ? `يتم تجهيز وشحن جميع الطلبات عبر مراكز الشحن المعتمدة لمتجر ${activeStore.nameAr || activeStore.name}. يتم التوصيل السريع إلى باب منزلك مع إمكانية التتبع المباشر.`
-                  : `All orders are dispatched from certified fulfillment hubs for ${activeStore.name}. Enjoy doorstep delivery with live tracking status.`}
-              </p>
-              <ul className="list-disc ps-5 space-y-1">
-                <li>
-                  <strong>{language === 'ar' ? 'الشحن السريع المحلي:' : 'Domestic Express:'}</strong>{' '}
-                  {language === 'ar' ? 'خلال 1-2 يوم عمل مع رقم تتبع مباشر.' : '1-2 business days with live GPS track and trace.'}
-                </li>
-                <li>
-                  <strong>{language === 'ar' ? 'الشحن الدولي المباشر:' : 'International Priority:'}</strong>{' '}
-                  {language === 'ar' ? 'خلال 3-5 أيام عمل مع التخليص الجمركي المسبق.' : '3-5 business days with duties pre-cleared.'}
-                </li>
-                <li>
-                  <strong>{language === 'ar' ? 'سياسة الإرجاع المرن:' : 'Returns:'}</strong>{' '}
-                  {language === 'ar' ? 'إرجاع مجاني خلال 30 يوماً واسترداد كامل للمبلغ بدون أي تعقيد.' : '30-day money-back guarantee, no questions asked.'}
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
       </div>
 
