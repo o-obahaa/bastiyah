@@ -16,7 +16,9 @@ import {
   Clock,
   Trash2,
   Zap,
-  FileText
+  FileText,
+  MapPin,
+  CheckCircle2
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
@@ -55,6 +57,10 @@ export const ProductDetailPage: React.FC = () => {
 
   const [selectedSize, setSelectedSize] = useState<string>(availableSizes[0] || '');
   const [selectedColor, setSelectedColor] = useState<string>(availableColors[0] || '');
+
+  const discountPercent = product?.originalPrice && product.originalPrice > product.price 
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
+    : 0;
 
   // Review form states
   const [newReviewAuthor, setNewReviewAuthor] = useState('');
@@ -173,21 +179,48 @@ export const ProductDetailPage: React.FC = () => {
         <span className="text-slate-900 font-semibold truncate max-w-xs">{productName}</span>
       </nav>
 
-      {/* Main Product Showcase Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16">
-        {/* Gallery column */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative group">
+      {/* Main Product Showcase Grid - 3 Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-10 items-start mb-16">
+        
+        {/* Column 1: Gallery (Span 5) */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="aspect-square sm:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-sm relative group">
             <img
               src={product.images[selectedImage] || product.images[0]}
               alt={productName}
               className="w-full h-full object-cover object-center transition-all duration-300"
             />
+            
+            {/* Top-end Badge (e.g. HOT SALE) */}
             {product.badge && (
-              <span className="absolute top-4 start-4 px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow">
+              <span className="absolute top-4 end-4 z-10 px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow">
                 {product.badge}
               </span>
             )}
+
+            {/* Floating Quick Action Buttons: Share & Wishlist */}
+            <div className="absolute top-4 start-4 z-10 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-10 h-10 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-md backdrop-blur-sm border border-slate-200/80 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                title={t.share}
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleWishlist(product.id)}
+                className={`w-10 h-10 rounded-full shadow-md backdrop-blur-sm border transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${
+                  isFavorited 
+                    ? 'bg-rose-50 text-rose-500 border-rose-200' 
+                    : 'bg-white/90 hover:bg-white text-slate-700 border-slate-200/80'
+                }`}
+                title="Wishlist"
+              >
+                <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current text-rose-500' : ''}`} />
+              </button>
+            </div>
 
             {/* Next and Back Buttons */}
             {product.images.length > 1 && (
@@ -196,12 +229,12 @@ export const ProductDetailPage: React.FC = () => {
                   type="button"
                   onClick={handlePrevImage}
                   aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous picture'}
-                  className="absolute top-1/2 -translate-y-1/2 start-3 sm:start-4 z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
+                  className="absolute top-1/2 -translate-y-1/2 start-3 z-10 w-10 h-10 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
                 >
                   {language === 'ar' ? (
-                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronRight className="w-5 h-5" />
                   ) : (
-                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronLeft className="w-5 h-5" />
                   )}
                 </button>
 
@@ -209,17 +242,17 @@ export const ProductDetailPage: React.FC = () => {
                   type="button"
                   onClick={handleNextImage}
                   aria-label={language === 'ar' ? 'الصورة التالية' : 'Next picture'}
-                  className="absolute top-1/2 -translate-y-1/2 end-3 sm:end-4 z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
+                  className="absolute top-1/2 -translate-y-1/2 end-3 z-10 w-10 h-10 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
                 >
                   {language === 'ar' ? (
-                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronLeft className="w-5 h-5" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronRight className="w-5 h-5" />
                   )}
                 </button>
 
                 {/* Picture Counter */}
-                <div className="absolute bottom-4 end-4 px-3 py-1 rounded-full bg-slate-900/70 backdrop-blur-md text-white text-xs font-bold tabular-nums shadow select-none">
+                <div className="absolute bottom-3 end-3 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-md text-white text-xs font-bold tabular-nums shadow select-none">
                   {selectedImage + 1} / {product.images.length}
                 </div>
               </>
@@ -228,12 +261,12 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Thumbnails */}
           {product.images.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex gap-2.5 overflow-x-auto pb-1 pt-1">
               {product.images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${
+                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${
                     selectedImage === idx
                       ? 'border-emerald-600 ring-4 ring-emerald-100 shadow-sm'
                       : 'border-slate-200 opacity-60 hover:opacity-100'
@@ -246,60 +279,109 @@ export const ProductDetailPage: React.FC = () => {
           )}
         </div>
 
-        {/* Product Info column */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Column 2: Product Info & Variants (Span 4) */}
+        <div className="lg:col-span-4 space-y-5">
           <div>
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="font-bold text-emerald-700 tracking-wider uppercase">
-                {categoryName}
-              </span>
-              <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span>{product.rating}</span>
-                <span className="text-slate-400">({productReviews.length || product.reviewCount} {t.reviews})</span>
-              </div>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+            <span className="font-bold text-xs text-emerald-700 tracking-wider uppercase">
+              {categoryName}
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-1.5">
               {productName}
             </h1>
-            <p className="text-sm text-slate-600 mt-2 font-medium">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
               {productTagline}
             </p>
+            
+            {/* Rating row */}
+            <div className="flex items-center gap-2 mt-2.5 text-xs">
+              <div className="flex items-center gap-1 text-amber-500 font-semibold">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <span className="text-slate-800 font-bold">{product.rating}</span>
+              </div>
+              <span className="text-slate-400">
+                ({productReviews.length || product.reviewCount} {t.reviews})
+              </span>
+            </div>
           </div>
 
-          {/* Price & Savings */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
-            <div>
+          {/* Price display with discount badge */}
+          <div className="pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {discountPercent > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-700">
+                  {language === 'ar' ? `خصم ${discountPercent}%` : `${discountPercent}% OFF`}
+                </span>
+              )}
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-slate-900">
-                  {currency}{product.price}
+                <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                  {currency}{product.price.toLocaleString()}
                 </span>
                 {product.originalPrice && product.originalPrice > product.price && (
-                  <span className="text-base text-slate-400 line-through">
-                    {currency}{product.originalPrice}
+                  <span className="text-sm text-slate-400 line-through">
+                    {currency}{product.originalPrice.toLocaleString()}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">{language === 'ar' ? 'الضرائب تُحسب عند الدفع' : 'Taxes calculated at checkout'}</p>
             </div>
-
-            <div className="text-end">
-              {isOutOfStock ? (
-                <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
-                  {t.outOfStock}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200/80">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                  <span>{t.inStock}</span>
-                </span>
-              )}
-            </div>
+            <p className="text-[11px] text-slate-400 mt-1">
+              {language === 'ar' ? 'الضرائب تُحسب عند الدفع • الدفع عند الاستلام متاح' : 'Taxes calculated at checkout'}
+            </p>
           </div>
 
+          {/* Variant Selectors: Colors */}
+          {availableColors.length > 0 && (
+            <div className="space-y-2 pt-4 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700">
+                {language === 'ar' ? 'اللون المتاح:' : 'Select Color:'}
+                <span className="ms-2 font-bold text-emerald-700">{selectedColor}</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableColors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      selectedColor === color
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-600 ring-2 ring-emerald-200 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Variant Selectors: Sizes */}
+          {availableSizes.length > 0 && (
+            <div className="space-y-2 pt-4 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700">
+                {language === 'ar' ? 'المقاس / السعة:' : 'Select Size:'}
+                <span className="ms-2 font-bold text-slate-900">{selectedSize}</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableSizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      selectedSize === size
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Product Description Overview */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 space-y-2 shadow-2xs">
+          <div className="pt-4 border-t border-slate-100 space-y-2">
             <h3 className="font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-emerald-600" />
               <span>{language === 'ar' ? 'وصف ومميزات المنتج' : 'Product Description'}</span>
@@ -311,157 +393,147 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Tags */}
           {product.tags && product.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 pt-2">
               {product.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium"
+                  className="px-2.5 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium"
                 >
                   #{tag}
                 </span>
               ))}
             </div>
           )}
+        </div>
 
-          {/* Variant Selectors: Sizes & Colors */}
-          {availableSizes.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">
-                {language === 'ar' ? 'المقاس المتاح:' : 'Select Size:'}
-                <span className="ms-2 font-semibold text-emerald-700">{selectedSize}</span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {availableSizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                      selectedSize === size
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-sm ring-2 ring-slate-300'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+        {/* Column 3: Buy Box Card (Span 3 - Sticky) */}
+        <div className="lg:col-span-3 lg:sticky lg:top-24 space-y-4">
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+            
+            {/* Availability status */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span className="text-xs text-slate-500 font-medium">{language === 'ar' ? 'حالة التوفر' : 'Availability'}</span>
+              {isOutOfStock ? (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
+                  {t.outOfStock}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                  <span>{t.inStock}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Total price calculation */}
+            <div className="space-y-0.5">
+              <span className="text-xs text-slate-400 font-medium">{language === 'ar' ? 'المجموع الإجمالي' : 'Total Price'}</span>
+              <div className="text-2xl font-black text-slate-900">
+                {currency}{(product.price * quantity).toLocaleString()}
               </div>
             </div>
-          )}
 
-          {availableColors.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">
-                {language === 'ar' ? 'اللون المتاح:' : 'Select Color:'}
-                <span className="ms-2 font-semibold text-emerald-700">{selectedColor}</span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {availableColors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                      selectedColor === color
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-200'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Buying Options (CTAs: Add to Cart & Buy Now) */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              {/* Stepper */}
-              <div className="flex items-center border border-slate-200 rounded-xl bg-white shadow-sm shrink-0">
+            {/* Quantity Stepper */}
+            <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span className="text-xs font-bold text-slate-700 ps-1">{language === 'ar' ? 'الكمية المطلوبة:' : 'Quantity:'}</span>
+              <div className="flex items-center bg-white rounded-lg border border-slate-200 shadow-xs">
                 <button
+                  type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1 || isOutOfStock}
-                  className="px-3.5 py-3 text-slate-600 hover:text-slate-900 font-bold disabled:opacity-40 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center text-slate-600 hover:text-slate-900 font-bold disabled:opacity-30 transition-colors"
                 >
                   -
                 </button>
-                <span className="px-2 sm:px-3 text-sm font-bold text-slate-900 min-w-[1.75rem] text-center">{quantity}</span>
+                <span className="w-8 text-center text-xs font-black text-slate-900">{quantity}</span>
                 <button
+                  type="button"
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                   disabled={quantity >= product.stock || isOutOfStock}
-                  className="px-3.5 py-3 text-slate-600 hover:text-slate-900 font-bold disabled:opacity-40 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center text-slate-600 hover:text-slate-900 font-bold disabled:opacity-30 transition-colors"
                 >
                   +
                 </button>
               </div>
+            </div>
 
-              {/* Add to cart */}
+            {/* Action Buttons: Add to Cart & Buy Now */}
+            <div className="space-y-2.5 pt-1">
+              {/* Add to Cart button */}
               <button
+                type="button"
                 onClick={() => addToCart(product, quantity, selectedColor || undefined, selectedSize || undefined)}
                 disabled={isOutOfStock}
-                className="flex-1 py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:bg-slate-200 disabled:text-slate-400"
+                className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:bg-slate-200 disabled:text-slate-400"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>{isOutOfStock ? t.outOfStock : `${t.addToBag} • ${currency}${(product.price * quantity).toFixed(0)}`}</span>
+                <span>{isOutOfStock ? t.outOfStock : t.addToBag}</span>
               </button>
 
-              {/* Wishlist button */}
+              {/* Buy Now button */}
               <button
-                onClick={() => toggleWishlist(product.id)}
-                className={`p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm shrink-0 ${
-                  isFavorited ? 'text-rose-500 fill-rose-500 bg-rose-50 border-rose-200' : 'text-slate-600'
-                }`}
-                title="Wishlist"
+                type="button"
+                onClick={handleBuyNow}
+                disabled={isOutOfStock}
+                className="w-full py-3 px-4 rounded-xl border-2 border-emerald-600 bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-98 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
               >
-                <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
-              </button>
-
-              {/* Share button */}
-              <button
-                onClick={handleShare}
-                className="p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shadow-sm shrink-0"
-                title={t.share}
-              >
-                <Share2 className="w-5 h-5" />
+                <Zap className="w-4 h-4 fill-current" />
+                <span>{language === 'ar' ? 'اشترِ الآن (الدفع عند الاستلام)' : 'Buy Now'}</span>
               </button>
             </div>
 
-            {/* Buy Now Option */}
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              disabled={isOutOfStock}
-              className="w-full py-4 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-            >
-              <Zap className="w-5 h-5 fill-white text-white" />
-              <span>
-                {language === 'ar' ? 'اشتري الآن (الدفع عند الاستلام)' : 'Buy Now (Cash on Delivery)'}
-                {' • '}
-                {currency}{(product.price * quantity).toFixed(0)}
-              </span>
-            </button>
-          </div>
+            {/* Delivery row indicator */}
+            <div className="pt-3 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-600">
+              <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{language === 'ar' ? 'توصيل مباشر لباب المنزل • الدفع نقداً عند الاستلام' : 'Doorstep express delivery • Cash on delivery'}</span>
+            </div>
 
-          {/* Trust Guarantees */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-200 text-xs text-slate-600">
-            <div className="flex flex-col items-center text-center p-2 rounded-xl bg-slate-50">
-              <Truck className="w-5 h-5 text-emerald-600 mb-1" />
-              <span className="font-bold text-slate-900">{language === 'ar' ? 'شحن سريع' : 'Free Express'}</span>
-              <span>{language === 'ar' ? 'توصيل موثوق' : 'Fast delivery'}</span>
+            {/* Trust Badges vertical list */}
+            <div className="pt-3 border-t border-slate-100 space-y-2.5 text-xs text-slate-600">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Truck className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900 block leading-tight">{language === 'ar' ? 'توصيل سريع' : 'Fast Delivery'}</span>
+                  <span className="text-[11px] text-slate-500">{language === 'ar' ? 'شحن موثوق لجميع المحافظات' : 'Reliable delivery to all areas'}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900 block leading-tight">{language === 'ar' ? 'ضمان أصلي' : 'Authentic'}</span>
+                  <span className="text-[11px] text-slate-500">{language === 'ar' ? 'منتج معتمد وجودة مضمونة' : '100% verified authentic'}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900 block leading-tight">{language === 'ar' ? 'إرجاع 30 يوماً' : '30-Day Returns'}</span>
+                  <span className="text-[11px] text-slate-500">{language === 'ar' ? 'إرجاع واستبدال مرن' : 'Hassle-free return policy'}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-slate-900 block leading-tight">{language === 'ar' ? 'دائماً موثوقة' : 'Always Trusted'}</span>
+                  <span className="text-[11px] text-slate-500">{language === 'ar' ? 'تسوق آمن والدفع عند المعاينة' : 'Safe shopping guaranteed'}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-center text-center p-2 rounded-xl bg-slate-50">
-              <RotateCcw className="w-5 h-5 text-emerald-600 mb-1" />
-              <span className="font-bold text-slate-900">{language === 'ar' ? 'إرجاع 30 يوماً' : '30 Days'}</span>
-              <span>{language === 'ar' ? 'إرجاع سهل' : 'Easy returns'}</span>
-            </div>
-            <div className="flex flex-col items-center text-center p-2 rounded-xl bg-slate-50">
-              <ShieldCheck className="w-5 h-5 text-emerald-600 mb-1" />
-              <span className="font-bold text-slate-900">{language === 'ar' ? 'ضمان أصلي' : 'Authentic'}</span>
-              <span>{language === 'ar' ? 'جودة مضمونة' : 'Guaranteed'}</span>
-            </div>
+
           </div>
         </div>
+
       </div>
 
       {/* Tabs Section: Specs, Reviews, Shipping */}
