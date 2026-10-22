@@ -20,8 +20,15 @@ import {
   ArrowRight,
   DollarSign,
   TrendingUp,
-  Share2
+  Share2,
+  Sparkles
 } from 'lucide-react';
+import { 
+  IRAQI_COURIERS, 
+  generateIraqiTrackingNumber, 
+  getIraqiTrackingUrl, 
+  findIraqiCourier 
+} from '../../utils/iraqShipping';
 
 export const AdminOrders: React.FC = () => {
   const { 
@@ -45,13 +52,12 @@ export const AdminOrders: React.FC = () => {
 
   const currency = activeStore.settings.currency || '$';
 
-  const courierOptions = [
-    { label: 'أرامكس (Aramex)', value: 'Aramex' },
-    { label: 'سمسا (SMSA Express)', value: 'SMSA' },
-    { label: 'دي إتش إل (DHL Express)', value: 'DHL' },
-    { label: 'رد بوكس (RedBox)', value: 'RedBox' },
-    { label: 'مندوب خاص / توصيل محلي (Local Delivery)', value: 'Local Courier' },
-  ];
+  const courierOptions = IRAQI_COURIERS.map((c) => ({
+    label: language === 'ar' ? c.nameAr : c.name,
+    value: c.nameAr,
+    id: c.id,
+    code: c.code
+  }));
 
   const filteredOrders = orders.filter((order) => {
     const q = searchTerm.toLowerCase();
@@ -99,9 +105,17 @@ export const AdminOrders: React.FC = () => {
 
   const handleOpenDetails = (order: Order) => {
     setInspectingOrder(order);
-    setCourierInput(order.courier || 'Aramex');
-    setTrackingInput(order.trackingNumber || '');
+    const courier = order.courier || IRAQI_COURIERS[0].nameAr;
+    setCourierInput(courier);
+    setTrackingInput(order.trackingNumber || generateIraqiTrackingNumber(courier, order.customer.state || order.customer.city));
     setIsInvoiceOpen(false);
+  };
+
+  const handleGenerateTracking = () => {
+    if (!inspectingOrder) return;
+    const newTracking = generateIraqiTrackingNumber(courierInput, inspectingOrder.customer.state || inspectingOrder.customer.city);
+    setTrackingInput(newTracking);
+    addToast(language === 'ar' ? `تم توليد كود تتبع عراقي: ${newTracking}` : `Generated Iraqi tracking: ${newTracking}`, 'info');
   };
 
   const handleAdvanceStatus = (orderId: string, currentStatus: OrderStatus) => {
@@ -128,9 +142,11 @@ export const AdminOrders: React.FC = () => {
       return;
     }
     const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const trackUrl = getIraqiTrackingUrl(tracking, courier);
+    const trackingLinkText = trackUrl ? `\nرابط تتبع الشحنة المباشر: ${trackUrl}` : '';
     const msg = language === 'ar'
-      ? `مرحباً ${order.customer.fullName}، يسعدنا إبلاغك بأنه تم شحن طلبك رقم #${order.orderNumber} من متجر ${storeName} بنجاح!\n\nشركة الشحن: ${courier}\nرقم التتبع: ${tracking}\n\nشكراً لتسوقك معنا، وسنكون سعداء بخدمتك دائماً.`
-      : `Hello ${order.customer.fullName}, your order #${order.orderNumber} from ${storeName} has been shipped!\n\nCourier: ${courier}\nTracking Number: ${tracking}\n\nThank you for shopping with us!`;
+      ? `مرحباً ${order.customer.fullName}، يسعدنا إبلاغك بأنه تم شحن وتجهيز طلبك رقم #${order.orderNumber} من متجر ${storeName} بنجاح!\n\nشركة التوصيل في العراق: ${courier}\nكود التتبع: ${tracking}${trackingLinkText}\n\nشكراً لتسوقك معنا، وسنكون سعداء بخدمتك دائماً.`
+      : `Hello ${order.customer.fullName}, your order #${order.orderNumber} from ${storeName} has been shipped!\n\nCourier in Iraq: ${courier}\nTracking Number: ${tracking}${trackUrl ? `\nTracking Link: ${trackUrl}` : ''}\n\nThank you for shopping with us!`;
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -657,11 +673,17 @@ export const AdminOrders: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                          {language === 'ar' ? 'شركة الشحن' : 'Courier'}
+                          {language === 'ar' ? 'شركة التوصيل في العراق' : 'Iraqi Delivery Courier'}
                         </label>
                         <select
                           value={courierInput}
-                          onChange={(e) => setCourierInput(e.target.value)}
+                          onChange={(e) => {
+                            const newCourier = e.target.value;
+                            setCourierInput(newCourier);
+                            if (inspectingOrder) {
+                              setTrackingInput(generateIraqiTrackingNumber(newCourier, inspectingOrder.customer.state || inspectingOrder.customer.city));
+                            }
+                          }}
                           className="w-full py-1.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         >
                           {courierOptions.map((c) => (
@@ -671,16 +693,37 @@ export const AdminOrders: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                          {language === 'ar' ? 'رقم الشحنة / التتبع' : 'Tracking Number'}
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-semibold text-slate-500">
+                            {language === 'ar' ? 'كود التتبع المتوافق' : 'Compatible Tracking Code'}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleGenerateTracking}
+                            className="text-[10px] font-bold text-emerald-700 hover:text-emerald-900 inline-flex items-center gap-1 hover:underline"
+                          >
+                            <Sparkles className="w-3 h-3 text-emerald-600" />
+                            <span>{language === 'ar' ? 'توليد كود عراقي' : 'Auto-Generate'}</span>
+                          </button>
+                        </div>
                         <input
                           type="text"
-                          placeholder="e.g. ARX-99824823"
+                          placeholder="e.g. WAS-BG-849201"
                           value={trackingInput}
                           onChange={(e) => setTrackingInput(e.target.value)}
-                          className="w-full py-1.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="w-full py-1.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
+                        {getIraqiTrackingUrl(trackingInput, courierInput) && (
+                          <a
+                            href={getIraqiTrackingUrl(trackingInput, courierInput)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-emerald-700 hover:underline inline-flex items-center gap-1 mt-1 font-semibold"
+                          >
+                            <ExternalLink className="w-2.5 h-2.5" />
+                            <span>{language === 'ar' ? 'فتح صفحة تتبع الشحنة' : 'Open Tracking Page'}</span>
+                          </a>
+                        )}
                       </div>
                     </div>
 

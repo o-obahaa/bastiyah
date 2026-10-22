@@ -23,6 +23,7 @@ import {
   AdminNotification,
   NotificationSettings
 } from '../types';
+import { generateIraqiTrackingNumber } from '../utils/iraqShipping';
 import { 
   INITIAL_HOSTED_STORES,
   INITIAL_PRODUCTS, 
@@ -1836,7 +1837,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       total: cartTotal,
       status: 'processing',
       paymentMethod,
-      trackingNumber: `${prefix}-TRK-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      courier: 'واصل إكسبريس (Wasel Express)',
+      trackingNumber: generateIraqiTrackingNumber('Wasel Express', shippingInfo.state || shippingInfo.city),
       notes: notes?.trim() || undefined,
     };
 

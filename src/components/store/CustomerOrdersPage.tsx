@@ -12,8 +12,10 @@ import {
   AlertCircle,
   MessageCircle,
   User,
-  MapPin
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
+import { getIraqiTrackingUrl } from '../../utils/iraqShipping';
 
 export const CustomerOrdersPage: React.FC = () => {
   const { 
@@ -323,20 +325,16 @@ export const CustomerOrdersPage: React.FC = () => {
                       <div className="flex items-center gap-2 text-slate-600 font-medium">
                         <Truck className="w-4 h-4 text-emerald-600" />
                         <span>
-                          {order.courier ? (
-                            <>
-                              <strong className="text-slate-800">{order.courier}</strong>
-                            </>
-                          ) : (
-                            t.carrierUsps
-                          )}
+                          <strong className="text-slate-800">
+                            {order.courier || (language === 'ar' ? 'واصل إكسبريس (Wasel Express)' : 'Wasel Express')}
+                          </strong>
                         </span>
                       </div>
 
                       {order.trackingNumber && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-slate-500 text-[11px]">
-                            {language === 'ar' ? 'رقم التتبع:' : 'Tracking #:'}
+                            {language === 'ar' ? 'كود التتبع العراقي:' : 'Tracking #:'}
                           </span>
                           <span className="font-mono text-emerald-800 font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">
                             {order.trackingNumber}
@@ -344,7 +342,7 @@ export const CustomerOrdersPage: React.FC = () => {
                           <button
                             onClick={() => handleCopyTracking(order.trackingNumber!)}
                             className="p-1 hover:bg-white rounded text-slate-500 hover:text-slate-800 border border-transparent hover:border-slate-200 transition-colors"
-                            title={language === 'ar' ? 'نسخ رقم التتبع' : 'Copy tracking number'}
+                            title={language === 'ar' ? 'نسخ كود التتبع' : 'Copy tracking number'}
                           >
                             {copiedTracking === order.trackingNumber ? (
                               <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -352,6 +350,18 @@ export const CustomerOrdersPage: React.FC = () => {
                               <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
+                          {getIraqiTrackingUrl(order.trackingNumber, order.courier) && (
+                            <a
+                              href={getIraqiTrackingUrl(order.trackingNumber, order.courier)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] font-bold text-emerald-700 hover:underline inline-flex items-center gap-1 ms-1"
+                              title={language === 'ar' ? 'فتح موقع التتبع الرسمي' : 'Open Tracking Portal'}
+                            >
+                              <span>{language === 'ar' ? 'تتبع' : 'Track'}</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>
