@@ -738,7 +738,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 
     // 1. Attempt sending through the custom QR-code WhatsApp Gateway (100% free, zero-Meta-restrictions)
-    const gatewayUrl = (import.meta.env.VITE_WHATSAPP_GATEWAY_URL || 'http://localhost:3001').trim();
+    const gatewayUrl = (import.meta.env.VITE_WHATSAPP_GATEWAY_URL || 'https://bastiyah-whatsapp.onrender.com').trim();
     fetch(`${gatewayUrl}/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
