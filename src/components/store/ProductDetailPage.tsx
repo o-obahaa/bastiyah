@@ -306,22 +306,22 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Price display with discount badge */}
           <div className="pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {discountPercent > 0 && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-700">
+            {discountPercent > 0 && (
+              <div className="mb-1">
+                <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
                   {language === 'ar' ? `خصم ${discountPercent}%` : `${discountPercent}% OFF`}
                 </span>
-              )}
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900">
-                  {currency}{product.price.toLocaleString()}
-                </span>
-                {product.originalPrice && product.originalPrice > product.price && (
-                  <span className="text-sm text-slate-400 line-through">
-                    {currency}{product.originalPrice.toLocaleString()}
-                  </span>
-                )}
               </div>
+            )}
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                {currency}{product.price.toLocaleString()}
+              </span>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-sm text-slate-400 line-through">
+                  {currency}{product.originalPrice.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
 
@@ -407,20 +407,12 @@ export const ProductDetailPage: React.FC = () => {
         <div className="lg:col-span-3 lg:sticky lg:top-24 space-y-4">
           <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
             
-            {/* Availability status */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <span className="text-xs text-slate-500 font-medium">{language === 'ar' ? 'حالة التوفر' : 'Availability'}</span>
-              {isOutOfStock ? (
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
-                  {t.outOfStock}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                  <span>{t.inStock}</span>
-                </span>
-              )}
-            </div>
+            {/* Out of stock banner if applicable */}
+            {isOutOfStock && (
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-center text-xs font-bold text-rose-700">
+                {t.outOfStock}
+              </div>
+            )}
 
             {/* Total price calculation */}
             <div className="space-y-0.5">
