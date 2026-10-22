@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { IRAQ_GOVERNORATES } from '../store/CheckoutPage';
+import { ANONYMOUS_USER_AVATAR } from '../../types';
 import {
   X,
   User,
@@ -19,7 +20,6 @@ import {
   Sparkles,
   ExternalLink,
   ShieldCheck,
-  RefreshCw,
 } from 'lucide-react';
 
 export const CustomerAccountModal: React.FC = () => {
@@ -95,12 +95,6 @@ export const CustomerAccountModal: React.FC = () => {
     setIsCustomerAuthModalOpen(true);
   };
 
-  const handleRandomizeAvatar = () => {
-    const randomId = Math.floor(1500000000000 + Math.random() * 50000000);
-    const newAvatar = `https://images.unsplash.com/photo-${randomId}?auto=format&fit=crop&w=150&q=80`;
-    updateCustomerProfile({ avatar: newAvatar });
-  };
-
   const storeTitle = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
 
   return (
@@ -130,20 +124,11 @@ export const CustomerAccountModal: React.FC = () => {
           <div className="flex items-center gap-3.5 sm:gap-4 pe-8">
             <div className="relative group shrink-0">
               <img
-                src={currentCustomer?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                src={currentCustomer?.avatar || ANONYMOUS_USER_AVATAR}
                 alt={name}
+                onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-white/60 shadow-md bg-white/20"
               />
-              {currentCustomer && (
-                <button
-                  type="button"
-                  onClick={handleRandomizeAvatar}
-                  className="absolute -bottom-1 -end-1 p-1 rounded-full bg-slate-900 text-white text-[10px] hover:bg-slate-800 shadow-md transition-transform hover:scale-110"
-                  title={language === 'ar' ? 'تغيير الصورة الرمزية' : 'Change avatar'}
-                >
-                  <RefreshCw className="w-3 h-3" />
-                </button>
-              )}
             </div>
 
             <div className="min-w-0 flex-1">

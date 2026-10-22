@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { ProductCategory } from '../../types';
+import { ProductCategory, ANONYMOUS_USER_AVATAR } from '../../types';
 import { 
   ShoppingBag, 
   Heart, 
@@ -243,9 +243,10 @@ export const Header: React.FC = () => {
                   >
                     <div className="relative">
                       <img
-                        src={currentCustomer.avatar}
+                        src={currentCustomer.avatar || ANONYMOUS_USER_AVATAR}
                         alt={currentCustomer.name}
-                        className="w-7 h-7 rounded-xl object-cover bg-emerald-100"
+                        onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
+                        className="w-7 h-7 rounded-xl object-cover bg-slate-100"
                       />
                       <span className="absolute -bottom-1 -end-1 w-3.5 h-3.5 bg-[#25D366] text-white rounded-full flex items-center justify-center text-[8px] font-black shadow-xs ring-1 ring-white">
                         ✓
@@ -272,9 +273,10 @@ export const Header: React.FC = () => {
                         <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 rounded-t-xl">
                           <div className="flex items-center gap-2.5">
                             <img
-                              src={currentCustomer.avatar}
+                              src={currentCustomer.avatar || ANONYMOUS_USER_AVATAR}
                               alt=""
-                              className="w-9 h-9 rounded-xl object-cover bg-emerald-100 shrink-0 border border-slate-200"
+                              onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
+                              className="w-9 h-9 rounded-xl object-cover bg-slate-100 shrink-0 border border-slate-200"
                             />
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-bold text-slate-900 truncate">{currentCustomer.name}</p>

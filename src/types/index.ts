@@ -96,6 +96,9 @@ export interface Order {
   notes?: string;
 }
 
+export const ANONYMOUS_USER_AVATAR = 
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="%23E2E8F0"/><circle cx="64" cy="50" r="23" fill="%2394A3B8"/><path d="M28 108C28 89.2223 43.2223 74 62 74H66C84.7777 74 100 89.2223 100 108V115C89.6 123.2 77.4 128 64 128C50.6 128 38.4 123.2 28 115V108Z" fill="%2394A3B8"/></svg>';
+
 export interface Customer {
   id: string;
   name: string;

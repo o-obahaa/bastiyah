@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { Customer } from '../../types';
+import { Customer, ANONYMOUS_USER_AVATAR } from '../../types';
 import { 
   Search, 
   Mail, 
@@ -241,9 +241,10 @@ export const AdminCustomers: React.FC = () => {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={customer.avatar}
+                            src={customer.avatar || ANONYMOUS_USER_AVATAR}
                             alt=""
-                            className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
+                            className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0 bg-slate-100"
                           />
                           <div className="min-w-0">
                             <span className="font-bold text-slate-900 block text-xs sm:text-sm truncate">
@@ -332,9 +333,10 @@ export const AdminCustomers: React.FC = () => {
             <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
                 <img
-                  src={inspectingCustomer.avatar}
+                  src={inspectingCustomer.avatar || ANONYMOUS_USER_AVATAR}
                   alt=""
-                  className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm"
+                  onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
+                  className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm bg-slate-100"
                 />
                 <div>
                   <h3 className="font-bold text-base text-slate-900">{inspectingCustomer.name}</h3>

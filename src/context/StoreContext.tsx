@@ -21,7 +21,8 @@ import {
   ProductReview,
   CustomerUser,
   AdminNotification,
-  NotificationSettings
+  NotificationSettings,
+  ANONYMOUS_USER_AVATAR
 } from '../types';
 import { generateIraqiTrackingNumber } from '../utils/iraqShipping';
 import { 
@@ -398,8 +399,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 sku: p.sku || initProd?.sku || `${(s.slug || 'SKU').toUpperCase().slice(0, 3)}-${String(idx + 1).padStart(2, '0')}`,
               };
             });
+            const updatedCustomers = (s.customers || []).map((c: any) => ({
+              ...c,
+              avatar: (!c.avatar || c.avatar.includes('unsplash.com')) ? ANONYMOUS_USER_AVATAR : c.avatar,
+            }));
             return {
               ...s,
+              customers: updatedCustomers,
               products: updatedProducts,
               ownerPhone: needsIraqiPhone ? (initMatch?.ownerPhone || '+964 770 123 4567') : s.ownerPhone,
               design: {
@@ -708,7 +714,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentCustomer, setCurrentCustomer] = useState<CustomerUser | null>(() => {
     try {
       const saved = localStorage.getItem('bastiyah_current_customer');
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!parsed.avatar || parsed.avatar.includes('unsplash.com')) {
+          parsed.avatar = ANONYMOUS_USER_AVATAR;
+        }
+        return parsed;
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -813,7 +826,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       email: matchedPastOrder?.customer.email || `user.${normalized.slice(-4)}@customer.iq`,
       city: matchedPastOrder?.customer.city,
       address: matchedPastOrder?.customer.address,
-      avatar: `https://images.unsplash.com/photo-${1534528741775 + (parseInt(normalized.slice(-2)) || 10)}?auto=format&fit=crop&w=150&q=80`,
+      avatar: ANONYMOUS_USER_AVATAR,
       authenticatedVia: 'whatsapp',
       authenticatedAt: new Date().toISOString(),
     };
@@ -844,7 +857,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (existingCust) {
           updatedCusts = st.customers.map((c) =>
             c.id === existingCust.id
-              ? { ...c, name: customerName, phone: fullFormattedPhone, isPhoneVerified: true }
+              ? { ...c, name: customerName, phone: fullFormattedPhone, avatar: ANONYMOUS_USER_AVATAR, isPhoneVerified: true }
               : c
           );
         } else {
@@ -853,7 +866,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: customerName,
             phone: fullFormattedPhone,
             email: matchedPastOrder?.customer.email || `${normalized.slice(-4)}@customer.iq`,
-            avatar: customerUser.avatar || '',
+            avatar: ANONYMOUS_USER_AVATAR,
             city: matchedPastOrder?.customer.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
             country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
             ordersCount: matchedPastOrder ? 1 : 0,
@@ -900,7 +913,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             city: updates.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
             address: updates.address || '',
             landmark: updates.landmark || '',
-            avatar: updates.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+            avatar: updates.avatar && !updates.avatar.includes('unsplash.com') ? updates.avatar : ANONYMOUS_USER_AVATAR,
             authenticatedVia: 'phone_auth',
             authenticatedAt: new Date().toISOString(),
           };
@@ -943,7 +956,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: updated.name,
             phone: updated.phone,
             email: updated.email || `${custPhone.slice(-6)}@customer.iq`,
-            avatar: updated.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+            avatar: updated.avatar && !updated.avatar.includes('unsplash.com') ? updated.avatar : ANONYMOUS_USER_AVATAR,
             city: `${updated.state || ''} ${updated.city || ''}`.trim() || (language === 'ar' ? 'بغداد' : 'Baghdad'),
             country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
             ordersCount: 0,
@@ -1884,7 +1897,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           name: shippingInfo.fullName,
           phone: shippingInfo.phone,
           email: shippingInfo.email || `${shippingInfo.phone.replace(/\D/g, '').slice(-6)}@customer.iq`,
-          avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+          avatar: ANONYMOUS_USER_AVATAR,
           city: shippingInfo.city,
           country: shippingInfo.country,
           ordersCount: 1,
@@ -1963,7 +1976,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         email: shippingInfo.email,
         city: shippingInfo.city,
         address: shippingInfo.address,
-        avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+        avatar: ANONYMOUS_USER_AVATAR,
         authenticatedVia: 'phone_auth',
         authenticatedAt: new Date().toISOString(),
       };
