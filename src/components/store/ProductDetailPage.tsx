@@ -14,7 +14,9 @@ import {
   MessageSquarePlus,
   User,
   Clock,
-  Trash2
+  Trash2,
+  Zap,
+  FileText
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
@@ -105,6 +107,11 @@ export const ProductDetailPage: React.FC = () => {
     const url = getSpecifiedProductUrl() || window.location.href;
     navigator.clipboard?.writeText(url);
     addToast(language === 'ar' ? 'تم نسخ رابط المنتج المخصص إلى الحافظة بنجاح!' : 'Specified product link copied to clipboard!', 'info');
+  };
+
+  const handleBuyNow = () => {
+    addToCart(product, quantity, selectedColor || undefined, selectedSize || undefined);
+    setCurrentPage('checkout');
   };
 
   const handleAddReview = (e: React.FormEvent) => {
@@ -233,16 +240,42 @@ export const ProductDetailPage: React.FC = () => {
 
             <div className="text-end">
               {isOutOfStock ? (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
+                <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
                   {t.outOfStock}
                 </span>
               ) : (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                  {t.inStock} ({product.stock})
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200/80">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                  <span>{t.inStock}</span>
                 </span>
               )}
             </div>
           </div>
+
+          {/* Product Description Overview */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 space-y-2 shadow-2xs">
+            <h3 className="font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{language === 'ar' ? 'وصف ومميزات المنتج' : 'Product Description'}</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+              {productDesc || productTagline}
+            </p>
+          </div>
+
+          {/* Tags */}
+          {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {product.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Variant Selectors: Sizes & Colors */}
           {availableSizes.length > 0 && (
@@ -295,37 +328,23 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Tags */}
-          {product.tags && product.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {product.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Quantity and CTA */}
+          {/* Buying Options (CTAs: Add to Cart & Buy Now) */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               {/* Stepper */}
-              <div className="flex items-center border border-slate-200 rounded-xl bg-white shadow-sm">
+              <div className="flex items-center border border-slate-200 rounded-xl bg-white shadow-sm shrink-0">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1 || isOutOfStock}
-                  className="px-4 py-3 text-slate-600 hover:text-slate-900 font-bold disabled:opacity-40"
+                  className="px-3.5 py-3 text-slate-600 hover:text-slate-900 font-bold disabled:opacity-40 transition-colors"
                 >
                   -
                 </button>
-                <span className="px-3 text-sm font-bold text-slate-900">{quantity}</span>
+                <span className="px-2 sm:px-3 text-sm font-bold text-slate-900 min-w-[1.75rem] text-center">{quantity}</span>
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                   disabled={quantity >= product.stock || isOutOfStock}
-                  className="px-4 py-3 text-slate-600 hover:text-slate-900 font-bold disabled:opacity-40"
+                  className="px-3.5 py-3 text-slate-600 hover:text-slate-900 font-bold disabled:opacity-40 transition-colors"
                 >
                   +
                 </button>
@@ -335,7 +354,7 @@ export const ProductDetailPage: React.FC = () => {
               <button
                 onClick={() => addToCart(product, quantity, selectedColor || undefined, selectedSize || undefined)}
                 disabled={isOutOfStock}
-                className="flex-1 py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all disabled:bg-slate-200 disabled:text-slate-400"
+                className="flex-1 py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 disabled:bg-slate-200 disabled:text-slate-400"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>{isOutOfStock ? t.outOfStock : `${t.addToBag} • ${currency}${(product.price * quantity).toFixed(0)}`}</span>
@@ -344,7 +363,7 @@ export const ProductDetailPage: React.FC = () => {
               {/* Wishlist button */}
               <button
                 onClick={() => toggleWishlist(product.id)}
-                className={`p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm ${
+                className={`p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm shrink-0 ${
                   isFavorited ? 'text-rose-500 fill-rose-500 bg-rose-50 border-rose-200' : 'text-slate-600'
                 }`}
                 title="Wishlist"
@@ -355,28 +374,27 @@ export const ProductDetailPage: React.FC = () => {
               {/* Share button */}
               <button
                 onClick={handleShare}
-                className="p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shadow-sm"
+                className="p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shadow-sm shrink-0"
                 title={t.share}
               >
                 <Share2 className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Specified Product Link Pill */}
-            <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl border border-slate-200/90 flex items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <Share2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="shrink-0 font-bold text-slate-700">{language === 'ar' ? 'رابط المنتج المخصص:' : 'Product Link:'}</span>
-                <span className="font-mono text-[11px] text-slate-500 truncate" dir="ltr">{getSpecifiedProductUrl()}</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleShare}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-bold text-[11px] shrink-0 transition-colors shadow-2xs"
-              >
-                {language === 'ar' ? 'نسخ' : 'Copy'}
-              </button>
-            </div>
+            {/* Buy Now Option */}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={isOutOfStock}
+              className="w-full py-4 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              <Zap className="w-5 h-5 fill-white text-white" />
+              <span>
+                {language === 'ar' ? 'اشتري الآن (الدفع عند الاستلام)' : 'Buy Now (Cash on Delivery)'}
+                {' • '}
+                {currency}{(product.price * quantity).toFixed(0)}
+              </span>
+            </button>
           </div>
 
           {/* Trust Guarantees */}
