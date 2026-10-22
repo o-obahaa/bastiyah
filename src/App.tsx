@@ -6,6 +6,7 @@ import { StoreMerchantLogin } from './components/admin/StoreMerchantLogin';
 import { BastiyahLandingPage } from './components/platform/BastiyahLandingPage';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
+import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { ToastContainer } from './components/common/ToastContainer';
 import { CustomerWhatsAppAuthModal } from './components/common/CustomerWhatsAppAuthModal';
 import { CustomerAccountModal } from './components/common/CustomerAccountModal';
@@ -147,7 +148,7 @@ export function App() {
       <Header />
 
       {/* Page Routing */}
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         {currentPage === 'home' && (
           <div className="space-y-16">
             <HeroBanner />
@@ -282,6 +283,9 @@ export function App() {
 
       {/* Main Footer */}
       <Footer />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav />
     </div>
   );
 }

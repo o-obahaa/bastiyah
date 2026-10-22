@@ -57,9 +57,9 @@ export const Footer: React.FC = () => {
         )}
 
         {/* Main Footer Links */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-10 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 py-12">
           {/* Brand info */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="sm:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white font-extrabold text-xl p-1 overflow-hidden">
                 {activeStore.design.customLogoUrl ? (
@@ -129,33 +129,6 @@ export const Footer: React.FC = () => {
                 </button>
               </li>
             </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider text-white mb-4">
-              {language === 'ar' ? 'النشرة البريدية' : 'Stay in the Loop'}
-            </h4>
-            <p className="text-xs text-slate-400 mb-3">
-              {language === 'ar' ? 'اشترك للحصول على أحدث العروض والخصومات الحصرية.' : 'Subscribe for private drop alerts, seasonal discount codes, and updates.'}
-            </p>
-            <div className="flex gap-1.5">
-              <input
-                type="email"
-                placeholder="you@domain.com"
-                className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none w-full"
-              />
-              <button 
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  alert(language === 'ar' ? `تم الاشتراك بنجاح في ${displayStoreName}!` : `Subscribed to ${displayStoreName}!`); 
-                }}
-                className="text-white px-3 py-2 rounded-lg text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
-                style={{ backgroundColor: theme.hex }}
-              >
-                {language === 'ar' ? 'انضم' : 'Join'}
-              </button>
-            </div>
           </div>
         </div>
 

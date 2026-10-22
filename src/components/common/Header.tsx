@@ -19,7 +19,9 @@ import {
   ChevronDown,
   MapPin,
   Edit3,
-  Package
+  Package,
+  Truck,
+  ChevronLeft
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -228,13 +230,13 @@ export const Header: React.FC = () => {
               <span>{language === 'en' ? 'العربية' : 'EN'}</span>
             </button>
 
-            {/* Customer User Account Button / Dropdown - on desktop */}
-            <div className="hidden sm:block">
+            {/* Customer User Account Button / Dropdown (Desktop & Mobile) */}
+            <div>
               {currentCustomer ? (
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    className={`flex items-center gap-1.5 sm:gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all border ${
                       isDarkHeader
                         ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-750'
                         : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-2xs'
@@ -258,7 +260,7 @@ export const Header: React.FC = () => {
                         {currentCustomer.city || currentCustomer.state || (language === 'ar' ? 'العراق' : 'Iraq')}
                       </span>
                     </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <ChevronDown className="hidden sm:block w-3.5 h-3.5 text-slate-400 shrink-0" />
                   </button>
 
                   {/* User Dropdown Menu with Shipping Location Details */}
@@ -363,7 +365,7 @@ export const Header: React.FC = () => {
                 /* User Account trigger when not logged in */
                 <button
                   onClick={() => setIsCustomerAuthModalOpen(true)}
-                  className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
+                  className={`flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
                     isDarkHeader
                       ? 'bg-slate-800/90 hover:bg-slate-750 text-white border-slate-700'
                       : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
@@ -376,7 +378,7 @@ export const Header: React.FC = () => {
                   >
                     <User className="w-3.5 h-3.5" />
                   </div>
-                  <div className="flex flex-col text-start leading-none">
+                  <div className="hidden sm:flex flex-col text-start leading-none">
                     <span className="font-bold text-xs">{language === 'ar' ? 'حسابي' : 'Account'}</span>
                   </div>
                 </button>
@@ -478,6 +480,33 @@ export const Header: React.FC = () => {
             </form>
           </div>
         )}
+      </div>
+
+      {/* Mobile Quick Delivery / Location Strip */}
+      <div className={`md:hidden border-t px-4 py-1.5 flex items-center justify-between text-xs transition-colors ${
+        isDarkHeader ? 'bg-slate-800/80 border-slate-700/60 text-slate-300' : 'bg-slate-100/70 border-slate-200/60 text-slate-700'
+      }`}>
+        <button
+          onClick={() => {
+            if (currentCustomer) {
+              setIsCustomerAccountModalOpen(true);
+            } else {
+              setIsCustomerAuthModalOpen(true);
+            }
+          }}
+          className="flex items-center gap-1.5 w-full justify-between"
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <Truck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="font-semibold truncate">
+              {language === 'ar' ? 'توصيل إلى:' : 'Delivery to:'}{' '}
+              <span className={`font-bold ${isDarkHeader ? 'text-white' : 'text-slate-900'}`}>
+                {currentCustomer?.state || currentCustomer?.city || (language === 'ar' ? 'العراق (كافة المحافظات)' : 'Iraq')}
+              </span>
+            </span>
+          </div>
+          <ChevronLeft className={`w-3.5 h-3.5 text-slate-400 shrink-0 ${language === 'en' ? 'rotate-180' : ''}`} />
+        </button>
       </div>
 
       {/* Mobile Drawer Menu */}
