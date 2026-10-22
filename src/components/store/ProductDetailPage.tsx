@@ -323,9 +323,6 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              {language === 'ar' ? 'الضرائب تُحسب عند الدفع • الدفع عند الاستلام متاح' : 'Taxes calculated at checkout'}
-            </p>
           </div>
 
           {/* Variant Selectors: Colors */}
@@ -478,7 +475,7 @@ export const ProductDetailPage: React.FC = () => {
                 className="w-full py-3 px-4 rounded-xl border-2 border-emerald-600 bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-98 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <Zap className="w-4 h-4 fill-current" />
-                <span>{language === 'ar' ? 'اشترِ الآن (الدفع عند الاستلام)' : 'Buy Now'}</span>
+                <span>{language === 'ar' ? 'اشترِ الآن' : 'Buy Now'}</span>
               </button>
             </div>
 
