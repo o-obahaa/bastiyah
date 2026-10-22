@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { X, Star, ShoppingBag, ArrowRight, ShieldCheck, Truck } from 'lucide-react';
+import { X, Star, ShoppingBag, ArrowRight, ShieldCheck, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const ProductQuickViewModal: React.FC = () => {
   const { 
@@ -49,6 +49,16 @@ export const ProductQuickViewModal: React.FC = () => {
     setQuickViewProduct(null);
   };
 
+  const handlePrevImage = () => {
+    if (!quickViewProduct?.images?.length) return;
+    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : quickViewProduct.images.length - 1));
+  };
+
+  const handleNextImage = () => {
+    if (!quickViewProduct?.images?.length) return;
+    setActiveImageIndex((prev) => (prev < quickViewProduct.images.length - 1 ? prev + 1 : 0));
+  };
+
   const handleAddToCart = () => {
     addToCart(quickViewProduct, quantity, selectedColor || undefined, selectedSize || undefined);
     setQuickViewProduct(null);
@@ -71,12 +81,46 @@ export const ProductQuickViewModal: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 max-h-[85vh] overflow-y-auto">
           {/* Gallery Side */}
           <div className="p-6 bg-slate-50 flex flex-col justify-between gap-4">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-white shadow-inner">
+            <div className="aspect-square rounded-2xl overflow-hidden bg-white shadow-inner relative group">
               <img
                 src={quickViewProduct.images[activeImageIndex] || quickViewProduct.images[0]}
                 alt={productName}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover object-center transition-all duration-300"
               />
+
+              {quickViewProduct.images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevImage}
+                    aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous picture'}
+                    className="absolute top-1/2 -translate-y-1/2 start-2.5 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95"
+                  >
+                    {language === 'ar' ? (
+                      <ChevronRight className="w-5 h-5" />
+                    ) : (
+                      <ChevronLeft className="w-5 h-5" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNextImage}
+                    aria-label={language === 'ar' ? 'الصورة التالية' : 'Next picture'}
+                    className="absolute top-1/2 -translate-y-1/2 end-2.5 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95"
+                  >
+                    {language === 'ar' ? (
+                      <ChevronLeft className="w-5 h-5" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5" />
+                    )}
+                  </button>
+
+                  <div className="absolute bottom-2.5 end-2.5 px-2.5 py-0.5 rounded-full bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-bold tabular-nums shadow">
+                    {activeImageIndex + 1} / {quickViewProduct.images.length}
+                  </div>
+                </>
+              )}
             </div>
 
             {quickViewProduct.images.length > 1 && (

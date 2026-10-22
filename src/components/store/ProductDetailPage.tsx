@@ -114,6 +114,16 @@ export const ProductDetailPage: React.FC = () => {
     setCurrentPage('checkout');
   };
 
+  const handlePrevImage = () => {
+    if (!product?.images?.length) return;
+    setSelectedImage((prev) => (prev > 0 ? prev - 1 : product.images.length - 1));
+  };
+
+  const handleNextImage = () => {
+    if (!product?.images?.length) return;
+    setSelectedImage((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
+  };
+
   const handleAddReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReviewAuthor.trim() || !newReviewComment.trim()) {
@@ -167,16 +177,52 @@ export const ProductDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16">
         {/* Gallery column */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+          <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative group">
             <img
               src={product.images[selectedImage] || product.images[0]}
               alt={productName}
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover object-center transition-all duration-300"
             />
             {product.badge && (
               <span className="absolute top-4 start-4 px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow">
                 {product.badge}
               </span>
+            )}
+
+            {/* Next and Back Buttons */}
+            {product.images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous picture'}
+                  className="absolute top-1/2 -translate-y-1/2 start-3 sm:start-4 z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
+                >
+                  {language === 'ar' ? (
+                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  ) : (
+                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  aria-label={language === 'ar' ? 'الصورة التالية' : 'Next picture'}
+                  className="absolute top-1/2 -translate-y-1/2 end-3 sm:end-4 z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
+                >
+                  {language === 'ar' ? (
+                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                  )}
+                </button>
+
+                {/* Picture Counter */}
+                <div className="absolute bottom-4 end-4 px-3 py-1 rounded-full bg-slate-900/70 backdrop-blur-md text-white text-xs font-bold tabular-nums shadow select-none">
+                  {selectedImage + 1} / {product.images.length}
+                </div>
+              </>
             )}
           </div>
 
