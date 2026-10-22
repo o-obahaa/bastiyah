@@ -66,9 +66,9 @@ export const AdminSettings: React.FC = () => {
   // Payment methods
   const [paymentMethods, setPaymentMethods] = useState({
     cashOnDelivery: settings.paymentMethods?.cashOnDelivery ?? true,
-    creditCard: settings.paymentMethods?.creditCard ?? true,
+    creditCard: settings.paymentMethods?.creditCard ?? false,
     bankTransfer: settings.paymentMethods?.bankTransfer ?? false,
-    applePay: settings.paymentMethods?.applePay ?? true,
+    applePay: settings.paymentMethods?.applePay ?? false,
   });
 
   // Merchant login credentials & security

@@ -84,7 +84,11 @@ export const OrderSuccessPage: React.FC = () => {
           </div>
           <div>
             <span className="text-slate-500 block font-medium">{t.paymentMethod}</span>
-            <span className="font-bold text-slate-900 text-sm">{lastPlacedOrder.paymentMethod}</span>
+            <span className="font-bold text-slate-900 text-sm">
+              {lastPlacedOrder.paymentMethod === 'Cash on Delivery'
+                ? (language === 'ar' ? 'الدفع نقداً عند الاستلام' : 'Cash on Delivery')
+                : lastPlacedOrder.paymentMethod}
+            </span>
           </div>
         </div>
 

@@ -2,19 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ShippingAddress, Order } from '../../types';
 import { 
-  CreditCard, 
   Truck, 
   Lock, 
   ArrowLeft, 
   ArrowRight, 
   ShoppingBag,
   Banknote,
-  Smartphone,
   MapPin,
   CheckCircle2,
   Phone,
-  MessageCircle,
-  User
+  User,
+  ShieldCheck
 } from 'lucide-react';
 
 export const IRAQ_GOVERNORATES = [
@@ -85,10 +83,7 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [currentCustomer]);
 
-  const [paymentMethod, setPaymentMethod] = useState<Order['paymentMethod']>('Cash on Delivery');
-  const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4242');
-  const [cardExpiry, setCardExpiry] = useState('12/28');
-  const [cardCvc, setCardCvc] = useState('884');
+  const paymentMethod: Order['paymentMethod'] = 'Cash on Delivery';
   const [isProcessing, setIsProcessing] = useState(false);
 
   const BackArrow = language === 'ar' ? ArrowRight : ArrowLeft;
@@ -325,163 +320,84 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. Payment Method */}
+          {/* 2. Payment Method - Cash on Delivery Only */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-5">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
-                2
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+                  2
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  {t.paymentMethod}
+                </h2>
               </div>
-              <h2 className="text-lg font-bold text-slate-900">
-                {t.paymentMethod}
-              </h2>
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-200">
+                {language === 'ar' ? 'طريقة الدفع الحصرية' : 'Exclusive Payment Method'}
+              </span>
             </div>
 
-            {/* Payment options pills */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { 
-                  id: 'Cash on Delivery' as const, 
-                  label: language === 'ar' ? 'الدفع عند الاستلام' : 'Cash on Delivery',
-                  subtitle: language === 'ar' ? 'نقدًا لمندوب التوصيل عند الباب' : 'Pay cash to courier upon arrival',
-                  badge: language === 'ar' ? 'الأكثر شيوعاً' : 'Most Popular',
-                  icon: Banknote 
-                },
-                { 
-                  id: 'Zain Cash' as const, 
-                  label: language === 'ar' ? 'زين كاش (Zain Cash)' : 'Zain Cash',
-                  subtitle: language === 'ar' ? 'محفظة زين كاش العراقية' : 'Zain Cash mobile wallet',
-                  badge: language === 'ar' ? 'محفظة إلكترونية' : 'Wallet',
-                  icon: Smartphone 
-                },
-                { 
-                  id: 'FastPay' as const, 
-                  label: language === 'ar' ? 'فاست باي (FastPay)' : 'FastPay',
-                  subtitle: language === 'ar' ? 'محفظة فاست باي الرقمية' : 'FastPay digital wallet',
-                  badge: language === 'ar' ? 'محفظة إلكترونية' : 'Wallet',
-                  icon: Smartphone 
-                },
-                { 
-                  id: 'Credit Card' as const, 
-                  label: language === 'ar' ? 'كي كارد / ماستركارد / فيزا' : 'Qi Card / MasterCard / Visa',
-                  subtitle: language === 'ar' ? 'بطاقة مصرفية إلكترونية' : 'Debit or credit card',
-                  badge: language === 'ar' ? 'دفع إلكتروني' : 'Card',
-                  icon: CreditCard 
-                },
-              ].map((method) => {
-                const Icon = method.icon;
-                const isSelected = paymentMethod === method.id;
-                return (
-                  <button
-                    type="button"
-                    key={method.id}
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`p-4 rounded-2xl border text-start transition-all relative flex items-start gap-3 ${
-                      isSelected
-                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-2 ring-emerald-200'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-xl shrink-0 ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                      <Icon className="w-5 h-5" />
+            {/* Exclusive Cash on Delivery Card */}
+            <div className="p-5 sm:p-6 rounded-2xl border-2 border-emerald-600 bg-emerald-50/50 relative overflow-hidden transition-all shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="p-3.5 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 shrink-0">
+                  <Banknote className="w-7 h-7" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-base sm:text-lg text-slate-900">
+                        {language === 'ar' ? 'الدفع نقداً عند الاستلام (كاش)' : 'Cash on Delivery (COD)'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-white border border-emerald-300 px-2.5 py-0.5 rounded-full shadow-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        {language === 'ar' ? 'مفعل ومضمون 100%' : '100% Guaranteed'}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="font-bold text-xs text-slate-900 block truncate">{method.label}</span>
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded shrink-0">
-                          {method.badge}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 block mt-0.5">{method.subtitle}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Payment method dynamic details */}
-            {paymentMethod === 'Cash on Delivery' && (
-              <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200/80 space-y-1.5 text-xs text-emerald-950">
-                <div className="flex items-center gap-2 font-bold text-emerald-800">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>{language === 'ar' ? 'الدفع نقداً عند استلام شحنتك' : 'Cash on Delivery Active'}</span>
-                </div>
-                <p className="text-emerald-800/80 leading-relaxed text-[11px]">
-                  {language === 'ar'
-                    ? `ادفع نقداً بالدينار العراقي (${currency}${cartTotal.toFixed(0)}) لمندوب التوصيل بعد استلام ومعاينة طلبك. سيتصل بك المندوب على هاتفك (${shippingInfo.phone}) لتأكيد موعد التسليم.`
-                    : `Pay cash in Iraqi Dinars (${currency}${cartTotal.toFixed(0)}) upon receiving your parcel. The courier will contact you at (${shippingInfo.phone}).`}
-                </p>
-              </div>
-            )}
-
-            {paymentMethod === 'Zain Cash' && (
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="font-bold text-slate-800">{language === 'ar' ? 'رقم محفظة زين كاش للمتجر:' : 'Store Zain Cash Wallet:'}</span>
-                  <span className="font-mono font-black text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200" dir="ltr">
-                    0780 123 4567
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  {language === 'ar'
-                    ? `حوّل إجمالي الطلب (${currency}${cartTotal.toFixed(0)}) إلى رقم المحفظة أعلاه عبر تطبيق زين كاش، وسيتم ربط وتجهيز طلبك تلقائياً برقم هاتفك.`
-                    : `Transfer total (${currency}${cartTotal.toFixed(0)}) via Zain Cash app to the number above.`}
-                </p>
-              </div>
-            )}
-
-            {paymentMethod === 'FastPay' && (
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="font-bold text-slate-800">{language === 'ar' ? 'رقم حساب فاست باي للمتجر:' : 'Store FastPay Account:'}</span>
-                  <span className="font-mono font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200" dir="ltr">
-                    0750 123 4567
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  {language === 'ar'
-                    ? `حوّل إجمالي الطلب (${currency}${cartTotal.toFixed(0)}) عبر تطبيق FastPay، وسيتم شحن طلبك فوراً.`
-                    : `Transfer total (${currency}${cartTotal.toFixed(0)}) via FastPay to the account above.`}
-                </p>
-              </div>
-            )}
-
-            {paymentMethod === 'Credit Card' && (
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200 text-xs">
-                  <span className="font-bold text-slate-700">{language === 'ar' ? 'بيانات البطاقة المصرفية' : 'Card Details'}</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Qi Card • MasterCard • Visa</span>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t.cardNumber}</label>
-                  <input
-                    type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">{t.expiryDate}</label>
-                    <input
-                      type="text"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
+                    <span className="font-mono font-black text-sm text-emerald-950 bg-emerald-200/80 px-3 py-1 rounded-xl">
+                      {currency}{cartTotal.toFixed(0)}
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">{t.cvv}</label>
-                    <input
-                      type="text"
-                      value={cardCvc}
-                      onChange={(e) => setCardCvc(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
+
+                  <p className="text-xs text-slate-700 mt-2.5 leading-relaxed font-medium">
+                    {language === 'ar'
+                      ? `ادفع نقداً بالدينار العراقي لمندوب التوصيل بعد استلام ومعاينة طلبك عند باب منزلك. لا توجد أي بطاقات أو دفعات مسبقة مطلوبة.`
+                      : `Pay cash in Iraqi Dinars directly to the courier upon receiving and inspecting your parcel at your doorstep. No upfront online payment required.`}
+                  </p>
+
+                  {/* Trust & Guarantee Highlights */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-emerald-200/70">
+                    <div className="flex items-center gap-2 text-xs text-emerald-950 bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-xs">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-[11px]">
+                        {language === 'ar' ? 'لا دفع مسبق نهائياً' : 'Zero Advance Payment'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-950 bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-[11px]">
+                        {language === 'ar' ? 'معاينة وفحص قبل الدفع' : 'Inspect Before Paying'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-950 bg-white/90 p-2.5 rounded-xl border border-emerald-200/80 shadow-xs">
+                      <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-bold text-[11px]">
+                        {language === 'ar' ? 'تنسيق هاتفي مع المندوب' : 'Courier Phone Call'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Courier coordination note */}
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 flex items-center gap-2.5">
+              <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+              <p className="text-[11px] leading-relaxed">
+                {language === 'ar'
+                  ? `سيتواصل معك مندوب التوصيل على هاتفك (${shippingInfo.phone || 'رقمك المسجل'}) قبل التوصيل للتأكد من تواجدك وتحديد الوقت المناسب.`
+                  : `The courier will contact you at (${shippingInfo.phone || 'your phone number'}) prior to delivery to confirm your presence.`}
+              </p>
+            </div>
           </div>
 
           {/* 3. Order Notes / Special Instructions */}
