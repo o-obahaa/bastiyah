@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { HeroSectionConfig, HeroSlide } from '../../types';
+import { HeroSectionConfig, HeroSlide, HeroHeight } from '../../types';
 import { ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface StoreHeroSliderProps {
@@ -111,12 +111,13 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
     return null;
   }
 
-  // Section Height Classes
-  const heightClasses = {
-    small: isPreview ? 'h-[260px] sm:h-[320px]' : 'h-[340px] sm:h-[420px]',
-    medium: isPreview ? 'h-[340px] sm:h-[420px]' : 'h-[440px] sm:h-[540px] lg:h-[600px]',
-    large: isPreview ? 'h-[420px] sm:h-[500px]' : 'h-[520px] sm:h-[640px] lg:h-[720px]',
+  // Section Height Classes (supporting promotional banner 16:5 aspect ratio)
+  const heightClasses: Record<HeroHeight, string> = {
+    small: isPreview ? 'aspect-[18/5] min-h-[160px]' : 'aspect-[18/5] min-h-[200px] w-full',
+    medium: isPreview ? 'aspect-[16/5]' : 'aspect-[16/7] sm:aspect-[16/5] w-full',
+    large: isPreview ? 'aspect-[14/5]' : 'aspect-[14/7] sm:aspect-[14/5] w-full',
     fullscreen: isPreview ? 'h-[480px]' : 'min-h-[85vh] sm:min-h-[90vh]',
+    'aspect-banner': isPreview ? 'aspect-[16/5]' : 'aspect-[16/7] sm:aspect-[16/5] w-full',
     custom: '',
   };
 
@@ -388,51 +389,52 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
           </>
         )}
 
-        {/* Navigation Dots / Bars / Numbers (Slider Mode only) */}
-        {!isSingleMode && config.showDots && (
-          <div className="absolute bottom-4 sm:bottom-6 inset-x-0 z-20 flex items-center justify-center gap-2">
-            {config.dotStyle === 'numbers' ? (
-              <div className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-white font-mono text-xs font-bold border border-white/20 shadow-md">
-                <span>0{currentSlideIndex + 1}</span>
-                <span className="opacity-50 mx-1">/</span>
-                <span className="opacity-75">0{slideCount}</span>
-              </div>
-            ) : config.dotStyle === 'bars' ? (
-              <div className="flex items-center gap-1.5 p-1 rounded-full bg-black/25 backdrop-blur-xs">
-                {activeSlides.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setCurrentSlideIndex(i)}
-                    aria-label={`Go to slide ${i + 1}`}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i === currentSlideIndex
-                        ? 'w-8 bg-white shadow-sm'
-                        : 'w-2 bg-white/40 hover:bg-white/70'
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 p-1.5 rounded-full bg-black/30 backdrop-blur-xs">
-                {activeSlides.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setCurrentSlideIndex(i)}
-                    aria-label={`Go to slide ${i + 1}`}
-                    className={`rounded-full transition-all duration-300 ${
-                      i === currentSlideIndex
-                        ? 'w-6 h-2 bg-white shadow-sm'
-                        : 'w-2 h-2 bg-white/50 hover:bg-white/80'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </section>
+
+      {/* Navigation Dots / Bars / Numbers (Slider Mode only - positioned cleanly below banner or inside) */}
+      {!isSingleMode && config.showDots && (
+        <div className={config.roundedCorners ? "flex items-center justify-center gap-2 pt-3 pb-1" : "absolute bottom-4 sm:bottom-6 inset-x-0 z-20 flex items-center justify-center gap-2"}>
+          {config.dotStyle === 'numbers' ? (
+            <div className="px-3 py-1 rounded-full bg-slate-900/60 backdrop-blur-md text-white font-mono text-xs font-bold border border-white/20 shadow-md">
+              <span>0{currentSlideIndex + 1}</span>
+              <span className="opacity-50 mx-1">/</span>
+              <span className="opacity-75">0{slideCount}</span>
+            </div>
+          ) : config.dotStyle === 'bars' ? (
+            <div className="flex items-center gap-1.5 p-1 rounded-full bg-slate-100 dark:bg-slate-800">
+              {activeSlides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setCurrentSlideIndex(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === currentSlideIndex
+                      ? 'w-8 bg-slate-800 dark:bg-white shadow-sm'
+                      : 'w-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
+                  }`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 py-1">
+              {activeSlides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setCurrentSlideIndex(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === currentSlideIndex
+                      ? 'w-2.5 h-2.5 bg-slate-700 dark:bg-white shadow-xs scale-110'
+                      : 'w-2 h-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

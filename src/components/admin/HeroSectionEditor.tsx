@@ -917,6 +917,7 @@ export const HeroSectionEditor: React.FC = () => {
                     onChange={(e) => saveConfig({ ...heroConfig, height: e.target.value as HeroHeight })}
                     className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold"
                   >
+                    <option value="aspect-banner">{isRtl ? 'بانر عريض متجاوب (16:5 - قياسي كالعينة)' : 'Widescreen Banner (16:5 ratio)'}</option>
                     <option value="small">{isRtl ? 'قصير (Small - ~400px)' : 'Small (~400px)'}</option>
                     <option value="medium">{isRtl ? 'متوسط (Medium - ~540px)' : 'Medium (~540px)'}</option>
                     <option value="large">{isRtl ? 'كبير (Large - ~660px)' : 'Large (~660px)'}</option>

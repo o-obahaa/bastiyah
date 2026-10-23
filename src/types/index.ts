@@ -182,7 +182,7 @@ export type StoreThemeColor = 'emerald' | 'indigo' | 'amber' | 'rose' | 'cyan' |
 export type StoreLayoutStyle = 'modern-split' | 'luxury-centered' | 'minimal-editorial' | 'vibrant-banner';
 
 export type HeroDisplayMode = 'single' | 'slider';
-export type HeroHeight = 'small' | 'medium' | 'large' | 'fullscreen' | 'custom';
+export type HeroHeight = 'small' | 'medium' | 'large' | 'fullscreen' | 'aspect-banner' | 'custom';
 export type HeroTransitionEffect = 'slide' | 'fade';
 export type HeroTextAlign = 'left' | 'center' | 'right';
 export type HeroTextPosition = 'top' | 'center' | 'bottom';
