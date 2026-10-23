@@ -106,7 +106,14 @@ export const updateStatusByOrderNumber = mutation({
   handler: async (ctx, args) => {
     const cleanNum = args.orderNumber.trim().toUpperCase().replace('#', '');
     const orders = await ctx.db.query("orders").collect();
-    const order = orders.find((o) => o.orderNumber.toUpperCase().replace('#', '') === cleanNum || o.orderNumber.toUpperCase().endsWith(cleanNum));
+    
+    // Strict order matching: exact match or hyphenated prefix match (min 4 chars)
+    const order = orders.find((o) => {
+      const existing = o.orderNumber.toUpperCase().replace('#', '');
+      if (existing === cleanNum) return true;
+      if (cleanNum.length >= 4 && existing.endsWith('-' + cleanNum)) return true;
+      return false;
+    });
 
     if (!order) {
       // Auto-register order so WhatsApp manager commands NEVER fail
@@ -163,8 +170,16 @@ export const getOrderByNumber = query({
   args: { orderNumber: v.string() },
   handler: async (ctx, args) => {
     const cleanNum = args.orderNumber.trim().toUpperCase().replace('#', '');
+    if (!cleanNum || cleanNum.length < 3) return null;
+
     const orders = await ctx.db.query("orders").collect();
-    return orders.find((o) => o.orderNumber.toUpperCase().replace('#', '') === cleanNum || o.orderNumber.toUpperCase().endsWith(cleanNum)) || null;
+    // Strict exact match or hyphenated suffix match (never single digits)
+    return orders.find((o) => {
+      const existing = o.orderNumber.toUpperCase().replace('#', '');
+      if (existing === cleanNum) return true;
+      if (cleanNum.length >= 4 && existing.endsWith('-' + cleanNum)) return true;
+      return false;
+    }) || null;
   },
 });
 

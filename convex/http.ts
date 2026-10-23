@@ -148,7 +148,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
-      const { text, quotedText } = await request.json();
+      const { text, quotedText, orderNumber: explicitOrderNumber } = await request.json();
       if (!text || typeof text !== "string") {
         return new Response(JSON.stringify({ reply: null }), {
           status: 200,
@@ -158,9 +158,10 @@ http.route({
 
       const raw = text.trim();
 
-      // Extract order number: prioritize order number found in quotedText, then raw text
-      let orderNumber: string | null = null;
-      if (quotedText) {
+      // Extract order number: prioritize explicit orderNumber mapped from stanzaId, then quotedText, then raw text
+      let orderNumber: string | null = explicitOrderNumber ? explicitOrderNumber.toUpperCase().replace('#', '') : null;
+
+      if (!orderNumber && quotedText) {
         const quotedMatch = quotedText.match(/#?([A-Za-z]{3,10}-[0-9]{4,6}|[0-9]{4,6})/i);
         if (quotedMatch) {
           orderNumber = quotedMatch[1].toUpperCase();
@@ -390,24 +391,36 @@ http.route({
         const order: any = await ctx.runQuery("orders:getOrderByNumber" as any, { orderNumber: targetOrderNumber });
         if (!order) {
           return new Response(
-            JSON.stringify({ reply: `⚠️ لم يتم العثور على طلب برقم #${targetOrderNumber}.` }),
+            JSON.stringify({ reply: `⚠️ لم يتم العثور على تفاصيل الطلب #${targetOrderNumber}. يرجى إرسال: تفاصيل [رقم الطلب]` }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
         }
 
-        const itemsList = order.items
-          .map((it: any, i: number) => `  ${i + 1}. *${it.productName}* × ${it.quantity}`)
-          .join("\n");
+        const itemsList = (order.items && order.items.length > 0)
+          ? order.items
+              .map((it: any, i: number) => `  ${i + 1}. *${it.productName}*\n     الكمية: ${it.quantity} × د.ع ${(it.price || 0).toLocaleString()}`)
+              .join("\n")
+          : "  • منتجات الطلب مسجلة بالمتجر";
+
+        const addressText = [order.customer?.state, order.customer?.city, order.customer?.address].filter(Boolean).join(" - ");
+
         const infoMsg =
-          `📋 *تفاصيل الطلب #${order.orderNumber}:*\n` +
+          `📋 *تفاصيل الطلب المستعلم عنه: #${order.orderNumber}*\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `👤 *الزبون:* ${order.customer.fullName} (${order.customer.phone})\n` +
-          `📍 *العنوان:* ${order.customer.city} - ${order.customer.address}\n\n` +
-          `📦 *المنتجات:*\n${itemsList}\n\n` +
-          `💵 *الإجمالي:* د.ع ${order.total.toLocaleString()}\n` +
-          `📊 *الحالة:* ${order.status}\n` +
+          `👤 *اسم الزبون:* *${order.customer?.fullName || "عميل المتجر"}*\n` +
+          `📞 *رقم الهاتف:* ${order.customer?.phone || "غير مسجل"}\n` +
+          `📍 *عنوان التوصيل:* ${addressText || "العراق"}\n\n` +
+          `📦 *المنتجات المطلوبة:*\n${itemsList}\n\n` +
+          `💵 *المبلغ المطلوب تحصيله:* *د.ع ${(order.total || 0).toLocaleString()}*\n` +
+          `💳 *طريقة الدفع:* ${order.paymentMethod || "الدفع عند الاستلام"}\n` +
+          `📊 *حالة الطلب الحالية:* *${order.status}*\n` +
+          (order.trackingNumber ? `🚚 *كود التتبع:* \`${order.trackingNumber}\`\n` : "") +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `💡 خيارات سريعة: رد برقم الخيار:\n1️⃣ تأكيد | 2️⃣ شحن | 3️⃣ تم التوصيل | 4️⃣ إلغاء`;
+          `⚡ *خيارات التحكم السريع بهذا الطلب #${order.orderNumber}:*\n` +
+          `• 1️⃣ تأكيد وقبول الطلب (أرسل 1)\n` +
+          `• 2️⃣ شحن الطلب للمندوب (أرسل 2)\n` +
+          `• 3️⃣ تم التوصيل واستلام المبلغ (أرسل 3)\n` +
+          `• 4️⃣ إلغاء الطلب (أرسل 4)`;
         return new Response(JSON.stringify({ reply: infoMsg }), {
           status: 200,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },

@@ -29,6 +29,9 @@ let currentQrDataUrl = null;
 let connectionStatus = 'DISCONNECTED'; // 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED'
 let connectedPhone = null;
 
+// Map sent notification messageId -> orderNumber for 100% accurate reply tracking
+const sentOrderMessages = new Map();
+
 // Ensure auth directory exists
 if (!fs.existsSync(AUTH_DIR)) {
   fs.mkdirSync(AUTH_DIR, { recursive: true });
@@ -181,6 +184,8 @@ async function connectToWhatsApp() {
 
       const senderJid = m.key.remoteJid;
       const incomingText = m.message.conversation || m.message.extendedTextMessage?.text || '';
+      const stanzaId = m.message.extendedTextMessage?.contextInfo?.stanzaId;
+      const mappedOrderNumber = stanzaId ? sentOrderMessages.get(stanzaId) : undefined;
       const quotedText =
         m.message.extendedTextMessage?.contextInfo?.quotedMessage?.conversation ||
         m.message.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text ||
@@ -188,7 +193,7 @@ async function connectToWhatsApp() {
 
       if (!incomingText.trim()) return;
 
-      console.log(`[Bastiyah Gateway] 💬 Incoming message from ${senderJid}: "${incomingText}"`);
+      console.log(`[Bastiyah Gateway] 💬 Incoming message from ${senderJid}: "${incomingText}" (mappedOrder: ${mappedOrderNumber || 'none'})`);
 
       // Forward to Convex WhatsApp command handler
       const res = await fetch(`${CONVEX_SITE_URL}/whatsapp-command`, {
@@ -197,6 +202,7 @@ async function connectToWhatsApp() {
         body: JSON.stringify({
           text: incomingText,
           quotedText,
+          orderNumber: mappedOrderNumber,
           senderPhone: senderJid ? senderJid.replace('@s.whatsapp.net', '') : '',
         }),
       });
@@ -389,6 +395,12 @@ app.post('/send-message', async (req, res) => {
     const jid = `${cleanPhone}@s.whatsapp.net`;
 
     const sent = await sock.sendMessage(jid, { text: message });
+
+    // Map WhatsApp message ID to orderNumber for 100% exact reply matching
+    const orderMatch = message.match(/#([A-Za-z0-9]+-[0-9]+|[0-9]{4,6})/);
+    if (orderMatch && sent?.key?.id) {
+      sentOrderMessages.set(sent.key.id, orderMatch[1].toUpperCase());
+    }
 
     console.log(`[Bastiyah Gateway] ✅ Message dispatched to manager [${cleanPhone}] via WhatsApp! MsgId: ${sent?.key?.id}`);
 
