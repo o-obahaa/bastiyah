@@ -171,24 +171,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Price and Cart button footer */}
-        <div className="pt-2.5 mt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className={`pt-2.5 mt-2.5 border-t border-slate-100 ${
+          isCompact 
+            ? 'flex flex-col gap-2' 
+            : 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-2.5'
+        }`}>
+          {/* Price Container */}
           <div className="flex flex-col min-w-0">
-            {/* Price and Currency together - NEVER wrapped or broken */}
-            <div className="flex items-baseline gap-1 whitespace-nowrap">
-              <span className={`${isCompact ? 'text-base sm:text-lg' : isLargeOrSpacious ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'} font-black text-slate-950 font-brand tracking-tight`}>
-                {product.price.toLocaleString()}
-              </span>
-              <span className={`${isCompact ? 'text-[10px] sm:text-xs' : 'text-xs'} font-bold text-slate-600`}>
-                {activeStore.settings.currency || 'د.ع'}
-              </span>
-            </div>
+            <div className={`flex items-baseline ${isCompact ? 'justify-between' : 'gap-1.5'} whitespace-nowrap`}>
+              <div className="flex items-baseline gap-1">
+                <span className={`${
+                  isCompact ? 'text-base sm:text-lg' : isLargeOrSpacious ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
+                } font-black text-slate-950 font-brand tracking-tight`}>
+                  {product.price.toLocaleString()}
+                </span>
+                <span className={`${isCompact ? 'text-xs' : 'text-xs sm:text-sm'} font-bold text-slate-600`}>
+                  {activeStore.settings.currency || 'د.ع'}
+                </span>
+              </div>
 
-            {/* Struck-through original price (if discounted) */}
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-[10px] sm:text-[11px] text-slate-400 line-through font-medium whitespace-nowrap block">
-                {product.originalPrice.toLocaleString()} {activeStore.settings.currency || 'د.ع'}
-              </span>
-            )}
+              {/* Struck-through original price (if discounted) */}
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className={`${isCompact ? 'text-[11px]' : 'text-xs ms-1'} text-slate-400 line-through font-medium whitespace-nowrap`}>
+                  {product.originalPrice.toLocaleString()} {activeStore.settings.currency || 'د.ع'}
+                </span>
+              )}
+            </div>
 
             {/* Stock indicator: only show if out of stock or low stock (Available note removed) */}
             {isOutOfStock ? (
@@ -212,10 +220,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             disabled={isOutOfStock}
             className={`${
               isCompact 
-                ? 'px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs' 
+                ? 'w-full py-2 px-3 text-xs' 
                 : isLargeOrSpacious 
-                ? 'px-4 py-2.5 sm:px-5 sm:py-3 text-sm' 
-                : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'
+                ? 'w-full sm:w-auto px-4 py-2.5 sm:px-5 sm:py-3 text-sm' 
+                : 'w-full sm:w-auto px-3.5 py-2 text-xs sm:text-sm'
             } rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0 whitespace-nowrap ${
               isOutOfStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
