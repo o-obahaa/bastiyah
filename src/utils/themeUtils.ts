@@ -130,6 +130,23 @@ export const THEME_CONFIGS: Record<StoreThemeColor, ThemeClasses> = {
   },
 };
 
-export const getThemeClasses = (color: StoreThemeColor = 'emerald'): ThemeClasses => {
-  return THEME_CONFIGS[color] || THEME_CONFIGS.emerald;
+export const getThemeClasses = (color: StoreThemeColor = 'emerald', customHex?: string): ThemeClasses => {
+  const base = THEME_CONFIGS[color] || THEME_CONFIGS.emerald;
+  if (customHex && /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(customHex.trim())) {
+    const cleanHex = customHex.trim().toLowerCase();
+    // Check if it matches any preset
+    const matchedKey = (Object.keys(THEME_CONFIGS) as StoreThemeColor[]).find(
+      (k) => THEME_CONFIGS[k].hex.toLowerCase() === cleanHex
+    );
+    if (matchedKey) {
+      return THEME_CONFIGS[matchedKey];
+    }
+    return {
+      ...base,
+      hex: customHex.trim(),
+      name: customHex.trim(),
+      nameAr: `لون مخصص (${customHex.trim()})`,
+    };
+  }
+  return base;
 };

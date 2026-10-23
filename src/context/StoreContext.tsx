@@ -998,7 +998,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
-  const theme = getThemeClasses(activeStore.design.themeColor);
+  const theme = getThemeClasses(activeStore.design.themeColor, activeStore.design.customThemeColor);
 
   // Per-store carts stored by store ID
   const [cartsByStore, setCartsByStore] = useState<Record<string, CartItem[]>>(() => {

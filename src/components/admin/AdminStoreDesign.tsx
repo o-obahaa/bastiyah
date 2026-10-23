@@ -22,7 +22,8 @@ import {
   Upload,
   X,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Pipette
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle } from '../../types';
@@ -35,6 +36,19 @@ import { TrustBadgesEditor } from './TrustBadgesEditor';
 import { StoreHeroSlider } from '../store/StoreHeroSlider';
 
 const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
+
+const CURATED_PALETTES = [
+  { hex: '#10B981', nameAr: 'أخضر زمردي', nameEn: 'Emerald Green' },
+  { hex: '#2563EB', nameAr: 'أزرق ملكي', nameEn: 'Royal Blue' },
+  { hex: '#6366F1', nameAr: 'نيلي عصري', nameEn: 'Modern Indigo' },
+  { hex: '#8B5CF6', nameAr: 'بنفسجي فاخر', nameEn: 'Luxury Violet' },
+  { hex: '#E11D48', nameAr: 'وردي ياقوتي', nameEn: 'Crimson Rose' },
+  { hex: '#F59E0B', nameAr: 'ذهبي عنبري', nameEn: 'Amber Gold' },
+  { hex: '#06B6D4', nameAr: 'سماوي بحري', nameEn: 'Ocean Cyan' },
+  { hex: '#0D9488', nameAr: 'أخضر بحري', nameEn: 'Teal Marine' },
+  { hex: '#F97316', nameAr: 'برتقالي مشرق', nameEn: 'Sunset Orange' },
+  { hex: '#18181B', nameAr: 'أسود فاحم', nameEn: 'Midnight Black' },
+];
 
 export const AdminStoreDesign: React.FC = () => {
   const {
@@ -79,6 +93,55 @@ export const AdminStoreDesign: React.FC = () => {
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+
+  // Custom Theme Color State & Handlers
+  const currentHex = activeStore.design.customThemeColor || theme.hex || '#10B981';
+  const [customColorInput, setCustomColorInput] = useState<string>(currentHex);
+  const [copiedHex, setCopiedHex] = useState(false);
+  const colorPickerRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const hex = activeStore.design.customThemeColor || theme.hex || '#10B981';
+    setCustomColorInput(hex);
+  }, [activeStore.design.customThemeColor, theme.hex]);
+
+  const handleHexInputChange = (rawVal: string) => {
+    setCustomColorInput(rawVal);
+    let val = rawVal.trim();
+    if (!val.startsWith('#') && /^[0-9A-Fa-f]{3,6}$/.test(val)) {
+      val = '#' + val;
+    }
+    if (/^#[0-9A-Fa-f]{6}$/.test(val) || /^#[0-9A-Fa-f]{3}$/.test(val)) {
+      const matchedKey = (Object.keys(THEME_CONFIGS) as StoreThemeColor[]).find(
+        (k) => THEME_CONFIGS[k].hex.toLowerCase() === val.toLowerCase()
+      );
+      updateStoreDesign({
+        customThemeColor: val,
+        themeColor: matchedKey || activeStore.design.themeColor,
+      });
+    }
+  };
+
+  const handleColorPick = (newHex: string) => {
+    setCustomColorInput(newHex);
+    const matchedKey = (Object.keys(THEME_CONFIGS) as StoreThemeColor[]).find(
+      (k) => THEME_CONFIGS[k].hex.toLowerCase() === newHex.toLowerCase()
+    );
+    updateStoreDesign({
+      customThemeColor: newHex,
+      themeColor: matchedKey || activeStore.design.themeColor,
+    });
+  };
+
+  const handleCopyHex = () => {
+    navigator.clipboard.writeText(customColorInput);
+    setCopiedHex(true);
+    addToast(
+      language === 'ar' ? `تم نسخ كود اللون: ${customColorInput}` : `Color code copied: ${customColorInput}`,
+      'success'
+    );
+    setTimeout(() => setCopiedHex(false), 2000);
+  };
 
   useEffect(() => {
     setSlug(activeStore.slug);
@@ -596,46 +659,195 @@ export const AdminStoreDesign: React.FC = () => {
 
         {/* Right Column: Theme Color, Logo Emoji/Image, and Header Style */}
         <div className="lg:col-span-5 space-y-8">
-          {/* Theme Color Picker */}
+          {/* Brand Theme Color Poster & Code Picker */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
-            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-              <Palette className="w-5 h-5 text-amber-600" />
-              <div>
-                <h3 className="font-bold text-base text-slate-900">
-                  {language === 'ar' ? 'ألوان هوية المتجر (Theme Color)' : 'Brand Theme Palette'}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  {language === 'ar' ? 'اللون المميز للأزرار والشارات في متجرك' : 'Accent theme color for CTA & badges'}
-                </p>
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  <Palette className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">
+                    {language === 'ar' ? 'ألوان هوية المتجر (Theme Color)' : 'Brand Theme Palette'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {language === 'ar' ? 'بوستر لون الهوية وكود اللون المعتمد' : 'Brand color poster & custom color code'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pipette trigger button */}
+              <button
+                type="button"
+                onClick={() => colorPickerRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                title={language === 'ar' ? 'اختر لون من الطيف' : 'Pick color spectrum'}
+              >
+                <Pipette className="w-3.5 h-3.5 text-slate-600" />
+                <span>{language === 'ar' ? 'القطارة' : 'Picker'}</span>
+              </button>
+            </div>
+
+            {/* Hidden native color input */}
+            <input
+              ref={colorPickerRef}
+              type="color"
+              value={customColorInput.startsWith('#') && (customColorInput.length === 7 || customColorInput.length === 4) ? customColorInput : '#10B981'}
+              onChange={(e) => handleColorPick(e.target.value)}
+              className="sr-only"
+              aria-label="Color spectrum picker"
+            />
+
+            {/* Visual Color Poster Card */}
+            <div
+              className="relative overflow-hidden rounded-2xl p-5 text-white shadow-md transition-all duration-300 group cursor-pointer border border-black/10 select-none hover:shadow-lg"
+              style={{
+                backgroundColor: currentHex,
+                backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.25) 100%)',
+              }}
+              onClick={() => colorPickerRef.current?.click()}
+              title={language === 'ar' ? 'اضغط لتغيير اللون عبر منتقي الألوان' : 'Click to change color via color spectrum'}
+            >
+              {/* Subtle background decorative shapes */}
+              <div className="absolute -top-12 -left-12 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
+              <div className="absolute -bottom-12 -right-12 w-40 h-40 rounded-full bg-black/10 blur-xl pointer-events-none" />
+
+              <div className="relative z-10 space-y-4">
+                {/* Poster Header Tag */}
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/25 backdrop-blur-md text-white/95 border border-white/20">
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    {language === 'ar' ? 'بوستر الهوية البصرية' : 'Brand Identity Poster'}
+                  </span>
+                  <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-md text-white group-hover:bg-white/30 transition-colors">
+                    {language === 'ar' ? 'انقر لتغيير الدرجة' : 'Click to edit'}
+                  </span>
+                </div>
+
+                {/* Poster Center: Big Hex Code & Label */}
+                <div className="py-2">
+                  <div className="text-3xl sm:text-4xl font-black font-mono tracking-wider drop-shadow-sm select-all">
+                    {customColorInput.toUpperCase()}
+                  </div>
+                  <p className="text-xs text-white/90 mt-1 font-medium drop-shadow-xs">
+                    {language === 'ar'
+                      ? (CURATED_PALETTES.find((p) => p.hex.toLowerCase() === customColorInput.toLowerCase())?.nameAr || 'درجة لون مخصصة لمتجرك')
+                      : (CURATED_PALETTES.find((p) => p.hex.toLowerCase() === customColorInput.toLowerCase())?.nameEn || 'Custom brand accent color')}
+                  </p>
+                </div>
+
+                {/* Poster Live Components Preview Strip */}
+                <div className="pt-3 border-t border-white/20 grid grid-cols-2 gap-2">
+                  <div className="bg-white text-slate-900 rounded-xl px-3 py-2 text-center text-xs font-bold shadow-xs flex items-center justify-center gap-1.5">
+                    <span>{language === 'ar' ? 'زر الشراء (CTA)' : 'Primary Button'}</span>
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: currentHex }} />
+                  </div>
+                  <div className="bg-black/25 backdrop-blur-md text-white rounded-xl px-3 py-2 text-center text-xs font-medium border border-white/20 flex items-center justify-center gap-1.5">
+                    <span>{language === 'ar' ? 'شارة عرض 20%-' : 'Badge -20%'}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {(Object.keys(THEME_CONFIGS) as StoreThemeColor[]).map((cKey) => {
-                const conf = THEME_CONFIGS[cKey];
-                const isSelected = activeStore.design.themeColor === cKey;
-                return (
-                  <button
-                    key={cKey}
-                    onClick={() => updateStoreDesign({ themeColor: cKey })}
-                    className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all ${
-                      isSelected
-                        ? 'border-slate-900 bg-slate-50 shadow-xs ring-2 ring-slate-900/10'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <span
-                      className="w-6 h-6 rounded-full shadow-xs shrink-0 flex items-center justify-center text-white"
-                      style={{ backgroundColor: conf.hex }}
+            {/* Color Code Input Field & Action Buttons */}
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-700">
+                {language === 'ar' ? 'كود اللون السداسي (Color Hex Code)' : 'Color Hex Code'}
+              </label>
+
+              <div className="flex items-center gap-2">
+                {/* Visual Swatch Button */}
+                <button
+                  type="button"
+                  onClick={() => colorPickerRef.current?.click()}
+                  className="w-11 h-11 rounded-xl shrink-0 border-2 border-slate-200 shadow-xs flex items-center justify-center transition-transform hover:scale-105 relative group overflow-hidden cursor-pointer"
+                  style={{ backgroundColor: currentHex }}
+                  title={language === 'ar' ? 'فتح لوحة اختيار اللون' : 'Open color picker'}
+                >
+                  <Pipette className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+                </button>
+
+                {/* Hex Text Input */}
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-slate-400 font-mono font-bold">
+                    #
+                  </div>
+                  <input
+                    type="text"
+                    value={customColorInput.replace(/^#/, '')}
+                    onChange={(e) => handleHexInputChange(e.target.value)}
+                    placeholder="10B981"
+                    maxLength={7}
+                    className="w-full ps-8 pe-3 py-2.5 rounded-xl border border-slate-200 font-mono text-sm font-bold text-slate-800 uppercase focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 tracking-wider transition-all"
+                    dir="ltr"
+                  />
+                </div>
+
+                {/* Copy Button */}
+                <button
+                  type="button"
+                  onClick={handleCopyHex}
+                  className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shrink-0 text-xs font-semibold cursor-pointer"
+                  title={language === 'ar' ? 'نسخ كود اللون' : 'Copy color code'}
+                >
+                  {copiedHex ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span className="text-emerald-600">{language === 'ar' ? 'تم النسخ' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-slate-500" />
+                      <span>{language === 'ar' ? 'نسخ' : 'Copy'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p className="text-[11px] text-slate-400 leading-normal">
+                {language === 'ar'
+                  ? 'يمكنك كتابة أو لصق كود لون علامتك مباشرةً (من Figma أو Canva)، أو الضغط على البوستر لاختيار درجة مخصصة.'
+                  : 'Type or paste any brand color code directly from Figma/Canva, or click the poster to pick.'}
+              </p>
+            </div>
+
+            {/* Quick Palettes Presets */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span>{language === 'ar' ? 'درجات جاهزة شائعة:' : 'Curated Palettes:'}</span>
+                <span className="text-[11px] text-slate-400">
+                  {language === 'ar' ? 'نقرة واحدة للتطبيق' : '1-click apply'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-5 gap-2">
+                {CURATED_PALETTES.map((palette) => {
+                  const isSelected = currentHex.toLowerCase() === palette.hex.toLowerCase();
+                  return (
+                    <button
+                      key={palette.hex}
+                      type="button"
+                      onClick={() => handleColorPick(palette.hex)}
+                      className={`group relative flex flex-col items-center p-2 rounded-xl border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-slate-900 bg-slate-50 ring-2 ring-slate-900/10 shadow-xs'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
+                      }`}
+                      title={`${language === 'ar' ? palette.nameAr : palette.nameEn} (${palette.hex})`}
                     >
-                      {isSelected && <Check className="w-3.5 h-3.5" />}
-                    </span>
-                    <span className="font-bold text-xs text-slate-800">
-                      {language === 'ar' ? conf.nameAr : conf.name}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span
+                        className="w-7 h-7 rounded-full shadow-xs flex items-center justify-center text-white transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: palette.hex }}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 drop-shadow" />}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500 mt-1 truncate max-w-full">
+                        {palette.hex}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

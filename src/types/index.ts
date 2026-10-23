@@ -290,6 +290,7 @@ export interface TrustBadge {
 
 export interface StoreDesign {
   themeColor: StoreThemeColor;
+  customThemeColor?: string;
   layoutStyle: StoreLayoutStyle;
   logoEmoji: string;
   headerStyle: 'light' | 'dark';
