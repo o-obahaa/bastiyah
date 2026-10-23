@@ -1,3 +1,5 @@
+import { Order, HostedStore } from '../types';
+
 /**
  * Utility functions for Order Notifications, Audio Chimes, and Browser Web Notifications.
  */
@@ -237,5 +239,112 @@ export const generateWhatsAppAlertUrl = (
   );
 
   return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${text}`;
+};
+
+/**
+ * Formats a comprehensive Arabic WhatsApp order notification for the store manager.
+ */
+export const formatOrderWhatsAppMessage = (
+  order: Order,
+  storeName: string,
+  currency: string = 'د.ع'
+): string => {
+  const itemsText = order.items
+    .map((item, idx) => {
+      const variantDetails = [
+        item.selectedColor ? `اللون: ${item.selectedColor}` : '',
+        item.selectedSize ? `المقاس: ${item.selectedSize}` : '',
+      ]
+        .filter(Boolean)
+        .join(' | ');
+      return `  ${idx + 1}. *${item.productName}*\n     الكمية: ${item.quantity} × ${currency}${item.price.toLocaleString()} ${variantDetails ? `(${variantDetails})` : ''}`;
+    })
+    .join('\n');
+
+  const customer = order.customer;
+  const addressText = [customer.state, customer.city, customer.address].filter(Boolean).join(' - ');
+
+  return (
+    `🛍️ *طلب جديد وارد إلى متجرك:* ${storeName}\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `📋 *رقم الطلب:* #${order.orderNumber}\n` +
+    `📅 *التاريخ:* ${new Date(order.date).toLocaleString('ar-IQ')}\n\n` +
+    `👤 *معلومات الزبون:*\n` +
+    `• الاسم: *${customer.fullName}*\n` +
+    `• رقم الهاتف: ${customer.phone}\n` +
+    `• العنوان: ${addressText || 'لم يُحدد'}\n\n` +
+    `📦 *المنتجات المطلوبة:*\n` +
+    `${itemsText}\n\n` +
+    `💰 *تفاصيل الحساب:*\n` +
+    `• المجموع الفرعي: ${currency}${order.subtotal.toLocaleString()}\n` +
+    (order.discount > 0 ? `• الخصم: -${currency}${order.discount.toLocaleString()}\n` : '') +
+    `• رسوم التوصيل: ${order.shipping > 0 ? `${currency}${order.shipping.toLocaleString()}` : 'مجاني'}\n` +
+    `💵 *المبلغ الإجمالي المطلوب تحصيله:* *${currency}${order.total.toLocaleString()}*\n\n` +
+    `💳 *طريقة الدفع:* ${order.paymentMethod === 'Cash on Delivery' ? 'الدفع نقداً عند الاستلام (COD)' : order.paymentMethod}\n` +
+    (order.courier ? `🚚 *شركة التوصيل:* ${order.courier}\n` : '') +
+    (order.trackingNumber ? `📍 *رقم التتبع:* \`${order.trackingNumber}\`\n` : '') +
+    (order.notes ? `📝 *ملاحظات الزبون:* ${order.notes}\n` : '') +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `✅ يرجى تجهيز الطلب وإرساله لشركة الشحن.`
+  );
+};
+
+/**
+ * Dispatches an automated WhatsApp notification to the store manager
+ * via the live Render WhatsApp Gateway and/or direct API.
+ */
+export const dispatchOrderWhatsAppToManager = async (
+  order: Order,
+  store: HostedStore,
+  convexClient?: any
+): Promise<{ success: boolean; phone: string; message: string }> => {
+  const storeName = store.nameAr || store.name;
+  const currency = store.settings.currency || 'د.ع';
+  const rawPhone = store.settings.notificationSettings?.whatsappAlertPhone || store.ownerPhone || '9647714834776';
+
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
+  if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+  if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+
+  const message = formatOrderWhatsAppMessage(order, storeName, currency);
+
+  // 1. Dispatch through WhatsApp Gateway (Render)
+  const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+  try {
+    fetch(`${gatewayUrl}/send-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: cleanPhone,
+        message,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`[WhatsApp Gateway] ✅ Order alert sent to manager (+${cleanPhone}):`, data);
+        }
+      })
+      .catch((err) => {
+        console.warn('[WhatsApp Gateway] Offline note:', err);
+      });
+  } catch (e) {
+    // silently catch
+  }
+
+  // 2. Dispatch via Convex action if configured
+  if (convexClient) {
+    try {
+      convexClient
+        .action('whatsapp:sendWhatsAppMessage' as any, {
+          phone: cleanPhone,
+          message,
+        })
+        .catch(() => {});
+    } catch (e) {}
+  }
+
+  return { success: true, phone: cleanPhone, message };
 };
 

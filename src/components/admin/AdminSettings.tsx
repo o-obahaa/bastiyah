@@ -550,12 +550,31 @@ export const AdminSettings: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const targetPhone = activeStore.settings.notificationSettings?.whatsappAlertPhone || activeStore.ownerPhone || '9647701234567';
+                      const targetPhone = activeStore.settings.notificationSettings?.whatsappAlertPhone || activeStore.ownerPhone || '9647714834776';
+                      let cleanPhone = targetPhone.replace(/\D/g, '');
+                      if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
+                      if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+                      if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+
+                      const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+                      fetch(`${gatewayUrl}/send-message`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          phone: cleanPhone,
+                          message: `🛍️ *رسالة تجريبية لمدير متجر ${activeStore.nameAr || activeStore.name}*\n\n✅ تم ربط وتعيين رقم واتساب مدير المتجر (+${cleanPhone}) بنجاح!\nعندما يقوم أي زبون بطلب جديد ستصلك رسالة فورية هنا بكافة تفاصيل الطلب (المنتجات، الكميات، بيانات العميل وعنوانه، ورقم التتبع).`
+                        })
+                      }).then((res) => {
+                        if (res.ok) {
+                          addToast(language === 'ar' ? `✅ تم إرسال رسالة تجريبية بنجاح إلى واتساب المدير (+${cleanPhone})` : `Test message dispatched to (+${cleanPhone})`, 'success');
+                        }
+                      }).catch(() => {});
+
                       const testUrl = generateWhatsAppAlertUrl(
-                        targetPhone,
-                        'TEST-88120',
-                        'عميل تجريبي',
-                        '+964 770 000 0000',
+                        cleanPhone,
+                        'PAN-88120',
+                        'أحمد علي (زبون تجريبي)',
+                        '+964 771 000 0000',
                         `${activeStore.settings.currency}125,000`,
                         2,
                         activeStore.nameAr || activeStore.name

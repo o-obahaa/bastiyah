@@ -45,7 +45,9 @@ import {
   sendBrowserNotification,
   requestBrowserNotificationPermission,
   showServiceWorkerNotification,
-  generateWhatsAppAlertUrl
+  generateWhatsAppAlertUrl,
+  dispatchOrderWhatsAppToManager,
+  formatOrderWhatsAppMessage
 } from '../utils/notificationUtils';
 import { convexClient, isConvexConfigured } from '../convexClient';
 import { api } from '../convexApi';
@@ -403,11 +405,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               ...c,
               avatar: (!c.avatar || c.avatar.includes('unsplash.com')) ? ANONYMOUS_USER_AVATAR : c.avatar,
             }));
+            const defaultOwnerPhone = s.slug === 'panda' ? '+964 771 483 4776' : (initMatch?.ownerPhone || '+964 770 123 4567');
+            const resolvedOwnerPhone = needsIraqiPhone ? defaultOwnerPhone : s.ownerPhone;
+            const resolvedWhatsappPhone = s.settings?.notificationSettings?.whatsappAlertPhone || (s.slug === 'panda' ? '9647714834776' : resolvedOwnerPhone.replace(/\D/g, ''));
             return {
               ...s,
               customers: updatedCustomers,
               products: updatedProducts,
-              ownerPhone: needsIraqiPhone ? (initMatch?.ownerPhone || '+964 770 123 4567') : s.ownerPhone,
+              ownerPhone: resolvedOwnerPhone,
               design: {
                 ...s.design,
                 heroConfig: s.design?.heroConfig || initMatch?.design?.heroConfig,
@@ -418,6 +423,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 freeShippingThreshold: needsIraqiCurrency ? 50000 : (s.settings?.freeShippingThreshold || 50000),
                 standardShippingFee: needsIraqiCurrency ? 5000 : (s.settings?.standardShippingFee || 5000),
                 taxRate: 0,
+                notificationSettings: {
+                  soundEnabled: s.settings?.notificationSettings?.soundEnabled ?? true,
+                  browserNotificationsEnabled: s.settings?.notificationSettings?.browserNotificationsEnabled ?? true,
+                  notifyOnNewOrder: s.settings?.notificationSettings?.notifyOnNewOrder ?? true,
+                  notifyOnLowStock: s.settings?.notificationSettings?.notifyOnLowStock ?? true,
+                  whatsappAlertPhone: resolvedWhatsappPhone,
+                },
               },
             };
           });
@@ -1967,6 +1979,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setLastPlacedOrder(newOrder);
 
+    // 📲 Automated WhatsApp notification to the store manager with full order details
+    dispatchOrderWhatsAppToManager(newOrder, activeStore, convexClient)
+      .then(({ phone }) => {
+        addToast(
+          language === 'ar'
+            ? `📲 تم إرسال تفاصيل الطلب #${orderNumber} إلى واتساب مدير المتجر (+${phone})`
+            : `📲 Order #${orderNumber} details dispatched to Store Manager WhatsApp (+${phone})`,
+          'info'
+        );
+      })
+      .catch((err) => {
+        console.warn('WhatsApp manager alert dispatch note:', err);
+      });
+
     // Auto-register and persist customer profile via phone number if not logged in
     if (!currentCustomer && shippingInfo.phone) {
       const autoCustomer: CustomerUser = {
@@ -2090,20 +2116,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateNotificationSettings = (settingsUpdates: Partial<NotificationSettings>) => {
-    mutateActiveStore((store) => ({
-      ...store,
-      settings: {
-        ...store.settings,
-        notificationSettings: {
-          soundEnabled: true,
-          browserNotificationsEnabled: false,
-          notifyOnNewOrder: true,
-          notifyOnLowStock: true,
-          ...store.settings.notificationSettings,
-          ...settingsUpdates,
+    mutateActiveStore((store) => {
+      const updatedPhone = settingsUpdates.whatsappAlertPhone ? settingsUpdates.whatsappAlertPhone.trim() : store.ownerPhone;
+      return {
+        ...store,
+        ownerPhone: updatedPhone,
+        settings: {
+          ...store.settings,
+          notificationSettings: {
+            soundEnabled: true,
+            browserNotificationsEnabled: false,
+            notifyOnNewOrder: true,
+            notifyOnLowStock: true,
+            ...store.settings.notificationSettings,
+            ...settingsUpdates,
+          },
         },
-      },
-    }));
+      };
+    });
     addToast(
       language === 'ar' ? 'تم تحديث إعدادات التنبيهات' : 'Notification settings updated',
       'success'

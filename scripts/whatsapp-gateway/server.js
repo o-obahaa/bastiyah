@@ -237,7 +237,49 @@ app.post('/send-otp', async (req, res) => {
   }
 });
 
-// 4. Logout / Reset Endpoint
+// 4. Send Custom Message / Order Notification endpoint
+app.post('/send-message', async (req, res) => {
+  try {
+    const { phone, message } = req.body;
+
+    if (!phone || !message) {
+      return res.status(400).json({ success: false, error: 'phone and message are required' });
+    }
+
+    if (connectionStatus !== 'CONNECTED' || !sock) {
+      return res.status(503).json({
+        success: false,
+        error: 'WhatsApp gateway is not connected. Please scan QR at gateway URL',
+      });
+    }
+
+    // Clean phone number
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
+    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+    if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+
+    const jid = `${cleanPhone}@s.whatsapp.net`;
+
+    const sent = await sock.sendMessage(jid, { text: message });
+
+    console.log(`[Bastiyah Gateway] ✅ Message dispatched to manager [${cleanPhone}] via WhatsApp! MsgId: ${sent?.key?.id}`);
+
+    return res.json({
+      success: true,
+      messageId: sent?.key?.id,
+      recipient: cleanPhone,
+    });
+  } catch (err) {
+    console.error('[Bastiyah Gateway] Error sending WhatsApp message:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to dispatch WhatsApp message',
+    });
+  }
+});
+
+// 5. Logout / Reset Endpoint
 app.post('/logout', async (req, res) => {
   try {
     if (sock) {

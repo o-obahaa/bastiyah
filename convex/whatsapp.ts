@@ -126,6 +126,56 @@ export const sendWhatsAppOtp = action({
   },
 });
 
+/**
+ * Sends a generic WhatsApp notification message (e.g. new order alert to store manager).
+ */
+export const sendWhatsAppMessage = action({
+  args: {
+    phone: v.string(),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+    let recipient = args.phone.replace(/\D/g, "");
+    if (recipient.startsWith("00")) recipient = recipient.slice(2);
+    if (recipient.startsWith("0")) recipient = recipient.slice(1);
+    if (!recipient.startsWith("964")) recipient = `964${recipient}`;
+
+    if (!phoneNumberId || !accessToken) {
+      console.log(`[WhatsApp Simulation] Order alert to ${recipient}:\n${args.message}`);
+      return { success: true, mode: "simulation" as const };
+    }
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: recipient,
+      type: "text",
+      text: {
+        preview_url: false,
+        body: args.message,
+      },
+    };
+
+    try {
+      const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      return { success: res.ok, data };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  },
+});
+
 export const getPhoneInfo = action({
   args: {},
   handler: async () => {
