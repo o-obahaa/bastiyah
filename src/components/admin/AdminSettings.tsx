@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { 
   Plus, 
@@ -27,9 +27,13 @@ import {
   MessageCircle,
   ExternalLink,
   Laptop,
-  CheckCircle
+  CheckCircle,
+  Loader2,
+  RefreshCw,
+  QrCode,
+  Radio,
+  AlertCircle
 } from 'lucide-react';
-import { generateWhatsAppAlertUrl } from '../../utils/notificationUtils';
 
 export const AdminSettings: React.FC = () => {
   const { 
@@ -75,6 +79,87 @@ export const AdminSettings: React.FC = () => {
   const [ownerLoginPhone, setOwnerLoginPhone] = useState(activeStore.ownerPhone || '+964 770 123 4567');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // WhatsApp Gateway states
+  const [isSendingWhatsAppTest, setIsSendingWhatsAppTest] = useState(false);
+  const [isCheckingGateway, setIsCheckingGateway] = useState(false);
+  const [gatewayStatus, setGatewayStatus] = useState<{
+    connected: boolean;
+    status: string;
+    phone?: string | null;
+    hasQr?: boolean;
+  } | null>(null);
+
+  const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+
+  const checkGatewayStatus = async () => {
+    setIsCheckingGateway(true);
+    try {
+      const res = await fetch(`${gatewayUrl}/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setGatewayStatus(data);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch gateway status:', err);
+    } finally {
+      setIsCheckingGateway(false);
+    }
+  };
+
+  useEffect(() => {
+    checkGatewayStatus();
+  }, []);
+
+  const handleSendAutomaticWhatsAppTest = async () => {
+    const targetPhone = activeStore.settings.notificationSettings?.whatsappAlertPhone || activeStore.ownerPhone || '9647714834776';
+    let cleanPhone = targetPhone.replace(/\D/g, '');
+    if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
+    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+    if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+
+    if (!cleanPhone || cleanPhone.length < 9) {
+      addToast(language === 'ar' ? 'يرجى إدخال رقم هاتف واتساب صالح' : 'Please enter a valid WhatsApp phone number', 'error');
+      return;
+    }
+
+    setIsSendingWhatsAppTest(true);
+    try {
+      const storeTitle = activeStore.nameAr || activeStore.name;
+      const res = await fetch(`${gatewayUrl}/send-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: cleanPhone,
+          message: `🛍️ *فحص تلقائي لإشعارات متجر ${storeTitle}*\n\n✅ يعمل نظام الإشعارات التلقائية بنجاح عبر خادم Render المستضاف!\nسيصلك تنبيه فوري هنا إلى هذا الرقم (+${cleanPhone}) عند قيام أي زبون بإنشاء طلب شراء جديد، تلقائياً بالكامل ودون الحاجة لفتح المتصفح أو أي موقع.`
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        addToast(
+          language === 'ar' 
+            ? `✅ تم إرسال إشعار الفحص التلقائي بنجاح إلى واتساب (+${cleanPhone}) عبر خادم Render!` 
+            : `Automated test notification sent to (+${cleanPhone}) via Render!`, 
+          'success'
+        );
+      } else {
+        const errorMsg = data.error || (language === 'ar' ? 'خادم واتساب في Render بانتظار مسح رمز QR للربط' : 'Render WhatsApp service is waiting for QR scan');
+        addToast(`⚠️ ${errorMsg}`, 'error');
+      }
+    } catch (error) {
+      addToast(
+        language === 'ar' 
+          ? '⚠️ تعذر الاتصال بخادم Render لواتساب. تأكد من تشغيل الخادم.' 
+          : 'Could not connect to WhatsApp Render server.', 
+        'error'
+      );
+    } finally {
+      setIsSendingWhatsAppTest(false);
+      checkGatewayStatus();
+    }
+  };
 
   const [isNewCouponOpen, setIsNewCouponOpen] = useState(false);
   const [newCouponData, setNewCouponData] = useState({
@@ -524,8 +609,8 @@ export const AdminSettings: React.FC = () => {
                 </div>
               </div>
 
-              {/* WhatsApp Notification Number & Instant Test */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              {/* WhatsApp Notification Number & Instant Automatic Test via Render */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MessageCircle className="w-4 h-4 text-emerald-600" />
@@ -533,8 +618,8 @@ export const AdminSettings: React.FC = () => {
                       {language === 'ar' ? 'رقم الواتساب لتلقي تنبيهات الطلبات الفورية' : 'WhatsApp Order Alert Phone'}
                     </span>
                   </div>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
-                    {language === 'ar' ? 'يعمل حتى عند إغلاق الموقع' : 'Works even when site is closed'}
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                    {language === 'ar' ? 'إرسال تلقائي عبر خادم Render' : 'Auto-dispatched via Render'}
                   </span>
                 </div>
 
@@ -549,43 +634,75 @@ export const AdminSettings: React.FC = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      const targetPhone = activeStore.settings.notificationSettings?.whatsappAlertPhone || activeStore.ownerPhone || '9647714834776';
-                      let cleanPhone = targetPhone.replace(/\D/g, '');
-                      if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
-                      if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
-                      if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
-
-                      const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
-                      fetch(`${gatewayUrl}/send-message`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          phone: cleanPhone,
-                          message: `🛍️ *رسالة تجريبية لمدير متجر ${activeStore.nameAr || activeStore.name}*\n\n✅ تم ربط وتعيين رقم واتساب مدير المتجر (+${cleanPhone}) بنجاح!\nعندما يقوم أي زبون بطلب جديد ستصلك رسالة فورية هنا بكافة تفاصيل الطلب (المنتجات، الكميات، بيانات العميل وعنوانه، ورقم التتبع).`
-                        })
-                      }).then((res) => {
-                        if (res.ok) {
-                          addToast(language === 'ar' ? `✅ تم إرسال رسالة تجريبية بنجاح إلى واتساب المدير (+${cleanPhone})` : `Test message dispatched to (+${cleanPhone})`, 'success');
-                        }
-                      }).catch(() => {});
-
-                      const testUrl = generateWhatsAppAlertUrl(
-                        cleanPhone,
-                        'PAN-88120',
-                        'أحمد علي (زبون تجريبي)',
-                        '+964 771 000 0000',
-                        `${activeStore.settings.currency}125,000`,
-                        2,
-                        activeStore.nameAr || activeStore.name
-                      );
-                      window.open(testUrl, '_blank');
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 w-full sm:w-auto justify-center"
+                    disabled={isSendingWhatsAppTest}
+                    onClick={handleSendAutomaticWhatsAppTest}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 w-full sm:w-auto justify-center cursor-pointer"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'تجربة إرسال تنبيه واتساب 📲' : 'Test WhatsApp Alert 📲'}</span>
+                    {isSendingWhatsAppTest ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>{language === 'ar' ? 'جاري الإرسال عبر Render...' : 'Dispatching via Render...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>{language === 'ar' ? 'فحص الإشعار التلقائي 📲' : 'Test Auto Notification 📲'}</span>
+                      </>
+                    )}
                   </button>
+                </div>
+
+                {/* Live Render Gateway Connection State */}
+                <div className="pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-500">{language === 'ar' ? 'حالة خادم Render:' : 'Render Gateway:'}</span>
+                    {gatewayStatus?.connected ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                        {language === 'ar' ? `متصل وجاهز (+${gatewayStatus.phone || 'WhatsApp'})` : `Connected (+${gatewayStatus.phone || 'WhatsApp'})`}
+                      </span>
+                    ) : gatewayStatus?.status === 'WAITING_FOR_QR_SCAN' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        {language === 'ar' ? 'يعمل - بانتظار مسح رمز QR' : 'Active - Waiting for QR scan'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px]">
+                        {isCheckingGateway ? (
+                          <>
+                            <Loader2 className="w-2.5 h-2.5 animate-spin text-slate-500" />
+                            {language === 'ar' ? 'جاري الفحص...' : 'Checking...'}
+                          </>
+                        ) : (
+                          language === 'ar' ? 'خادم Render قيد التهيئة' : 'Render Gateway Standby'
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {(!gatewayStatus?.connected) && (
+                      <a
+                        href={`${gatewayUrl}/qr`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg font-bold text-[10px] transition-colors"
+                      >
+                        <QrCode className="w-3 h-3" />
+                        <span>{language === 'ar' ? 'ربط واتساب بالـ QR' : 'Link via QR'}</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={checkGatewayStatus}
+                      disabled={isCheckingGateway}
+                      className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-md transition-colors"
+                      title={language === 'ar' ? 'تحديث حالة الاتصال' : 'Refresh status'}
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isCheckingGateway ? 'animate-spin text-indigo-600' : ''}`} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
