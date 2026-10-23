@@ -53,21 +53,38 @@ export const CheckoutPage: React.FC = () => {
     getProductName,
     currentCustomer,
     setIsCustomerAuthModalOpen,
-    setIsCustomerAccountModalOpen
+    setIsCustomerAccountModalOpen,
+    findCustomerByPhone,
+    recognizeCustomerByPhone,
   } = useStore();
 
   const currency = activeStore.settings.currency || 'د.ع';
   const [orderNotes, setOrderNotes] = useState('');
+  const [recognizedAlert, setRecognizedAlert] = useState<{ name: string; phone: string } | null>(null);
 
-  const [shippingInfo, setShippingInfo] = useState<ShippingAddress>({
-    fullName: language === 'ar' ? 'حيدر علي العراقي' : 'Haidar Ali Al-Iraqi',
-    email: 'customer@pandastore.iq',
-    phone: '+964 770 123 4567',
-    address: language === 'ar' ? 'حي المنصور - شارع 14 رمضان' : 'Al-Mansour, 14th of Ramadan St',
-    city: language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)',
-    state: language === 'ar' ? 'بغداد' : 'Baghdad',
-    zipCode: '10011',
-    country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
+  const [shippingInfo, setShippingInfo] = useState<ShippingAddress>(() => {
+    if (currentCustomer) {
+      return {
+        fullName: currentCustomer.name || '',
+        phone: currentCustomer.phone || '',
+        email: currentCustomer.email || '',
+        address: currentCustomer.address || '',
+        city: currentCustomer.city || '',
+        state: currentCustomer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'),
+        zipCode: '10011',
+        country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
+      };
+    }
+    return {
+      fullName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)',
+      zipCode: '10011',
+      country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
+    };
   });
 
   useEffect(() => {
@@ -83,6 +100,31 @@ export const CheckoutPage: React.FC = () => {
       }));
     }
   }, [currentCustomer]);
+
+  const handlePhoneInputChange = (val: string) => {
+    handleInputChange('phone', val);
+    const clean = val.replace(/\D/g, '');
+    let norm = clean;
+    if (norm.startsWith('00964')) norm = norm.slice(5);
+    else if (norm.startsWith('964')) norm = norm.slice(3);
+    if (norm.startsWith('0')) norm = norm.slice(1);
+
+    if (norm.length >= 10) {
+      const matched = recognizeCustomerByPhone(val);
+      if (matched) {
+        setShippingInfo((prev) => ({
+          ...prev,
+          fullName: matched.name || prev.fullName,
+          phone: val,
+          email: matched.email || prev.email,
+          address: matched.address || prev.address,
+          city: matched.city || prev.city,
+          state: matched.state || prev.state,
+        }));
+        setRecognizedAlert({ name: matched.name, phone: matched.phone });
+      }
+    }
+  };
 
   const paymentMethod: Order['paymentMethod'] = 'Cash on Delivery';
   const [isProcessing, setIsProcessing] = useState(false);
@@ -168,10 +210,15 @@ export const CheckoutPage: React.FC = () => {
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 block">
-                      {language === 'ar' ? `المستلم: ${currentCustomer.name}` : `Recipient: ${currentCustomer.name}`}
-                    </span>
-                    <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 block">
+                        {language === 'ar' ? `المستلم: ${currentCustomer.name}` : `Recipient: ${currentCustomer.name}`}
+                      </span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                        {language === 'ar' ? 'حساب موحّد لكافة المتاجر ✓' : 'Universal Store Account ✓'}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
                       <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
                       <span>{currentCustomer.state || 'بغداد'} • {currentCustomer.city || ''} ({currentCustomer.phone})</span>
                     </span>
@@ -194,8 +241,8 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   <span className="text-slate-600 text-xs">
                     {language === 'ar'
-                      ? 'لديك حساب وموقع توصيل محفوظ؟ افتح حسابك لتعبئة العنوان تلقائياً.'
-                      : 'Have an account or saved location? Open your account to auto-fill.'}
+                      ? 'مسجل في أي من متاجرنا؟ أدخل رقم هاتفك أدناه للتعرف الفوري على بياناتك وتعبئتها تلقائياً.'
+                      : 'Registered in any of our stores? Enter your phone below to instantly recognize and prefill your info.'}
                   </span>
                 </div>
                 <button
@@ -206,6 +253,19 @@ export const CheckoutPage: React.FC = () => {
                   <User className="w-3.5 h-3.5 text-amber-400" />
                   <span>{language === 'ar' ? 'حسابي وموقع التوصيل' : 'My Account'}</span>
                 </button>
+              </div>
+            )}
+
+            {recognizedAlert && (
+              <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl text-xs text-emerald-950 font-bold animate-in fade-in duration-200">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div className="flex-1">
+                  <span>
+                    {language === 'ar'
+                      ? `✨ مرحباً بك مجدداً يا ${recognizedAlert.name}! تم التعرف على حسابك وتعبئة موقع التوصيل المعتمد تلقائياً للشراء الفوري.`
+                      : `✨ Welcome back, ${recognizedAlert.name}! Recognized your phone number and prefilled your saved delivery info across stores.`}
+                  </span>
+                </div>
               </div>
             )}
 
@@ -237,7 +297,7 @@ export const CheckoutPage: React.FC = () => {
                     dir="ltr"
                     placeholder="0770 123 4567"
                     value={shippingInfo.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => handlePhoneInputChange(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                   />
                   <Phone className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />

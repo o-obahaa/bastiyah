@@ -31,6 +31,7 @@ import {
   OUD_PRODUCTS,
   FASHION_PRODUCTS,
   INITIAL_COUPONS, 
+  INITIAL_CUSTOMERS,
 } from '../data/mockData';
 import { translations, PRODUCT_ARABIC_TRANSLATIONS } from '../i18n/translations';
 import { getThemeClasses, ThemeClasses } from '../utils/themeUtils';
@@ -38,7 +39,9 @@ import {
   getCustomDomainRoot, 
   getStoreDisplayUrl, 
   getStorePathLabel, 
-  getPlatformDisplayUrl 
+  getPlatformDisplayUrl,
+  setSharedCustomerCookie,
+  getSharedCustomerCookie
 } from '../utils/urlUtils';
 import {
   playNotificationChime,
@@ -98,6 +101,8 @@ interface StoreContextType {
   sendCustomerWhatsAppOtp: (rawPhone: string) => { success: boolean; code: string; message: string; fullPhone: string };
   verifyCustomerWhatsAppOtp: (phone: string, code: string, name?: string) => boolean;
   logoutCustomer: () => void;
+  findCustomerByPhone: (phone: string) => CustomerUser | null;
+  recognizeCustomerByPhone: (phone: string) => CustomerUser | null;
 
   // Language & i18n
   language: Language;
@@ -376,6 +381,28 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   };
 };
 
+export const normalizePhoneDigits = (raw?: string): string => {
+  if (!raw) return '';
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('00964')) {
+    digits = digits.slice(5);
+  } else if (digits.startsWith('964')) {
+    digits = digits.slice(3);
+  }
+  if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  return digits;
+};
+
+export const phonesMatch = (p1?: string, p2?: string): boolean => {
+  if (!p1 || !p2) return false;
+  const n1 = normalizePhoneDigits(p1);
+  const n2 = normalizePhoneDigits(p2);
+  if (!n1 || !n2) return false;
+  return n1 === n2;
+};
+
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Language State
   const [language, setLanguage] = useState<Language>(() => {
@@ -586,21 +613,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       };
     }
 
-    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+964 770 123 4567');
-    const isMatch =
-      targetPhoneNorm === inputPhoneNorm ||
-      (inputPhoneNorm.length >= 8 && targetPhoneNorm.endsWith(inputPhoneNorm.slice(-8))) ||
-      (targetPhoneNorm.length >= 8 && inputPhoneNorm.endsWith(targetPhoneNorm.slice(-8)));
+    const isMatch = phonesMatch(targetStore.ownerPhone, phone);
 
     if (!isMatch) {
       // Check if this phone number belongs to another store
       const otherStore = stores.find((s) => {
         if (s.id === storeId || !s.ownerPhone) return false;
-        const otherNorm = normalizePhoneNumber(s.ownerPhone);
-        return (
-          otherNorm === inputPhoneNorm ||
-          (inputPhoneNorm.length >= 8 && otherNorm.endsWith(inputPhoneNorm.slice(-8)))
-        );
+        return phonesMatch(s.ownerPhone, phone);
       });
 
       if (otherStore) {
@@ -655,13 +674,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const targetStore = stores.find((s) => s.id === storeId);
     if (!targetStore) return false;
 
-    const inputPhoneNorm = normalizePhoneNumber(identifier);
-    const targetPhoneNorm = normalizePhoneNumber(targetStore.ownerPhone || '+964 770 123 4567');
-    const isPhoneMatch =
-      inputPhoneNorm.length >= 7 &&
-      (targetPhoneNorm === inputPhoneNorm ||
-        (inputPhoneNorm.length >= 8 && targetPhoneNorm.endsWith(inputPhoneNorm.slice(-8))) ||
-        (targetPhoneNorm.length >= 8 && inputPhoneNorm.endsWith(targetPhoneNorm.slice(-8))));
+    const isPhoneMatch = phonesMatch(targetStore.ownerPhone, identifier);
 
     const cleanEmail = identifier.trim().toLowerCase();
     const ownerEmail = targetStore.ownerEmail.toLowerCase();
@@ -671,8 +684,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const activeOtp = adminOtpSessions[storeId];
     const isOtpValid = Boolean(
       activeOtp &&
-        (activeOtp.phone === inputPhoneNorm ||
-          (inputPhoneNorm.length >= 8 && activeOtp.phone.endsWith(inputPhoneNorm.slice(-8)))) &&
+        (phonesMatch(activeOtp.phone, identifier) || activeOtp.phone === identifier.replace(/\D/g, '')) &&
         activeOtp.code === passOrOtp.trim() &&
         Date.now() < activeOtp.expiresAt
     );
@@ -727,7 +739,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
-  // Customer User Authentication via WhatsApp
+  // Customer User Authentication & Universal Profile across all hosted stores
   const [currentCustomer, setCurrentCustomer] = useState<CustomerUser | null>(() => {
     try {
       const saved = localStorage.getItem('bastiyah_current_customer');
@@ -738,15 +750,376 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         return parsed;
       }
+      // Check shared cookie across subdomains
+      const cookieUser = getSharedCustomerCookie();
+      if (cookieUser) {
+        return cookieUser;
+      }
       return null;
     } catch (e) {
       return null;
     }
   });
 
+  // Persistent platform-wide universal customer registry
+  const [universalCustomers, setUniversalCustomers] = useState<CustomerUser[]>(() => {
+    try {
+      const saved = localStorage.getItem('bastiyah_universal_customers_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Initialize universal customer profiles from initial mock customers
+    return INITIAL_CUSTOMERS.map((c) => ({
+      id: c.id,
+      name: c.name,
+      phone: c.phone || '',
+      email: c.email,
+      city: c.city,
+      state: c.city.includes('بغداد') ? 'بغداد (العاصمة)' : c.city,
+      address: c.address || (c.phone?.includes('770') ? 'حي المنصور - شارع 14 رمضان' : 'الشارع العام - قرب السوق التجاري'),
+      landmark: c.landmark || 'قرب المركز التجاري',
+      avatar: c.avatar || ANONYMOUS_USER_AVATAR,
+      authenticatedVia: 'phone_auth' as const,
+      authenticatedAt: c.joinedDate || new Date().toISOString(),
+    }));
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bastiyah_universal_customers_v1', JSON.stringify(universalCustomers));
+    } catch (e) {
+      // ignore
+    }
+  }, [universalCustomers]);
+
+  // Synchronize current customer with localStorage and shared root domain cookie
+  useEffect(() => {
+    try {
+      if (currentCustomer) {
+        localStorage.setItem('bastiyah_current_customer', JSON.stringify(currentCustomer));
+        setSharedCustomerCookie(currentCustomer);
+      } else {
+        localStorage.removeItem('bastiyah_current_customer');
+        setSharedCustomerCookie(null);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [currentCustomer]);
+
+  // Real-time synchronization across multiple open browser tabs / store windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'bastiyah_current_customer') {
+        try {
+          const val = e.newValue ? JSON.parse(e.newValue) : null;
+          setCurrentCustomer(val);
+        } catch {
+          // ignore
+        }
+      } else if (e.key === 'bastiyah_universal_customers_v1') {
+        try {
+          const val = e.newValue ? JSON.parse(e.newValue) : [];
+          if (Array.isArray(val) && val.length > 0) {
+            setUniversalCustomers(val);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Synchronize customers across all hosted stores on initial mount so all stores share registered customers
+  useEffect(() => {
+    setStores((prevStores) => {
+      const allUnique = new Map<string, Customer>();
+      for (const st of prevStores) {
+        for (const c of st.customers || []) {
+          const key = c.phone ? normalizePhoneDigits(c.phone) : c.email || c.id;
+          if (key && !allUnique.has(key)) {
+            allUnique.set(key, c);
+          }
+        }
+      }
+      for (const u of universalCustomers) {
+        const key = u.phone ? normalizePhoneDigits(u.phone) : u.email || u.id;
+        if (key && !allUnique.has(key)) {
+          allUnique.set(key, {
+            id: u.id,
+            name: u.name,
+            phone: u.phone,
+            email: u.email || `${key}@customer.iq`,
+            avatar: u.avatar || ANONYMOUS_USER_AVATAR,
+            city: u.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+            state: u.state,
+            address: u.address,
+            landmark: u.landmark,
+            country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
+            ordersCount: 0,
+            totalSpent: 0,
+            joinedDate: u.authenticatedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+            isPhoneVerified: true,
+          });
+        }
+      }
+
+      let hasChanges = false;
+      const updatedStores = prevStores.map((st) => {
+        const existingKeys = new Set(
+          (st.customers || []).map((c) => (c.phone ? normalizePhoneDigits(c.phone) : c.email || c.id))
+        );
+        const toAdd: Customer[] = [];
+        allUnique.forEach((cust, key) => {
+          if (!existingKeys.has(key)) {
+            toAdd.push({
+              ...cust,
+              id: `cust-${st.slug}-${key}`,
+              ordersCount: 0,
+              totalSpent: 0,
+            });
+          }
+        });
+        if (toAdd.length > 0) {
+          hasChanges = true;
+          return { ...st, customers: [...toAdd, ...(st.customers || [])] };
+        }
+        return st;
+      });
+
+      return hasChanges ? updatedStores : prevStores;
+    });
+  }, []);
+
   const [isCustomerAuthModalOpen, setIsCustomerAuthModalOpen] = useState(false);
   const [isCustomerAccountModalOpen, setIsCustomerAccountModalOpen] = useState(false);
   const [pendingCustomerOtp, setPendingCustomerOtp] = useState<{ phone: string; code: string; expiresAt: number } | null>(null);
+
+  // Synchronize customer profile universally across all stores in state & Convex
+  const syncCustomerToAllStores = (profile: {
+    name: string;
+    phone: string;
+    email?: string;
+    city?: string;
+    state?: string;
+    address?: string;
+    landmark?: string;
+    avatar?: string;
+    orderAmount?: number;
+    activeStoreId?: string;
+  }) => {
+    const rawPhone = profile.phone;
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+
+    // 1. Update universal registry
+    setUniversalCustomers((prev) => {
+      const existingIdx = prev.findIndex((p) => phonesMatch(p.phone, cleanPhone));
+      const updatedUser: CustomerUser = {
+        id: existingIdx >= 0 ? prev[existingIdx].id : `cust-wa-${Date.now()}`,
+        name: profile.name.trim() || (existingIdx >= 0 ? prev[existingIdx].name : (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer')),
+        phone: rawPhone.trim() || (existingIdx >= 0 ? prev[existingIdx].phone : ''),
+        email: profile.email?.trim() || (existingIdx >= 0 ? prev[existingIdx].email : undefined),
+        city: profile.city?.trim() || (existingIdx >= 0 ? prev[existingIdx].city : undefined),
+        state: profile.state?.trim() || (existingIdx >= 0 ? prev[existingIdx].state : undefined),
+        address: profile.address?.trim() || (existingIdx >= 0 ? prev[existingIdx].address : undefined),
+        landmark: profile.landmark?.trim() || (existingIdx >= 0 ? prev[existingIdx].landmark : undefined),
+        avatar: profile.avatar || (existingIdx >= 0 ? prev[existingIdx].avatar : ANONYMOUS_USER_AVATAR),
+        authenticatedVia: 'phone_auth',
+        authenticatedAt: new Date().toISOString(),
+      };
+      if (existingIdx >= 0) {
+        const copy = [...prev];
+        copy[existingIdx] = updatedUser;
+        return copy;
+      }
+      return [updatedUser, ...prev];
+    });
+
+    // 2. Synchronize customer across ALL stores
+    setStores((prevStores) =>
+      prevStores.map((st) => {
+        const existingCust = (st.customers || []).find((c) => phonesMatch(c.phone, cleanPhone));
+        const isCurrentStoreOrder = profile.orderAmount !== undefined && st.id === profile.activeStoreId;
+
+        if (existingCust) {
+          const updatedCusts = st.customers.map((c) =>
+            c.id === existingCust.id
+              ? {
+                  ...c,
+                  name: profile.name.trim() || c.name,
+                  phone: rawPhone.trim() || c.phone,
+                  email: profile.email?.trim() || c.email,
+                  city: profile.city?.trim() || c.city,
+                  state: profile.state?.trim() || c.state,
+                  address: profile.address?.trim() || c.address,
+                  landmark: profile.landmark?.trim() || c.landmark,
+                  ordersCount: isCurrentStoreOrder ? c.ordersCount + 1 : c.ordersCount,
+                  totalSpent: isCurrentStoreOrder ? Number((c.totalSpent + (profile.orderAmount || 0)).toFixed(2)) : c.totalSpent,
+                  isPhoneVerified: true,
+                }
+              : c
+          );
+          return { ...st, customers: updatedCusts };
+        } else {
+          const newCust: Customer = {
+            id: `cust-${Date.now()}-${st.slug}`,
+            name: profile.name.trim() || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer'),
+            phone: rawPhone.trim(),
+            email: profile.email?.trim() || `${cleanPhone.slice(-6)}@customer.iq`,
+            avatar: profile.avatar || ANONYMOUS_USER_AVATAR,
+            city: profile.city?.trim() || (profile.state?.trim() || (language === 'ar' ? 'بغداد' : 'Baghdad')),
+            state: profile.state?.trim(),
+            address: profile.address?.trim(),
+            landmark: profile.landmark?.trim(),
+            country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
+            ordersCount: isCurrentStoreOrder ? 1 : 0,
+            totalSpent: isCurrentStoreOrder ? (profile.orderAmount || 0) : 0,
+            joinedDate: new Date().toISOString().split('T')[0],
+            isPhoneVerified: true,
+          };
+          return { ...st, customers: [newCust, ...(st.customers || [])] };
+        }
+      })
+    );
+
+    // 3. Optional sync to Convex if connected
+    if (convexClient && cleanPhone.length >= 8) {
+      for (const st of stores) {
+        convexClient.mutation(api.customers.upsertCustomer, {
+          storeId: st.slug,
+          name: profile.name.trim(),
+          phone: rawPhone.trim(),
+          email: profile.email?.trim(),
+          city: profile.city?.trim() || (profile.state?.trim() || 'Baghdad'),
+          state: profile.state?.trim(),
+          address: profile.address?.trim(),
+          country: 'Iraq',
+          isPhoneVerified: true,
+        }).catch(() => {});
+      }
+    }
+  };
+
+  // Find customer profile by phone number across active session, universal registry, all stores, or past orders
+  const findCustomerByPhone = (rawPhone: string): CustomerUser | null => {
+    if (!rawPhone) return null;
+    const clean = rawPhone.replace(/\D/g, '');
+    if (clean.length < 7) return null;
+
+    let baseResult: CustomerUser | null = null;
+
+    // 1. Check currentCustomer
+    if (currentCustomer && phonesMatch(currentCustomer.phone, clean)) {
+      baseResult = currentCustomer;
+      if (baseResult.address && baseResult.city) {
+        return baseResult;
+      }
+    }
+
+    // 2. Check universalCustomers
+    const inUniversal = universalCustomers.find((c) => phonesMatch(c.phone, clean));
+    if (inUniversal) {
+      if (!baseResult) return inUniversal;
+      return {
+        ...inUniversal,
+        ...baseResult,
+        address: baseResult.address || inUniversal.address,
+        city: baseResult.city || inUniversal.city,
+        state: baseResult.state || inUniversal.state,
+        landmark: baseResult.landmark || inUniversal.landmark,
+      };
+    }
+
+    // 3. Check across all stores' customers
+    for (const st of stores) {
+      const matchedCust = (st.customers || []).find((c) => phonesMatch(c.phone, clean));
+      if (matchedCust) {
+        const custProfile: CustomerUser = {
+          id: matchedCust.id,
+          name: matchedCust.name,
+          phone: matchedCust.phone || rawPhone,
+          email: matchedCust.email,
+          city: matchedCust.city,
+          state: matchedCust.state || (matchedCust.city?.includes('بغداد') ? 'بغداد (العاصمة)' : matchedCust.city),
+          address: matchedCust.address || '',
+          landmark: matchedCust.landmark || '',
+          avatar: matchedCust.avatar || ANONYMOUS_USER_AVATAR,
+          authenticatedVia: 'phone_auth',
+          authenticatedAt: matchedCust.joinedDate || new Date().toISOString(),
+        };
+        if (!baseResult) return custProfile;
+        return {
+          ...custProfile,
+          ...baseResult,
+          address: baseResult.address || custProfile.address,
+          city: baseResult.city || custProfile.city,
+          state: baseResult.state || custProfile.state,
+          landmark: baseResult.landmark || custProfile.landmark,
+        };
+      }
+    }
+
+    // 4. Check across all stores' orders
+    for (const st of stores) {
+      const matchedOrder = (st.orders || []).find((o) => phonesMatch(o.customer?.phone, clean));
+      if (matchedOrder) {
+        const ordProfile: CustomerUser = {
+          id: `cust-${Date.now()}`,
+          name: matchedOrder.customer.fullName,
+          phone: matchedOrder.customer.phone,
+          email: matchedOrder.customer.email,
+          city: matchedOrder.customer.city,
+          state: matchedOrder.customer.state,
+          address: matchedOrder.customer.address,
+          avatar: ANONYMOUS_USER_AVATAR,
+          authenticatedVia: 'phone_auth',
+          authenticatedAt: matchedOrder.date || new Date().toISOString(),
+        };
+        if (!baseResult) return ordProfile;
+        return {
+          ...ordProfile,
+          ...baseResult,
+          address: baseResult.address || ordProfile.address,
+          city: baseResult.city || ordProfile.city,
+          state: baseResult.state || ordProfile.state,
+        };
+      }
+    }
+
+    return baseResult;
+  };
+
+  // Immediate recognition & auto-login by phone number
+  const recognizeCustomerByPhone = (rawPhone: string): CustomerUser | null => {
+    const found = findCustomerByPhone(rawPhone);
+    if (found) {
+      const needsUpdate =
+        !currentCustomer ||
+        !phonesMatch(currentCustomer.phone, found.phone) ||
+        (!currentCustomer.address && Boolean(found.address));
+
+      if (needsUpdate) {
+        setCurrentCustomer(found);
+        try {
+          localStorage.setItem('bastiyah_current_customer', JSON.stringify(found));
+          setSharedCustomerCookie(found);
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+    return found;
+  };
 
   const sendCustomerWhatsAppOtp = (rawPhone: string) => {
     const digits = rawPhone.replace(/\D/g, '');
@@ -827,23 +1200,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
 
-    // Try finding matching past order in activeStore
-    const matchedPastOrder = activeStore.orders.find(o => {
-      const pNorm = (o.customer.phone || '').replace(/\D/g, '');
-      return pNorm.endsWith(normalized.slice(-8));
-    });
+    // Try finding matching customer profile or past order across ALL hosted stores
+    const matchedProfile = findCustomerByPhone(phone);
+    const matchedPastOrder = stores.flatMap(s => s.orders).find(o => phonesMatch(o.customer?.phone, normalized));
 
     const fullFormattedPhone = `+964 ${normalized.slice(0, 3)} ${normalized.slice(3, 6)} ${normalized.slice(6)}`.trim();
-    const customerName = name?.trim() || matchedPastOrder?.customer.fullName || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer');
+    const customerName = name?.trim() || matchedProfile?.name || matchedPastOrder?.customer.fullName || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer');
 
     const customerUser: CustomerUser = {
-      id: matchedPastOrder ? `cust-${matchedPastOrder.customer.email}` : `cust-wa-${Date.now()}`,
+      id: matchedProfile?.id || (matchedPastOrder ? `cust-${matchedPastOrder.customer.email}` : `cust-wa-${Date.now()}`),
       name: customerName,
       phone: fullFormattedPhone,
-      email: matchedPastOrder?.customer.email || `user.${normalized.slice(-4)}@customer.iq`,
-      city: matchedPastOrder?.customer.city,
-      address: matchedPastOrder?.customer.address,
-      avatar: ANONYMOUS_USER_AVATAR,
+      email: matchedProfile?.email || matchedPastOrder?.customer.email || `user.${normalized.slice(-4)}@customer.iq`,
+      state: matchedProfile?.state || matchedPastOrder?.customer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'),
+      city: matchedProfile?.city || matchedPastOrder?.customer.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+      address: matchedProfile?.address || matchedPastOrder?.customer.address || '',
+      landmark: matchedProfile?.landmark || '',
+      avatar: matchedProfile?.avatar || ANONYMOUS_USER_AVATAR,
       authenticatedVia: 'whatsapp',
       authenticatedAt: new Date().toISOString(),
     };
@@ -858,45 +1231,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPendingCustomerOtp(null);
     setIsCustomerAuthModalOpen(false);
 
-    // Register or update customer profile in activeStore with verified phone
-    setStores((prevStores) =>
-      prevStores.map((st) => {
-        if (st.id !== activeStore.id) return st;
-        const existingCust = st.customers.find((c) => {
-          if (c.phone) {
-            const cp = c.phone.replace(/\D/g, '');
-            if (cp.slice(-8) === normalized.slice(-8)) return true;
-          }
-          return false;
-        });
-
-        let updatedCusts: Customer[];
-        if (existingCust) {
-          updatedCusts = st.customers.map((c) =>
-            c.id === existingCust.id
-              ? { ...c, name: customerName, phone: fullFormattedPhone, avatar: ANONYMOUS_USER_AVATAR, isPhoneVerified: true }
-              : c
-          );
-        } else {
-          const newCustomerEntry: Customer = {
-            id: `cust-${Date.now()}`,
-            name: customerName,
-            phone: fullFormattedPhone,
-            email: matchedPastOrder?.customer.email || `${normalized.slice(-4)}@customer.iq`,
-            avatar: ANONYMOUS_USER_AVATAR,
-            city: matchedPastOrder?.customer.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
-            country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
-            ordersCount: matchedPastOrder ? 1 : 0,
-            totalSpent: matchedPastOrder ? matchedPastOrder.total : 0,
-            joinedDate: new Date().toISOString().split('T')[0],
-            isPhoneVerified: true,
-          };
-          updatedCusts = [newCustomerEntry, ...st.customers];
-        }
-
-        return { ...st, customers: updatedCusts };
-      })
-    );
+    // Register or update customer profile universally across ALL hosted stores with verified phone
+    syncCustomerToAllStores({
+      name: customerName,
+      phone: fullFormattedPhone,
+      email: customerUser.email,
+      city: customerUser.city,
+      state: customerUser.state,
+      address: customerUser.address,
+      landmark: customerUser.landmark,
+      avatar: customerUser.avatar,
+    });
 
     addToast(
       language === 'ar'
@@ -941,58 +1286,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // ignore
       }
 
-      // Also sync to activeStore.customers
-      mutateActiveStore((store) => {
-        const custPhone = (updated.phone || '').replace(/\D/g, '');
-        const existing = store.customers.find((c) => {
-          if (c.phone) {
-            const cp = c.phone.replace(/\D/g, '');
-            if (cp.slice(-8) === custPhone.slice(-8)) return true;
-          }
-          return false;
-        });
-
-        if (existing) {
-          return {
-            ...store,
-            customers: store.customers.map((c) =>
-              c.id === existing.id
-                ? {
-                    ...c,
-                    name: updated.name || c.name,
-                    phone: updated.phone || c.phone,
-                    email: updated.email || c.email,
-                    city: `${updated.state || ''} ${updated.city || ''}`.trim() || c.city,
-                  }
-                : c
-            ),
-          };
-        } else {
-          const newRec: Customer = {
-            id: `cust-${Date.now()}`,
-            name: updated.name,
-            phone: updated.phone,
-            email: updated.email || `${custPhone.slice(-6)}@customer.iq`,
-            avatar: updated.avatar && !updated.avatar.includes('unsplash.com') ? updated.avatar : ANONYMOUS_USER_AVATAR,
-            city: `${updated.state || ''} ${updated.city || ''}`.trim() || (language === 'ar' ? 'بغداد' : 'Baghdad'),
-            country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
-            ordersCount: 0,
-            totalSpent: 0,
-            joinedDate: new Date().toISOString().split('T')[0],
-            isPhoneVerified: true,
-          };
-          return {
-            ...store,
-            customers: [newRec, ...store.customers],
-          };
-        }
+      // Synchronize customer profile universally across ALL hosted stores
+      syncCustomerToAllStores({
+        name: updated.name,
+        phone: updated.phone,
+        email: updated.email,
+        city: updated.city,
+        state: updated.state,
+        address: updated.address,
+        landmark: updated.landmark,
+        avatar: updated.avatar,
       });
 
       return updated;
     });
 
     addToast(
-      language === 'ar' ? '✅ تم حفظ وتحديث بيانات حسابك وموقع التوصيل بنجاح!' : '✅ Account & shipping details saved!',
+      language === 'ar' ? '✅ تم حفظ وتحديث بيانات حسابك وموقع التوصيل بنجاح لكافة المتاجر!' : '✅ Account & shipping details saved across all stores!',
       'success'
     );
   };
@@ -1635,7 +1945,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         id: `${cleanSlug}-prod-${idx + 1}`,
       })),
       orders: [],
-      customers: [],
+      customers: universalCustomers.map((u) => ({
+        id: `cust-${cleanSlug}-${normalizePhoneDigits(u.phone) || u.id}`,
+        name: u.name,
+        phone: u.phone,
+        email: u.email || `${normalizePhoneDigits(u.phone).slice(-6)}@customer.iq`,
+        avatar: u.avatar || ANONYMOUS_USER_AVATAR,
+        city: u.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+        state: u.state,
+        address: u.address,
+        landmark: u.landmark,
+        country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Iraq 🇮🇶',
+        ordersCount: 0,
+        totalSpent: 0,
+        joinedDate: u.authenticatedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+        isPhoneVerified: true,
+      })),
       coupons: INITIAL_COUPONS,
     };
 
@@ -2028,46 +2353,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return product;
       });
 
-      // Update customers - strictly matched by phone number first
-      const existingCustomer = store.customers.find((c) => {
-        if (c.phone && shippingInfo.phone) {
-          const cp = c.phone.replace(/\D/g, '');
-          const sp = shippingInfo.phone.replace(/\D/g, '');
-          if (cp.slice(-8) === sp.slice(-8)) return true;
-        }
-        return Boolean(c.email && shippingInfo.email && c.email.toLowerCase() === shippingInfo.email.toLowerCase());
-      });
-
-      let updatedCustomers: Customer[];
-      if (existingCustomer) {
-        updatedCustomers = store.customers.map((c) =>
-          c.id === existingCustomer.id
-            ? {
-                ...c,
-                phone: shippingInfo.phone || c.phone,
-                ordersCount: c.ordersCount + 1,
-                totalSpent: Number((c.totalSpent + cartTotal).toFixed(2)),
-                isPhoneVerified: c.isPhoneVerified || true,
-              }
-            : c
-        );
-      } else {
-        const newCust: Customer = {
-          id: `cust-${Date.now()}`,
-          name: shippingInfo.fullName,
-          phone: shippingInfo.phone,
-          email: shippingInfo.email || `${shippingInfo.phone.replace(/\D/g, '').slice(-6)}@customer.iq`,
-          avatar: ANONYMOUS_USER_AVATAR,
-          city: shippingInfo.city,
-          country: shippingInfo.country,
-          ordersCount: 1,
-          totalSpent: cartTotal,
-          joinedDate: new Date().toISOString().split('T')[0],
-          isPhoneVerified: true,
-        };
-        updatedCustomers = [newCust, ...store.customers];
-      }
-
       // Create Admin Notification for the newly submitted order
       const newAdminNotification: AdminNotification = {
         id: `notif-${Date.now()}`,
@@ -2088,7 +2373,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ...store,
         products: updatedProducts,
         orders: [newOrder, ...store.orders],
-        customers: updatedCustomers,
         adminNotifications: [newAdminNotification, ...(store.adminNotifications || [])],
       };
     });
@@ -2141,26 +2425,38 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.warn('WhatsApp manager alert dispatch note:', err);
       });
 
-    // Auto-register and persist customer profile via phone number if not logged in
-    if (!currentCustomer && shippingInfo.phone) {
-      const autoCustomer: CustomerUser = {
-        id: `cust-order-${Date.now()}`,
-        name: shippingInfo.fullName,
-        phone: shippingInfo.phone,
-        email: shippingInfo.email,
-        city: shippingInfo.city,
-        address: shippingInfo.address,
-        avatar: ANONYMOUS_USER_AVATAR,
-        authenticatedVia: 'phone_auth',
-        authenticatedAt: new Date().toISOString(),
-      };
-      setCurrentCustomer(autoCustomer);
-      try {
-        localStorage.setItem('bastiyah_current_customer', JSON.stringify(autoCustomer));
-      } catch (e) {
-        // ignore
-      }
+    // Persist and synchronize customer profile universally across all hosted stores
+    const customerPhone = shippingInfo.phone || currentCustomer?.phone || '';
+    const updatedCustomerUser: CustomerUser = {
+      id: currentCustomer?.id || `cust-order-${Date.now()}`,
+      name: shippingInfo.fullName,
+      phone: customerPhone,
+      email: shippingInfo.email || currentCustomer?.email,
+      state: shippingInfo.state || currentCustomer?.state,
+      city: shippingInfo.city || currentCustomer?.city,
+      address: shippingInfo.address || currentCustomer?.address,
+      landmark: currentCustomer?.landmark || '',
+      avatar: currentCustomer?.avatar || ANONYMOUS_USER_AVATAR,
+      authenticatedVia: currentCustomer?.authenticatedVia || 'phone_auth',
+      authenticatedAt: new Date().toISOString(),
+    };
+    setCurrentCustomer(updatedCustomerUser);
+    try {
+      localStorage.setItem('bastiyah_current_customer', JSON.stringify(updatedCustomerUser));
+    } catch (e) {
+      // ignore
     }
+
+    syncCustomerToAllStores({
+      name: shippingInfo.fullName,
+      phone: customerPhone,
+      email: shippingInfo.email,
+      state: shippingInfo.state,
+      city: shippingInfo.city,
+      address: shippingInfo.address,
+      orderAmount: cartTotal,
+      activeStoreId: activeStore.id,
+    });
     clearCart();
     setAppliedCoupon(null);
     setCurrentPage('order-success');
@@ -2363,6 +2659,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         sendCustomerWhatsAppOtp,
         verifyCustomerWhatsAppOtp,
         logoutCustomer,
+        findCustomerByPhone,
+        recognizeCustomerByPhone,
 
         language,
         setLanguage,

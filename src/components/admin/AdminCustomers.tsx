@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStore } from '../../context/StoreContext';
+import { useStore, phonesMatch } from '../../context/StoreContext';
 import { Customer, ANONYMOUS_USER_AVATAR } from '../../types';
 import { 
   Search, 
@@ -104,7 +104,7 @@ export const AdminCustomers: React.FC = () => {
 
   // Find orders belonging to inspecting customer
   const customerOrders = inspectingCustomer ? orders.filter(
-    (o) => (inspectingCustomer.phone && o.customer.phone && inspectingCustomer.phone.replace(/\D/g, '').endsWith(o.customer.phone.replace(/\D/g, '').slice(-8))) ||
+    (o) => (inspectingCustomer.phone && o.customer.phone && phonesMatch(inspectingCustomer.phone, o.customer.phone)) ||
            (inspectingCustomer.email && o.customer.email.toLowerCase() === inspectingCustomer.email.toLowerCase()) ||
            o.customer.fullName.toLowerCase() === inspectingCustomer.name.toLowerCase()
   ) : [];

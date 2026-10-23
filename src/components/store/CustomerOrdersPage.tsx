@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStore } from '../../context/StoreContext';
+import { useStore, phonesMatch } from '../../context/StoreContext';
 import { 
   Package, 
   Truck, 
@@ -108,10 +108,8 @@ export const CustomerOrdersPage: React.FC = () => {
       );
     }
     if (currentCustomer) {
-      const custPhone = (currentCustomer.phone || '').replace(/\D/g, '');
-      const ordPhone = (order.customer.phone || '').replace(/\D/g, '');
-      if (custPhone && ordPhone) {
-        return ordPhone.slice(-8) === custPhone.slice(-8);
+      if (currentCustomer.phone && order.customer.phone) {
+        return phonesMatch(currentCustomer.phone, order.customer.phone);
       }
     }
     return true;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useStore } from '../../context/StoreContext';
+import { useStore, phonesMatch } from '../../context/StoreContext';
 import { 
   ShieldCheck, 
   Lock, 
@@ -148,11 +148,9 @@ export const StoreMerchantLogin: React.FC = () => {
 
       if (!success) {
         // Check if phone matches another store
-        const cleanInput = fullPhone.replace(/[^0-9]/g, '');
         const otherStore = stores.find((s) => {
           if (s.id === activeStore.id || !s.ownerPhone) return false;
-          const otherClean = s.ownerPhone.replace(/[^0-9]/g, '');
-          return otherClean === cleanInput || otherClean.endsWith(cleanInput.slice(-8));
+          return phonesMatch(s.ownerPhone, fullPhone);
         });
 
         if (otherStore) {

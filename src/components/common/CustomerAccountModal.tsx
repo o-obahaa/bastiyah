@@ -35,6 +35,8 @@ export const CustomerAccountModal: React.FC = () => {
     language,
     theme,
     addToast,
+    findCustomerByPhone,
+    recognizeCustomerByPhone,
   } = useStore();
 
   const [name, setName] = useState('');
@@ -45,6 +47,28 @@ export const CustomerAccountModal: React.FC = () => {
   const [address, setAddress] = useState('');
   const [landmark, setLandmark] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  const handlePhoneInputChange = (val: string) => {
+    setPhone(val);
+    setIsEditing(true);
+    const clean = val.replace(/\D/g, '');
+    let norm = clean;
+    if (norm.startsWith('00964')) norm = norm.slice(5);
+    else if (norm.startsWith('964')) norm = norm.slice(3);
+    if (norm.startsWith('0')) norm = norm.slice(1);
+
+    if (norm.length >= 10) {
+      const matched = recognizeCustomerByPhone(val);
+      if (matched) {
+        if (!name.trim() || name === 'عميل بسطية') setName(matched.name);
+        if (matched.email && !email) setEmail(matched.email);
+        if (matched.state) setState(matched.state);
+        if (matched.city) setCity(matched.city);
+        if (matched.address) setAddress(matched.address);
+        if (matched.landmark) setLandmark(matched.landmark);
+      }
+    }
+  };
 
   // Sync state when currentCustomer changes or modal opens
   useEffect(() => {
@@ -255,10 +279,10 @@ export const CustomerAccountModal: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs sm:text-sm font-black text-slate-900">
-                    {language === 'ar' ? 'بيانات وموقع التوصيل المعتمد' : 'Default Delivery Location'}
+                    {language === 'ar' ? 'بيانات وموقع التوصيل المعتمد (موحد لكافة المتاجر)' : 'Default Delivery Location (Universal Across Stores)'}
                   </h4>
                   <p className="text-[11px] text-slate-500">
-                    {language === 'ar' ? 'تُعبّأ هذه البيانات تلقائياً في صفحة الشراء لسرعة الطلب' : 'Auto-fills in checkout for instant 1-click ordering'}
+                    {language === 'ar' ? 'تُطبّق هذه البيانات تلقائياً في صفحة الشراء لسرعة الطلب من أي متجر مستضاف' : 'Auto-fills in checkout for instant 1-click ordering from any hosted store'}
                   </p>
                 </div>
               </div>
@@ -300,10 +324,7 @@ export const CustomerAccountModal: React.FC = () => {
                     required
                     dir="ltr"
                     value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      setIsEditing(true);
-                    }}
+                    onChange={(e) => handlePhoneInputChange(e.target.value)}
                     placeholder="0770 123 4567"
                     className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
                   />

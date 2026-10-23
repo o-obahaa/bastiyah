@@ -117,14 +117,19 @@ export default defineSchema({
     storeId: v.string(),
     name: v.string(),
     email: v.string(),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string()),
+    state: v.optional(v.string()),
     avatar: v.string(),
     city: v.string(),
     country: v.string(),
     ordersCount: v.number(),
     totalSpent: v.number(),
     joinedDate: v.string(),
+    isPhoneVerified: v.optional(v.boolean()),
   })
-    .index("by_store", ["storeId"]),
+    .index("by_store", ["storeId"])
+    .index("by_phone", ["phone"]),
 
   coupons: defineTable({
     storeId: v.string(),

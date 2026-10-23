@@ -95,3 +95,39 @@ export const getPlatformDisplayUrl = (page: 'landing' | 'owner-admin' = 'landing
   }
   return `${protocol}//${root}/`;
 };
+
+/**
+ * Persists customer authentication across hosted store subdomains (e.g. *.bastiyah.com)
+ */
+export const setSharedCustomerCookie = (customer: any | null) => {
+  if (typeof document === 'undefined') return;
+  const root = getCustomDomainRoot();
+  const domainPart = root && !root.includes('localhost') ? `; domain=.${root}` : '';
+  if (!customer) {
+    document.cookie = `bastiyah_shared_customer=; path=/${domainPart}; max-age=0; SameSite=Lax`;
+  } else {
+    try {
+      const val = encodeURIComponent(JSON.stringify(customer));
+      // 30 days expiration
+      document.cookie = `bastiyah_shared_customer=${val}; path=/${domainPart}; max-age=2592000; SameSite=Lax`;
+    } catch {
+      // ignore
+    }
+  }
+};
+
+/**
+ * Retrieves customer authentication shared across hosted store subdomains
+ */
+export const getSharedCustomerCookie = (): any | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)bastiyah_shared_customer=([^;]*)/);
+  if (match && match[1]) {
+    try {
+      return JSON.parse(decodeURIComponent(match[1]));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};

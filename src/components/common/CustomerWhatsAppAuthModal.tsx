@@ -34,7 +34,8 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
     activeStore,
     language,
     theme,
-    addToast
+    addToast,
+    findCustomerByPhone,
   } = useStore();
 
   const [step, setStep] = useState<'phone' | 'otp' | 'details'>('phone');
@@ -45,6 +46,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [landmark, setLandmark] = useState('');
+  const [recognizedUser, setRecognizedUser] = useState<string | null>(null);
 
   const [otpCode, setOtpCode] = useState(['', '', '', '']);
   const [simulatedCode, setSimulatedCode] = useState<string>('');
@@ -54,6 +56,34 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handlePhoneChange = (val: string) => {
+    setPhoneNumber(val);
+    const clean = val.replace(/\D/g, '');
+    let norm = clean;
+    if (norm.startsWith('00964')) norm = norm.slice(5);
+    else if (norm.startsWith('964')) norm = norm.slice(3);
+    if (norm.startsWith('0')) norm = norm.slice(1);
+
+    if (norm.length >= 10) {
+      const matched = findCustomerByPhone(val);
+      if (matched) {
+        if (!fullName.trim() || fullName === 'عميل بسطية') {
+          setFullName(matched.name);
+        }
+        if (matched.email) setEmail(matched.email);
+        if (matched.state) setState(matched.state);
+        if (matched.city) setCity(matched.city);
+        if (matched.address) setAddress(matched.address);
+        if (matched.landmark) setLandmark(matched.landmark);
+        setRecognizedUser(matched.name);
+      } else {
+        setRecognizedUser(null);
+      }
+    } else {
+      setRecognizedUser(null);
+    }
+  };
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
@@ -79,9 +109,14 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
 
   const handleSendCode = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!fullName.trim()) {
+    const registered = findCustomerByPhone(phoneNumber);
+    const resolvedName = fullName.trim() || registered?.name || '';
+    if (!resolvedName) {
       addToast(language === 'ar' ? 'يرجى إدخال اسمك الكامل للمتابعة' : 'Please provide your full name', 'error');
       return;
+    }
+    if (!fullName.trim()) {
+      setFullName(resolvedName);
     }
     if (!phoneNumber.trim()) {
       addToast(language === 'ar' ? 'يرجى إدخال رقم هاتفك المحمول' : 'Please provide mobile phone number', 'error');
@@ -139,7 +174,16 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
       const ok = verifyCustomerWhatsAppOtp(phoneNumber, code, fullName.trim() || undefined);
       setIsVerifying(false);
       if (ok) {
-        // Authentication completed! Transition to details step for email and shipping info
+        // Look up matched customer to prefill details step
+        const matched = findCustomerByPhone(phoneNumber);
+        if (matched) {
+          if (matched.name) setFullName(matched.name);
+          if (matched.email) setEmail(matched.email);
+          if (matched.state) setState(matched.state);
+          if (matched.city) setCity(matched.city);
+          if (matched.address) setAddress(matched.address);
+          if (matched.landmark) setLandmark(matched.landmark);
+        }
         setStep('details');
       }
     }, 500);
@@ -262,13 +306,25 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                       type="tel"
                       required
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
                       placeholder="0770 123 4567"
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
                     />
                     <Smartphone className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 end-3 pointer-events-none" />
                   </div>
                 </div>
+
+                {recognizedUser && (
+                  <div className="flex items-center gap-2 p-2.5 mt-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      {language === 'ar'
+                        ? `✨ حساب مسجل باسم (${recognizedUser}) في منصة بسطية • يمكنك المتابعة بنفس الرقم`
+                        : `✨ Registered account for (${recognizedUser}) across Bastiyah stores • Ready to sign in`}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5">
                   <span>{language === 'ar' ? 'زين (078/079) • آسيا سيل (077) • كورك (075)' : 'Zain (078), Asiacell (077), Korek (075)'}</span>
                 </div>

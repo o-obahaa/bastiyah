@@ -111,6 +111,9 @@ export interface Customer {
   totalSpent: number;
   joinedDate: string;
   isPhoneVerified?: boolean;
+  state?: string;
+  address?: string;
+  landmark?: string;
 }
 
 export interface CustomerUser {
