@@ -126,18 +126,50 @@ export const AdminSettings: React.FC = () => {
     setIsSendingWhatsAppTest(true);
     try {
       const storeTitle = activeStore.nameAr || activeStore.name;
-      const res = await fetch(`${gatewayUrl}/send-message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: cleanPhone,
-          message: `🛍️ *فحص تلقائي لإشعارات متجر ${storeTitle}*\n\n✅ يعمل نظام الإشعارات التلقائية بنجاح عبر خادم Render المستضاف!\nسيصلك تنبيه فوري هنا إلى هذا الرقم (+${cleanPhone}) عند قيام أي زبون بإنشاء طلب شراء جديد، تلقائياً بالكامل ودون الحاجة لفتح المتصفح أو أي موقع.`
-        })
-      });
+      let sentSuccess = false;
 
-      const data = await res.json().catch(() => ({}));
+      // 1. Try sending full message via /send-message
+      try {
+        const res = await fetch(`${gatewayUrl}/send-message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: cleanPhone,
+            message: `🛍️ *فحص تلقائي لإشعارات متجر ${storeTitle}*\n\n✅ يعمل نظام الإشعارات التلقائية بنجاح عبر خادم Render المستضاف!\nسيصلك تنبيه فوري هنا إلى هذا الرقم (+${cleanPhone}) عند قيام أي زبون بإنشاء طلب شراء جديد، تلقائياً بالكامل ودون الحاجة لفتح المتصفح أو أي موقع.`
+          })
+        });
 
-      if (res.ok && data.success) {
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data.success) sentSuccess = true;
+        }
+      } catch (e) {
+        // Fallback below
+      }
+
+      // 2. Fallback to /send-otp if /send-message route is 404 on current Render deployment
+      if (!sentSuccess) {
+        try {
+          const resOtp = await fetch(`${gatewayUrl}/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              code: '✅ تم فحص وتأكيد الربط التلقائي بنجاح! الإشعارات جاهزة 🚀',
+              storeName: storeTitle
+            })
+          });
+
+          if (resOtp.ok) {
+            const dataOtp = await resOtp.json().catch(() => ({}));
+            if (dataOtp.success) sentSuccess = true;
+          }
+        } catch (e) {
+          // Both failed
+        }
+      }
+
+      if (sentSuccess) {
         addToast(
           language === 'ar' 
             ? `✅ تم إرسال إشعار الفحص التلقائي بنجاح إلى واتساب (+${cleanPhone}) عبر خادم Render!` 
@@ -145,8 +177,10 @@ export const AdminSettings: React.FC = () => {
           'success'
         );
       } else {
-        const errorMsg = data.error || (language === 'ar' ? 'خادم واتساب في Render بانتظار مسح رمز QR للربط' : 'Render WhatsApp service is waiting for QR scan');
-        addToast(`⚠️ ${errorMsg}`, 'error');
+        addToast(
+          language === 'ar' ? '⚠️ تعذر إرسال الإشعار، يرجى التأكد من حالة خادم Render' : 'Failed to dispatch test notification',
+          'error'
+        );
       }
     } catch (error) {
       addToast(

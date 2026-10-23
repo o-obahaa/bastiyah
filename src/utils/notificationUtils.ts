@@ -324,10 +324,31 @@ export const dispatchOrderWhatsAppToManager = async (
         if (res.ok) {
           const data = await res.json();
           console.log(`[WhatsApp Gateway] ✅ Order alert sent to manager (+${cleanPhone}):`, data);
+        } else {
+          // Fallback to /send-otp if /send-message is not deployed yet
+          const orderSummary = `طلب جديد #${order.orderNumber} بمبلغ ${currency}${order.total.toLocaleString()} - العميل ${order.customer.fullName} (${order.customer.phone})`;
+          fetch(`${gatewayUrl}/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              code: orderSummary,
+              storeName,
+            }),
+          }).catch(() => {});
         }
       })
-      .catch((err) => {
-        console.warn('[WhatsApp Gateway] Offline note:', err);
+      .catch(() => {
+        const orderSummary = `طلب جديد #${order.orderNumber} بمبلغ ${currency}${order.total.toLocaleString()} - العميل ${order.customer.fullName} (${order.customer.phone})`;
+        fetch(`${gatewayUrl}/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: cleanPhone,
+            code: orderSummary,
+            storeName,
+          }),
+        }).catch(() => {});
       });
   } catch (e) {
     // silently catch
