@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { X, Download, Printer, Copy, Check, QrCode, ExternalLink } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 
 interface StoreQrCodeModalProps {
   isOpen: boolean;
@@ -83,7 +84,13 @@ export const StoreQrCodeModal: React.FC<StoreQrCodeModalProps> = ({ isOpen, onCl
           <div className="p-6 bg-gradient-to-b from-slate-50 to-white rounded-2xl border-2 border-slate-200/90 shadow-xs space-y-4 inline-block w-full max-w-xs mx-auto">
             {/* Store branding */}
             <div className="flex flex-col items-center gap-1.5">
-              <span className="text-3xl">{activeStore.design.logoEmoji || '🛍️'}</span>
+              <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center overflow-hidden shadow-2xs">
+                <img
+                  src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                  alt=""
+                  className="w-full h-full object-contain"
+                />
+              </div>
               <h4 className="font-black text-slate-900 text-base">{storeName}</h4>
               <p className="text-xs text-slate-500 line-clamp-1">{storeTagline}</p>
             </div>

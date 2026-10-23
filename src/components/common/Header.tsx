@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCategory, ANONYMOUS_USER_AVATAR } from '../../types';
 import { filterProductsBySearch, matchCategorySearch } from '../../utils/searchUtils';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 import { 
   ShoppingBag, 
   Heart, 
@@ -458,26 +459,15 @@ export const Header: React.FC = () => {
                     minWidth: `${logoSizePx}px`,
                   }}
                 >
-                  {activeStore.design.customLogoUrl ? (
-                    <img
-                      src={activeStore.design.customLogoUrl}
-                      alt={displayStoreName}
-                      className="max-h-full w-auto object-contain select-none"
-                      style={{
-                        maxHeight: `${logoSizePx}px`,
-                        maxWidth: `${logoSizePx * 2.5}px`,
-                      }}
-                    />
-                  ) : (
-                    <span
-                      className="select-none leading-none"
-                      role="img"
-                      aria-label={displayStoreName}
-                      style={{ fontSize: `${Math.round(logoSizePx * 0.75)}px` }}
-                    >
-                      {activeStore.design.logoEmoji}
-                    </span>
-                  )}
+                  <img
+                    src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                    alt={displayStoreName}
+                    className="max-h-full w-auto object-contain select-none rounded-lg"
+                    style={{
+                      maxHeight: `${logoSizePx}px`,
+                      maxWidth: `${logoSizePx * 2.5}px`,
+                    }}
+                  />
                 </div>
                 <div className="min-w-0 flex flex-col justify-center">
                   <span className="font-black text-sm sm:text-base md:text-xl tracking-tight block leading-tight text-white truncate max-w-[110px] sm:max-w-[200px] md:max-w-xs">

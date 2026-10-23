@@ -34,8 +34,7 @@ import { uploadImageToR2, validateImageFile } from '../../utils/cloudflareR2';
 import { HeroSectionEditor } from './HeroSectionEditor';
 import { TrustBadgesEditor } from './TrustBadgesEditor';
 import { StoreHeroSlider } from '../store/StoreHeroSlider';
-
-const EMOJI_CHOICES = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '🚀', '🌸', '☕', '🎮', '📱', '🍫', '💐', '🍯'];
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 
 const CURATED_PALETTES = [
   { hex: '#10B981', nameAr: 'أخضر زمردي', nameEn: 'Emerald Green' },
@@ -208,7 +207,7 @@ export const AdminStoreDesign: React.FC = () => {
     setCustomLogoUrl('');
     updateStoreDesign({ customLogoUrl: undefined });
     addToast(
-      language === 'ar' ? 'تمت إزالة الشعار واستعادة أيقونة الإيموجي' : 'Logo removed, reverted to emoji icon',
+      language === 'ar' ? 'تمت إزالة الشعار واستعادة الصورة الفارغة المؤقتة' : 'Logo removed, reverted to blank photo placeholder',
       'info'
     );
   };
@@ -271,31 +270,31 @@ export const AdminStoreDesign: React.FC = () => {
   }[] = [
     {
       id: 'modern-split',
-      titleEn: 'Modern Split Hero',
-      titleAr: 'عصري مقسوم (Modern Split)',
-      descEn: 'Hero with dual action CTA and high-converting featured cards',
-      descAr: 'واجهة عصرية مع عرض بارز للمنتجات ومساحة إعلانية واسعة',
+      titleEn: 'Standard Modern Split',
+      titleAr: 'الواجهة العصرية القياسية',
+      descEn: 'Balanced commercial layout pairing high-converting hero messaging with featured product showcases.',
+      descAr: 'تصميم تجاري متوازن يجمع بين واجهة العرض الرئيسية والمنتجات المميزة لتعزيز معدل التحويل والمبيعات.',
     },
     {
       id: 'luxury-centered',
-      titleEn: 'Luxury Centered',
-      titleAr: 'فخامة ملكية (Luxury Centered)',
-      descEn: 'Symmetrical centered branding tailored for perfumes, jewelry & luxury',
-      descAr: 'تصميم أنيق متناظر للماركات الفاخرة، العطور، والمجوهرات',
+      titleEn: 'Classic Luxury Centered',
+      titleAr: 'الهوية الكلاسيكية الفاخرة',
+      descEn: 'Symmetrical high-end aesthetic with refined depth, ideal for premium brands, perfumery, and jewelry.',
+      descAr: 'طابع متناظر بأناقة هادئة وتدرجات عميقة، مخصص للعلامات التجارية الراقية كالعطور، الساعات والمجوهرات.',
     },
     {
       id: 'minimal-editorial',
-      titleEn: 'Minimal Editorial',
-      titleAr: 'بسيط وهادئ (Minimal Editorial)',
-      descEn: 'Clean high-fashion editorial layout emphasizing product imagery',
-      descAr: 'تنسيق ناعم يركز على صور المنتجات ونقاء التفاصيل',
+      titleEn: 'Contemporary Editorial',
+      titleAr: 'النمط التحريري المعاصر',
+      descEn: 'Streamlined magazine-grade layout highlighting high-resolution product imagery and clear details.',
+      descAr: 'تنسيق عصري انسيابي يركز بالكامل على فخامة صور المنتجات ووضوح التفاصيل بأسلوب المجلات العالمية.',
     },
     {
       id: 'vibrant-banner',
-      titleEn: 'Vibrant Dynamic Banner',
-      titleAr: 'حيوي وديناميكي (Vibrant Banner)',
-      descEn: 'Bold gradient backdrop with high-energy urgency prompts',
-      descAr: 'خلفية متدرجة حيوية تلفت الأنظار وتزيد من سرعة التفاعل',
+      titleEn: 'Dynamic Campaign Banner',
+      titleAr: 'الواجهة الترويجية التفاعلية',
+      descEn: 'High-impact promotional interface with wide banners suited for high-volume stores and retail events.',
+      descAr: 'واجهة إعلانية شاملة ببانر عريض وتدرجات لونية حيوية، مصممة للمتاجر سريعة الحركة والحملات الكبرى.',
     },
   ];
 
@@ -863,7 +862,7 @@ export const AdminStoreDesign: React.FC = () => {
                     {language === 'ar' ? 'شعار المتجر (رفع ملف مباشر)' : 'Store Logo (Direct File Upload)'}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {language === 'ar' ? 'ارفع صورة الشعار الرسمية لمتجرك أو اختر أيقونة إيموجي' : 'Upload your official brand logo or use an emoji emblem'}
+                    {language === 'ar' ? 'ارفع صورة الشعار الرسمية لمتجرك (في حال عدم الرفع تظهر صورة فارغة مؤقتة)' : 'Upload your official store logo (shows a blank photo placeholder until uploaded)'}
                   </p>
                 </div>
               </div>
@@ -983,40 +982,26 @@ export const AdminStoreDesign: React.FC = () => {
               className="hidden"
             />
 
-            {/* Emoji Fallback Picker (When no logo image is uploaded) */}
-            <div className="pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-700">
-                  {language === 'ar' ? 'أو استخدم أيقونة إيموجي كشعار:' : 'Or use an emoji emblem as logo:'}
-                </span>
-                {customLogoUrl && (
-                  <span className="text-[10px] text-slate-400">
-                    ({language === 'ar' ? 'الشعار المرفوع له الأولوية' : 'Uploaded logo takes priority'})
-                  </span>
-                )}
+            {/* Blank Photo Placeholder info when no logo is uploaded */}
+            {!customLogoUrl && (
+              <div className="pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 shadow-2xs">
+                    <img src={BLANK_STORE_LOGO_URL} alt="Blank Photo Placeholder" className="w-full h-full object-contain" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">
+                      {language === 'ar' ? 'صورة فارغة مؤقتة (معتمدة حالياً)' : 'Blank Photo Placeholder (Currently Active)'}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                      {language === 'ar'
+                        ? 'تظهر هذه الصورة الفارغة كشعار افتراضي في متجرك لحين رفع الشعار الرسمي أعلاه.'
+                        : 'This blank photo is displayed in your storefront until you upload an official logo above.'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-5 gap-2">
-                {EMOJI_CHOICES.map((emoji) => {
-                  const isSelected = activeStore.design.logoEmoji === emoji && !customLogoUrl;
-                  return (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => {
-                        updateStoreDesign({ logoEmoji: emoji });
-                      }}
-                      className={`h-11 rounded-xl text-xl flex items-center justify-center transition-all ${
-                        isSelected
-                          ? 'bg-slate-900 text-white shadow-md scale-105 ring-2 ring-purple-500'
-                          : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
-                      }`}
-                    >
-                      <span>{emoji}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            )}
 
             {/* Logo Size Customization */}
             <div className="pt-4 border-t border-slate-100 space-y-3">
@@ -1092,12 +1077,12 @@ export const AdminStoreDesign: React.FC = () => {
                       style={{ maxHeight: `${logoSize}px`, maxWidth: `${logoSize * 2.5}px` }}
                     />
                   ) : (
-                    <span
-                      className="select-none leading-none"
-                      style={{ fontSize: `${Math.round(logoSize * 0.75)}px` }}
-                    >
-                      {activeStore.design.logoEmoji}
-                    </span>
+                    <img
+                      src={BLANK_STORE_LOGO_URL}
+                      alt="Blank Logo Preview"
+                      className="max-h-full w-auto object-contain select-none rounded-lg"
+                      style={{ maxHeight: `${logoSize}px`, maxWidth: `${logoSize * 2.5}px` }}
+                    />
                   )}
                 </div>
               </div>
@@ -1242,11 +1227,11 @@ export const AdminStoreDesign: React.FC = () => {
                       className="flex items-center justify-center shrink-0"
                       style={{ height: `${Math.min(Math.max(logoSize * 0.55, 18), 30)}px` }}
                     >
-                      {customLogoUrl ? (
-                        <img src={customLogoUrl} alt="" className="max-h-full w-auto object-contain select-none" />
-                      ) : (
-                        <span style={{ fontSize: `${Math.min(Math.max(logoSize * 0.45, 14), 22)}px` }}>{activeStore.design.logoEmoji}</span>
-                      )}
+                      <img
+                        src={customLogoUrl || BLANK_STORE_LOGO_URL}
+                        alt=""
+                        className="max-h-full w-auto object-contain select-none rounded"
+                      />
                     </div>
                     <span className="font-black text-xs truncate max-w-[120px]">
                       {language === 'ar' ? nameAr || name : name}

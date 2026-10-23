@@ -8,6 +8,7 @@ import {
   ChevronDown, 
   X
 } from 'lucide-react';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 
 export const PlatformSwitcherPill: React.FC = () => {
   const { 
@@ -120,7 +121,9 @@ export const PlatformSwitcherPill: React.FC = () => {
                     className="w-full py-1.5 px-2 rounded-lg hover:bg-stone-50 text-stone-700 hover:text-stone-900 flex items-center justify-between text-start transition-colors"
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <span>{s.design.logoEmoji}</span>
+                      <div className="w-4 h-4 rounded bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center">
+                        <img src={s.design.customLogoUrl || s.logo || BLANK_STORE_LOGO_URL} alt="" className="w-full h-full object-contain" />
+                      </div>
                       <span className="truncate">{language === 'ar' ? s.nameAr || s.name : s.name}</span>
                     </div>
                     <span className="font-mono text-[10px] text-emerald-600">/store/{s.slug}</span>

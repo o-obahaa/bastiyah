@@ -19,6 +19,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { getStorePathLabel } from '../../utils/urlUtils';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 
 const COUNTRY_CODES = [
   { code: '+964', country: 'IQ', flag: '🇮🇶', nameAr: 'العراق', nameEn: 'Iraq' },
@@ -263,13 +264,17 @@ export const StoreMerchantLogin: React.FC = () => {
           {/* Header & Store Identity */}
           <div className="text-center space-y-3 mb-6">
             <div 
-              className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg border p-2 transition-transform hover:scale-105"
+              className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-lg border p-1.5 transition-transform hover:scale-105 overflow-hidden"
               style={{ 
                 backgroundColor: `${theme.hex}15`, 
                 borderColor: `${theme.hex}50` 
               }}
             >
-              <span>{activeStore.design.logoEmoji}</span>
+              <img
+                src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                alt=""
+                className="w-full h-full object-contain rounded-xl"
+              />
             </div>
 
             <div className="space-y-1">

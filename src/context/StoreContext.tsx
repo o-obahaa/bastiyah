@@ -74,7 +74,9 @@ export interface CreateStoreInput {
   plan: 'Starter' | 'Growth' | 'Enterprise';
   themeColor: StoreThemeColor;
   layoutStyle: StoreLayoutStyle;
-  logoEmoji: string;
+  logoEmoji?: string;
+  customLogoUrl?: string;
+  logo?: string;
   currency?: string;
 }
 
@@ -2240,10 +2242,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       status: 'active',
       plan: input.plan,
       createdAt: new Date().toISOString(),
+      logo: input.customLogoUrl || input.logo || '',
       design: {
         themeColor: input.themeColor,
         layoutStyle: input.layoutStyle,
         logoEmoji: input.logoEmoji || '🛍️',
+        customLogoUrl: input.customLogoUrl || input.logo || '',
         headerStyle: input.layoutStyle === 'luxury-centered' ? 'dark' : 'light',
         cardRadius: input.layoutStyle === 'minimal-editorial' ? 'sharp' : 'rounded',
       },

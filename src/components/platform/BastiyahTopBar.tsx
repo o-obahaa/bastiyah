@@ -13,6 +13,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getPlatformOrigin, getStoreDisplayUrl } from '../../utils/urlUtils';
 
@@ -142,7 +143,9 @@ export const BastiyahTopBar: React.FC = () => {
                             }}
                             className="flex items-center gap-2.5 text-start flex-1 min-w-0"
                           >
-                            <span className="text-lg shrink-0">{st.design.logoEmoji}</span>
+                            <div className="w-6 h-6 rounded-md bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center p-0.5">
+                              <img src={st.design.customLogoUrl || st.logo || BLANK_STORE_LOGO_URL} alt="" className="w-full h-full object-contain" />
+                            </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5">
                                 <p className="font-bold text-stone-900 text-xs truncate">

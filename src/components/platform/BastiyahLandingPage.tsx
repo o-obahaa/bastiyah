@@ -32,6 +32,7 @@ import {
   ShoppingBasket
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
 import { DynamicLogo } from '../common/DynamicLogo';
@@ -1523,8 +1524,12 @@ export const BastiyahLandingPage: React.FC = () => {
                       }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-stone-200/90 bg-white">
-                          {store.design.logoEmoji}
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border border-stone-200/90 bg-white overflow-hidden p-1">
+                          <img
+                            src={store.design.customLogoUrl || store.logo || BLANK_STORE_LOGO_URL}
+                            alt=""
+                            className="w-full h-full object-contain"
+                          />
                         </div>
                         <div>
                           <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white text-stone-600 border border-stone-200 shadow-2xs">

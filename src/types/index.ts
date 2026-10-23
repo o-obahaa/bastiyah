@@ -331,6 +331,7 @@ export interface HostedStore {
   status: 'active' | 'maintenance' | 'suspended';
   plan: 'Starter' | 'Growth' | 'Enterprise';
   createdAt: string;
+  logo?: string;
   design: StoreDesign;
   settings: StoreSettings;
   products: Product[];

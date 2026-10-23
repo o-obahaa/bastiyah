@@ -6,6 +6,7 @@ import { AdminOrders } from './AdminOrders';
 import { AdminCustomers } from './AdminCustomers';
 import { AdminSettings } from './AdminSettings';
 import { AdminStoreDesign } from './AdminStoreDesign';
+import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 import { 
   LayoutDashboard, 
   Package, 
@@ -182,14 +183,14 @@ export const AdminLayout: React.FC = () => {
 
           <div className="flex items-center gap-2 min-w-0">
             <div
-              className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-lg shadow-inner shrink-0"
+              className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner shrink-0 overflow-hidden p-0.5"
               style={{ borderColor: `${theme.hex}55` }}
             >
-              {activeStore.design.customLogoUrl ? (
-                <img src={activeStore.design.customLogoUrl} alt="" className="w-full h-full object-contain p-0.5 rounded-xl" />
-              ) : (
-                <span>{activeStore.design.logoEmoji}</span>
-              )}
+              <img
+                src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                alt=""
+                className="w-full h-full object-contain rounded-lg"
+              />
             </div>
             <span className="font-black text-sm text-white truncate max-w-[100px] xs:max-w-[140px]">
               {displayStoreName}
@@ -241,14 +242,14 @@ export const AdminLayout: React.FC = () => {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-2xl shadow-inner shrink-0"
+                className="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center shadow-inner shrink-0 overflow-hidden p-1"
                 style={{ borderColor: `${theme.hex}66` }}
               >
-                {activeStore.design.customLogoUrl ? (
-                  <img src={activeStore.design.customLogoUrl} alt="" className="w-full h-full object-contain p-1 rounded-2xl" />
-                ) : (
-                  <span>{activeStore.design.logoEmoji}</span>
-                )}
+                <img
+                  src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                  alt=""
+                  className="w-full h-full object-contain rounded-xl"
+                />
               </div>
 
               <div className="min-w-0">

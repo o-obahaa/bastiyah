@@ -70,8 +70,7 @@ import { StoreThemeColor, StoreLayoutStyle, HostedStore, Order, OrderStatus } fr
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 import { isMockOrder, isMockCustomer } from '../../data/mockData';
-
-const EMOJI_OPTIONS = ['🛍️', '👑', '☕', '👗', '⚡', '🏺', '🌿', '💎', '🦢', '🐼', '👟', '⌚', '🎧', '🕯️', '🎨', '🏪'];
+import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
 
 const CATEGORY_PRESETS = [
   { en: 'Specialty Coffee & Artisan', ar: 'قهوة مختصة وحرفيات' },
@@ -84,10 +83,34 @@ const CATEGORY_PRESETS = [
 ];
 
 const LAYOUT_OPTIONS: Array<{ id: StoreLayoutStyle; labelEn: string; labelAr: string; descEn: string; descAr: string }> = [
-  { id: 'modern-split', labelEn: 'Modern Split', labelAr: 'عصري منقسم', descEn: 'Split hero with card highlight', descAr: 'واجهة عصرية منقسمة مع إبراز البطاقات' },
-  { id: 'luxury-centered', labelEn: 'Luxury Centered', labelAr: 'ملكي فاخر', descEn: 'Centered luxury aesthetic with dark banner', descAr: 'طابع فاخر متمركز مع خلفية داكنة' },
-  { id: 'minimal-editorial', labelEn: 'Minimal Editorial', labelAr: 'تبسيطي تحريري', descEn: 'Magazine typography and sharp frames', descAr: 'خطوط عريضة أنيقة وطابع المجلات' },
-  { id: 'vibrant-banner', labelEn: 'Vibrant Banner', labelAr: 'بانر حيوي', descEn: 'Full-bleed banner with dynamic gradients', descAr: 'بانر ملون عريض مع تدرجات جذابة' },
+  { 
+    id: 'modern-split', 
+    labelEn: 'Standard Modern Split', 
+    labelAr: 'الواجهة العصرية القياسية', 
+    descEn: 'Balanced commercial layout pairing high-converting hero messaging with featured product showcases.', 
+    descAr: 'تصميم تجاري متوازن يجمع بين واجهة العرض الرئيسية والمنتجات المميزة لتعزيز معدل التحويل والمبيعات.' 
+  },
+  { 
+    id: 'luxury-centered', 
+    labelEn: 'Classic Luxury Centered', 
+    labelAr: 'الهوية الكلاسيكية الفاخرة', 
+    descEn: 'Symmetrical high-end aesthetic with refined depth, ideal for premium brands, perfumery, and jewelry.', 
+    descAr: 'طابع متناظر بأناقة هادئة وتدرجات عميقة، مخصص للعلامات التجارية الراقية كالعطور، الساعات والمجوهرات.' 
+  },
+  { 
+    id: 'minimal-editorial', 
+    labelEn: 'Contemporary Editorial', 
+    labelAr: 'النمط التحريري المعاصر', 
+    descEn: 'Streamlined magazine-grade layout highlighting high-resolution product imagery and clear details.', 
+    descAr: 'تنسيق عصري انسيابي يركز بالكامل على فخامة صور المنتجات ووضوح التفاصيل بأسلوب المجلات العالمية.' 
+  },
+  { 
+    id: 'vibrant-banner', 
+    labelEn: 'Dynamic Campaign Banner', 
+    labelAr: 'الواجهة الترويجية التفاعلية', 
+    descEn: 'High-impact promotional interface with wide banners suited for high-volume stores and retail events.', 
+    descAr: 'واجهة إعلانية شاملة ببانر عريض وتدرجات لونية حيوية، مصممة للمتاجر سريعة الحركة والحملات الكبرى.' 
+  },
 ];
 
 const THEME_COLOR_OPTIONS: Array<{ id: StoreThemeColor; labelEn: string; labelAr: string; bgClass: string }> = [
@@ -247,7 +270,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [editStatus, setEditStatus] = useState<'active' | 'maintenance' | 'suspended'>('active');
   const [editThemeColor, setEditThemeColor] = useState<StoreThemeColor>('emerald');
   const [editLayoutStyle, setEditLayoutStyle] = useState<StoreLayoutStyle>('modern-split');
-  const [editLogoEmoji, setEditLogoEmoji] = useState('🛍️');
+  const [editLogoUrl, setEditLogoUrl] = useState('');
   const [showEditPassword, setShowEditPassword] = useState(false);
 
   // Comprehensive Create Modal Form State
@@ -265,9 +288,11 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [newPlan, setNewPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
   const [newThemeColor, setNewThemeColor] = useState<StoreThemeColor>('emerald');
   const [newLayoutStyle, setNewLayoutStyle] = useState<StoreLayoutStyle>('modern-split');
-  const [newLogoEmoji, setNewLogoEmoji] = useState('🛍️');
+  const [newLogoUrl, setNewLogoUrl] = useState('');
   const [newCurrency, setNewCurrency] = useState('IQD');
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const newLogoInputRef = useRef<HTMLInputElement>(null);
+  const editLogoInputRef = useRef<HTMLInputElement>(null);
 
   // Merchants Tab State
   const [merchantSearch, setMerchantSearch] = useState('');
@@ -342,7 +367,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setEditStatus(store.status);
     setEditThemeColor(store.design.themeColor);
     setEditLayoutStyle(store.design.layoutStyle);
-    setEditLogoEmoji(store.design.logoEmoji);
+    setEditLogoUrl(store.design.customLogoUrl || store.logo || '');
     setShowEditPassword(false);
   };
 
@@ -386,13 +411,14 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       adminPassword: editAdminPassword.trim() || 'merchant123',
       plan: editPlan,
       status: editStatus,
+      logo: editLogoUrl,
     });
 
     updateStoreDesign(
       {
         themeColor: editThemeColor,
         layoutStyle: editLayoutStyle,
-        logoEmoji: editLogoEmoji,
+        customLogoUrl: editLogoUrl,
       },
       editingStore.id
     );
@@ -467,7 +493,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       plan: newPlan,
       themeColor: newThemeColor,
       layoutStyle: newLayoutStyle,
-      logoEmoji: newLogoEmoji,
+      customLogoUrl: newLogoUrl,
+      logo: newLogoUrl,
       currency: currencySymbol,
     });
 
@@ -478,6 +505,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setNewSlugManuallyEdited(false);
     setNewTagline('');
     setNewTaglineAr('');
+    setNewLogoUrl('');
     setNewOwnerName('');
     setNewOwnerEmail('');
     setNewOwnerPhone('+964 770 123 4567');
@@ -1618,7 +1646,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                       className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white border border-slate-200/80 hover:border-amber-400 text-xs font-bold text-slate-800 shrink-0 shadow-xs hover:shadow-sm transition-all"
                       title={language === 'ar' ? `إطلاق متجر ${preset.nameAr} فوراً` : `Launch ${preset.name} instantly`}
                     >
-                      <span className="text-base group-hover:scale-110 transition-transform">{preset.logoEmoji}</span>
+                      <Store className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-600 transition-colors shrink-0" />
                       <span>{language === 'ar' ? preset.nameAr : preset.name}</span>
                       <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-black border border-amber-200">
                         {preset.plan}
@@ -1776,8 +1804,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                         {/* Top Store Header */}
                         <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
-                              {store.design.logoEmoji || '🛍️'}
+                            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden p-1 shadow-2xs">
+                              <img src={getStoreLogo(store)} alt="" className="w-full h-full object-contain" />
                             </div>
                             <div>
                               <div className="flex items-center gap-1.5">
@@ -1940,7 +1968,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           <tr key={store.id} className="hover:bg-slate-50/80 transition-colors">
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-2.5">
-                                <span className="text-xl">{store.design.logoEmoji}</span>
+                                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                                  <img src={getStoreLogo(store)} alt="" className="w-full h-full object-contain" />
+                                </div>
                                 <div>
                                   <p className="font-bold text-slate-900">{language === 'ar' ? (store.nameAr || store.name) : store.name}</p>
                                   <p className="text-[11px] text-slate-500">{store.ownerName}</p>
@@ -2073,7 +2103,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                             <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px]">
                               {idx + 1}
                             </span>
-                            <span className="text-base">{st.design.logoEmoji}</span>
+                            <img src={getStoreLogo(st)} alt="" className="w-5 h-5 rounded-md object-contain border border-slate-200 bg-white p-0.5 shrink-0" />
                             <span className="font-bold text-slate-900">{language === 'ar' ? (st.nameAr || st.name) : st.name}</span>
                             <span className="text-slate-400 font-mono text-[11px]">({st.slug}.bastiyah.com)</span>
                           </div>
@@ -2207,7 +2237,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           </td>
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-base">{store.design.logoEmoji}</span>
+                              <img src={getStoreLogo(store)} alt="" className="w-5 h-5 rounded-md object-contain border border-slate-200 bg-white p-0.5 shrink-0" />
                               <span className="font-bold text-slate-800">{language === 'ar' ? (store.nameAr || store.name) : store.name}</span>
                             </div>
                           </td>
@@ -2481,7 +2511,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           </td>
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-1.5">
-                              <span>{ord.storeLogoEmoji}</span>
+                              <img src={getStoreLogo(stores.find(s => s.name === ord.storeName || s.nameAr === ord.storeName))} alt="" className="w-5 h-5 rounded-md object-contain border border-slate-200 bg-white p-0.5 shrink-0" />
                               <span className="font-bold text-slate-800">{ord.storeName}</span>
                             </div>
                           </td>
@@ -2610,7 +2640,10 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     {stores.map((store) => (
                       <tr key={store.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3 px-4 font-bold text-slate-900">
-                          {store.design.logoEmoji} {store.name}
+                          <div className="flex items-center gap-2">
+                            <img src={getStoreLogo(store)} alt="" className="w-5 h-5 rounded-md object-contain border border-slate-200 bg-white p-0.5 shrink-0" />
+                            <span>{language === 'ar' ? (store.nameAr || store.name) : store.name}</span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-slate-600">{store.ownerName}</td>
                         <td className="py-3 px-4">{getPlanPill(store.plan)}</td>
@@ -3066,20 +3099,20 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     {language === 'ar' ? 'نمط الواجهة والتصميم' : 'Store Layout Style'}
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                     {LAYOUT_OPTIONS.map((lo) => (
                       <button
                         key={lo.id}
                         type="button"
                         onClick={() => setNewLayoutStyle(lo.id)}
-                        className={`p-2.5 rounded-xl border text-start transition-all ${
+                        className={`p-3 rounded-2xl border text-start transition-all flex flex-col justify-between min-h-[96px] ${
                           newLayoutStyle === lo.id
-                            ? 'bg-amber-50/80 border-amber-500 text-amber-950 ring-2 ring-amber-500/20'
-                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                            ? 'bg-amber-50/90 border-amber-500 text-amber-950 ring-2 ring-amber-500/20 shadow-xs'
+                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80 text-slate-700'
                         }`}
                       >
-                        <p className="font-bold text-xs">{language === 'ar' ? lo.labelAr : lo.labelEn}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{language === 'ar' ? lo.descAr : lo.descEn}</p>
+                        <p className="font-bold text-xs sm:text-sm text-slate-900">{language === 'ar' ? lo.labelAr : lo.labelEn}</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed line-clamp-2">{language === 'ar' ? lo.descAr : lo.descEn}</p>
                       </button>
                     ))}
                   </div>
@@ -3109,22 +3142,64 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Emoji Picker */}
+                  {/* Store Logo Uploader */}
                   <div>
-                    <span className="text-[11px] text-slate-500 block mb-1.5">{language === 'ar' ? 'أيقونة الشعار (Emoji):' : 'Logo Emoji:'}</span>
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                      {EMOJI_OPTIONS.map((em) => (
-                        <button
-                          key={em}
-                          type="button"
-                          onClick={() => setNewLogoEmoji(em)}
-                          className={`w-8 h-8 rounded-xl text-base flex items-center justify-center transition-all shrink-0 ${
-                            newLogoEmoji === em ? 'bg-amber-100 border-2 border-amber-500 shadow-xs scale-110' : 'bg-white border border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {em}
-                        </button>
-                      ))}
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1.5">
+                      {language === 'ar' ? 'شعار المتجر (صورة):' : 'Store Logo (Image):'}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                        <img
+                          src={newLogoUrl || BLANK_STORE_LOGO_URL}
+                          alt="Logo Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => newLogoInputRef.current?.click()}
+                            className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-xs transition-all"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-amber-600" />
+                            <span>{newLogoUrl ? (language === 'ar' ? 'تغيير الصورة' : 'Change') : (language === 'ar' ? 'رفع شعار' : 'Upload Logo')}</span>
+                          </button>
+                          {newLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setNewLogoUrl('')}
+                              className="px-2.5 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors"
+                              title={language === 'ar' ? 'حذف الشعار واستخدام الصورة الفارغة' : 'Remove logo'}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {language === 'ar' 
+                            ? 'في حال عدم رفع شعار، سيتم اعتماد الصورة الفارغة الافتراضية تلقائياً.' 
+                            : 'If no logo is uploaded, a blank photo placeholder is used.'}
+                        </p>
+                      </div>
+                      <input
+                        ref={newLogoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              if (typeof reader.result === 'string') {
+                                setNewLogoUrl(reader.result);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -3218,8 +3293,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 <div className="bg-white border-2 border-slate-300 rounded-3xl p-5 shadow-lg space-y-4">
                   <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl shrink-0">
-                        {newLogoEmoji}
+                      <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-2xs">
+                        <img src={newLogoUrl || BLANK_STORE_LOGO_URL} alt="" className="w-full h-full object-contain" />
                       </div>
                       <div>
                         <h4 className="font-bold text-slate-900 text-base font-brand">
@@ -3286,8 +3361,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
           <div className="bg-white border border-slate-200/80 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center text-xl">
-                  {editLogoEmoji}
+                <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-2xs">
+                  <img src={editLogoUrl || BLANK_STORE_LOGO_URL} alt="" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 font-brand">
@@ -3422,36 +3497,79 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-bold text-slate-600 block mb-1.5">{language === 'ar' ? 'نمط الواجهة:' : 'Layout Style:'}</span>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1.5">{language === 'ar' ? 'نمط الواجهة والتصميم:' : 'Store Layout Style:'}</span>
                     <select
                       value={editLayoutStyle}
                       onChange={(e) => setEditLayoutStyle(e.target.value as StoreLayoutStyle)}
-                      className="w-full px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-medium text-slate-800"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800"
                     >
                       {LAYOUT_OPTIONS.map((lo) => (
                         <option key={lo.id} value={lo.id}>
-                          {language === 'ar' ? lo.labelAr : lo.labelEn}
+                          {language === 'ar' ? `${lo.labelAr} — ${lo.descAr.slice(0, 48)}...` : `${lo.labelEn} — ${lo.descEn.slice(0, 48)}...`}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
 
+                {/* Logo Image Uploader */}
                 <div>
-                  <span className="text-[11px] font-bold text-slate-600 block mb-1.5">{language === 'ar' ? 'أيقونة الشعار (Emoji):' : 'Logo Emoji:'}</span>
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                    {EMOJI_OPTIONS.map((em) => (
-                      <button
-                        key={em}
-                        type="button"
-                        onClick={() => setEditLogoEmoji(em)}
-                        className={`w-8 h-8 rounded-xl text-base flex items-center justify-center transition-all shrink-0 ${
-                          editLogoEmoji === em ? 'bg-amber-100 border-2 border-amber-500 shadow-xs scale-110' : 'bg-white border border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {em}
-                      </button>
-                    ))}
+                  <span className="text-[11px] font-bold text-slate-600 block mb-1.5">
+                    {language === 'ar' ? 'شعار المتجر (صورة):' : 'Store Logo (Image):'}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                      <img
+                        src={editLogoUrl || BLANK_STORE_LOGO_URL}
+                        alt="Logo Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1.5 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => editLogoInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-xs transition-all"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{editLogoUrl ? (language === 'ar' ? 'تغيير الصورة' : 'Change') : (language === 'ar' ? 'رفع شعار' : 'Upload Logo')}</span>
+                        </button>
+                        {editLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setEditLogoUrl('')}
+                            className="px-2.5 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors"
+                            title={language === 'ar' ? 'حذف الشعار واستخدام الصورة الفارغة' : 'Remove logo'}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {language === 'ar' 
+                          ? 'في حال عدم رفع شعار، سيتم اعتماد الصورة الفارغة الافتراضية تلقائياً.' 
+                          : 'If no logo is uploaded, a blank photo placeholder is used.'}
+                      </p>
+                    </div>
+                    <input
+                      ref={editLogoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (typeof reader.result === 'string') {
+                              setEditLogoUrl(reader.result);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
                   </div>
                 </div>
               </div>
