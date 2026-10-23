@@ -157,11 +157,22 @@ http.route({
       }
 
       const raw = text.trim();
-      const combined = `${raw} ${quotedText || ""}`;
 
-      // Extract order number from text or quoted text (e.g. #PAN-88240 or PAN-88240 or #88240)
-      const orderMatch = combined.match(/#?([A-Za-z0-9]+-[0-9]+|[0-9]{4,6})/);
-      const orderNumber = orderMatch ? orderMatch[1].toUpperCase() : null;
+      // Extract order number: prioritize order number found in quotedText, then raw text
+      let orderNumber: string | null = null;
+      if (quotedText) {
+        const quotedMatch = quotedText.match(/#?([A-Za-z]{3,10}-[0-9]{4,6}|[0-9]{4,6})/i);
+        if (quotedMatch) {
+          orderNumber = quotedMatch[1].toUpperCase();
+        }
+      }
+
+      if (!orderNumber) {
+        const rawMatch = raw.match(/#?([A-Za-z]{3,10}-[0-9]{4,6}|[0-9]{4,6})/i);
+        if (rawMatch) {
+          orderNumber = rawMatch[1].toUpperCase();
+        }
+      }
 
       const lower = raw.toLowerCase();
 
@@ -280,8 +291,8 @@ http.route({
         });
       }
 
-      // 5. CONFIRM / PROCESSING (Option 1 or 'تأكيد' or Option 3 from main menu)
-      if (/^(تأكيد|تاكيد|تجهيز|قبول|موافقة|confirm|1\b|3\b)/i.test(raw)) {
+      // 5. CONFIRM / PROCESSING (Option 1 or 'تأكيد')
+      if (/^(تأكيد|تاكيد|تجهيز|قبول|موافقة|confirm|1\b)/i.test(raw)) {
         const res: any = await ctx.runMutation("orders:updateStatusByOrderNumber" as any, {
           orderNumber: targetOrderNumber,
           status: "processing",
@@ -303,10 +314,13 @@ http.route({
 
       // 6. SHIP WITH OPTIONAL TRACKING (Option 2 with order context or 'شحن')
       if (/^(شحن|ارسال|إرسال|ship|2\b)/i.test(raw)) {
-        const parts = raw.split(/\s+/).filter(Boolean);
         let trackingCode: string | undefined = undefined;
-        if (parts.length >= 2 && !/^(2|شحن|ship)$/i.test(parts[parts.length - 1])) {
-          trackingCode = parts.slice(1).join(" ").replace(/#?[A-Za-z0-9]+-[0-9]+/i, "").trim() || undefined;
+        const stripped = raw
+          .replace(/^(شحن|ارسال|إرسال|ship|2\b)/i, "")
+          .replace(new RegExp(`#?${targetOrderNumber}`, "gi"), "")
+          .trim();
+        if (stripped) {
+          trackingCode = stripped;
         }
 
         const res: any = await ctx.runMutation("orders:updateStatusByOrderNumber" as any, {
@@ -403,6 +417,70 @@ http.route({
       return new Response(JSON.stringify({ reply: null }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
+      });
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+/**
+ * 4. Register order in Convex cloud from StoreContext or notification dispatch
+ */
+http.route({
+  path: "/register-order",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const order = await request.json();
+      if (!order || !order.orderNumber) {
+        return new Response(JSON.stringify({ error: "orderNumber is required" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const cleanNum = order.orderNumber.trim().toUpperCase().replace('#', '');
+      const existing: any = await ctx.runQuery("orders:getOrderByNumber" as any, { orderNumber: cleanNum });
+
+      if (!existing || existing.customer?.fullName === "عميل المتجر") {
+        await ctx.runMutation("orders:create" as any, {
+          storeId: order.storeId || "panda",
+          orderNumber: cleanNum,
+          customer: {
+            fullName: order.customer?.fullName || "عميل المتجر",
+            email: order.customer?.email || `${cleanNum.toLowerCase()}@customer.iq`,
+            phone: order.customer?.phone || "",
+            address: order.customer?.address || "العراق",
+            city: order.customer?.city || "بغداد",
+            state: order.customer?.state || "بغداد",
+            zipCode: order.customer?.zipCode || "10001",
+            country: order.customer?.country || "Iraq",
+          },
+          items: (order.items || []).map((it: any) => ({
+            productId: it.productId || "p1",
+            productName: it.productName || "منتج",
+            productImage: it.productImage || "",
+            price: it.price || 0,
+            quantity: it.quantity || 1,
+          })),
+          subtotal: order.subtotal || order.total || 0,
+          discount: order.discount || 0,
+          shipping: order.shipping || 0,
+          tax: order.tax || 0,
+          total: order.total || 0,
+          status: order.status || "pending",
+          paymentMethod: order.paymentMethod || "Cash on Delivery",
+          trackingNumber: order.trackingNumber,
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, orderNumber: cleanNum }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
       });
     } catch (err: any) {
       return new Response(JSON.stringify({ error: err.message }), {

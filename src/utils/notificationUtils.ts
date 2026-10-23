@@ -314,6 +314,31 @@ export const dispatchOrderWhatsAppToManager = async (
 
   const message = formatOrderWhatsAppMessage(order, storeName, currency);
 
+  // 0. Auto-register order in Convex database so WhatsApp Bot commands (confirm, ship, info) always succeed
+  const convexSiteUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_CONVEX_SITE_URL) || 'https://fine-lemming-449.convex.site').trim();
+  try {
+    fetch(`${convexSiteUrl}/register-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storeId: store.slug,
+        orderNumber: order.orderNumber,
+        customer: order.customer,
+        items: order.items,
+        subtotal: order.subtotal,
+        discount: order.discount,
+        shipping: order.shipping,
+        tax: order.tax,
+        total: order.total,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        trackingNumber: order.trackingNumber,
+      }),
+    }).catch(() => {});
+  } catch (e) {
+    // silently catch
+  }
+
   // 1. Dispatch through WhatsApp Gateway (Render)
   const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
   try {

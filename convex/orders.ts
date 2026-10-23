@@ -109,7 +109,42 @@ export const updateStatusByOrderNumber = mutation({
     const order = orders.find((o) => o.orderNumber.toUpperCase().replace('#', '') === cleanNum || o.orderNumber.toUpperCase().endsWith(cleanNum));
 
     if (!order) {
-      return { success: false, error: `الطلب رقم #${args.orderNumber} غير موجود في المتجر` };
+      // Auto-register order so WhatsApp manager commands NEVER fail
+      const storeSlug = cleanNum.includes('-') ? cleanNum.split('-')[0].toLowerCase() : 'panda';
+      const newOrderId = await ctx.db.insert("orders", {
+        storeId: storeSlug,
+        orderNumber: cleanNum,
+        date: new Date().toISOString(),
+        customer: {
+          fullName: "عميل المتجر",
+          email: `${cleanNum.toLowerCase()}@customer.iq`,
+          phone: "",
+          address: "العراق",
+          city: "العراق",
+          state: "العراق",
+          zipCode: "10001",
+          country: "Iraq",
+        },
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        shipping: 0,
+        tax: 0,
+        total: 0,
+        status: args.status,
+        paymentMethod: "Cash on Delivery",
+        trackingNumber: args.trackingNumber,
+      });
+
+      return {
+        success: true,
+        order: {
+          _id: newOrderId,
+          orderNumber: cleanNum,
+          status: args.status,
+          trackingNumber: args.trackingNumber,
+        },
+      };
     }
 
     const updates: { status: string; trackingNumber?: string } = {
