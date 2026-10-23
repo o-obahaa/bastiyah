@@ -19,7 +19,12 @@ import {
   Zap,
   FileText,
   MapPin,
-  CheckCircle2
+  CheckCircle2,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  X,
+  Move
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
@@ -68,6 +73,73 @@ export const ProductDetailPage: React.FC = () => {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Zoom & Close-Look Lightbox Modal State
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handleZoomIn = () => {
+    setZoomScale((prev) => Math.min(Number((prev + 0.5).toFixed(1)), 4));
+  };
+
+  const handleZoomOut = () => {
+    setZoomScale((prev) => {
+      const next = Math.max(Number((prev - 0.5).toFixed(1)), 1);
+      if (next === 1) setPanPosition({ x: 0, y: 0 });
+      return next;
+    });
+  };
+
+  const handleResetZoom = () => {
+    setZoomScale(1);
+    setPanPosition({ x: 0, y: 0 });
+    setIsDragging(false);
+  };
+
+  const handleOpenZoomModal = () => {
+    handleResetZoom();
+    setIsZoomModalOpen(true);
+  };
+
+  const handleCloseZoomModal = () => {
+    setIsZoomModalOpen(false);
+    handleResetZoom();
+  };
+
+  const handleToggleZoom = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (zoomScale > 1) {
+      handleResetZoom();
+    } else {
+      setZoomScale(2.5);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomScale <= 1) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - panPosition.x, y: e.clientY - panPosition.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoomScale <= 1) return;
+    setPanPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -131,6 +203,42 @@ export const ProductDetailPage: React.FC = () => {
     setSelectedImage((prev) => (prev < product.images.length - 1 ? prev + 1 : 0));
   };
 
+  // Lock body scroll when zoom modal is active
+  useEffect(() => {
+    if (isZoomModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isZoomModalOpen]);
+
+  // Keyboard navigation for zoom modal
+  useEffect(() => {
+    if (!isZoomModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCloseZoomModal();
+      } else if (e.key === 'ArrowRight') {
+        if (language === 'ar') handlePrevImage(); else handleNextImage();
+        handleResetZoom();
+      } else if (e.key === 'ArrowLeft') {
+        if (language === 'ar') handleNextImage(); else handlePrevImage();
+        handleResetZoom();
+      } else if (e.key === '+' || e.key === '=') {
+        handleZoomIn();
+      } else if (e.key === '-') {
+        handleZoomOut();
+      } else if (e.key === '0') {
+        handleResetZoom();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isZoomModalOpen, language, product?.images?.length]);
+
   const handleAddReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReviewAuthor.trim() || !newReviewComment.trim()) {
@@ -185,25 +293,37 @@ export const ProductDetailPage: React.FC = () => {
         
         {/* Column 1: Gallery (Span 5) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="aspect-square sm:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-sm relative group">
+          <div 
+            onClick={handleOpenZoomModal}
+            className="aspect-square sm:aspect-[4/3] lg:aspect-square rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-sm relative group cursor-zoom-in select-none"
+            title={language === 'ar' ? 'انقر لتكبير ومعاينة أدق التفاصيل' : 'Click to inspect & zoom'}
+          >
             <img
               src={product.images[selectedImage] || product.images[0]}
               alt={productName}
-              className="w-full h-full object-cover object-center transition-all duration-300"
+              className="w-full h-full object-cover object-center transition-all duration-300 group-hover:scale-105"
             />
             
+            {/* Hover overlay hint button for close look / zoom */}
+            <div className="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none flex items-center justify-center">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/95 text-slate-900 font-bold text-xs shadow-xl backdrop-blur-md transform translate-y-2 group-hover:translate-y-0 transition-all duration-200 border border-slate-200/60">
+                <ZoomIn className="w-4 h-4 text-emerald-600" />
+                <span>{language === 'ar' ? 'انقر للتكبير ومعاينة أدق التفاصيل' : 'Click to inspect & zoom'}</span>
+              </span>
+            </div>
+
             {/* Top-end Badge (e.g. HOT SALE) */}
             {product.badge && (
-              <span className="absolute top-4 end-4 z-10 px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow">
+              <span className="absolute top-4 end-4 z-10 px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow pointer-events-none">
                 {product.badge}
               </span>
             )}
 
             {/* Floating Quick Action Buttons: Share & Wishlist */}
-            <div className="absolute top-4 start-4 z-10 flex flex-col gap-2">
+            <div className="absolute top-4 start-4 z-10 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                onClick={handleShare}
+                onClick={(e) => { e.stopPropagation(); handleShare(); }}
                 className="w-10 h-10 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow-md backdrop-blur-sm border border-slate-200/80 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
                 title={t.share}
               >
@@ -211,7 +331,7 @@ export const ProductDetailPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => toggleWishlist(product.id)}
+                onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
                 className={`w-10 h-10 rounded-full shadow-md backdrop-blur-sm border transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${
                   isFavorited 
                     ? 'bg-rose-50 text-rose-500 border-rose-200' 
@@ -225,10 +345,10 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Next and Back Buttons */}
             {product.images.length > 1 && (
-              <>
+              <div onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
-                  onClick={handlePrevImage}
+                  onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
                   aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous picture'}
                   className="absolute top-1/2 -translate-y-1/2 start-3 z-10 w-10 h-10 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
                 >
@@ -241,7 +361,7 @@ export const ProductDetailPage: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={handleNextImage}
+                  onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
                   aria-label={language === 'ar' ? 'الصورة التالية' : 'Next picture'}
                   className="absolute top-1/2 -translate-y-1/2 end-3 z-10 w-10 h-10 rounded-full flex items-center justify-center bg-white/90 hover:bg-white text-slate-800 shadow-md hover:shadow-xl backdrop-blur-sm border border-slate-200/80 transition-all hover:scale-105 active:scale-95 focus:outline-none"
                 >
@@ -256,7 +376,7 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="absolute bottom-3 end-3 px-2.5 py-1 rounded-full bg-slate-900/70 backdrop-blur-md text-white text-xs font-bold tabular-nums shadow select-none">
                   {selectedImage + 1} / {product.images.length}
                 </div>
-              </>
+              </div>
             )}
           </div>
 
@@ -749,6 +869,190 @@ export const ProductDetailPage: React.FC = () => {
             {relatedProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Product Image Close-Look & Zoom Lightbox Modal */}
+      {isZoomModalOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col justify-between overflow-hidden animate-in fade-in duration-200 select-none"
+          onClick={handleCloseZoomModal}
+        >
+          {/* Top Bar: Title, Zoom Controls & Close Button */}
+          <div
+            className="flex items-center justify-between px-4 sm:px-6 py-3 bg-gradient-to-b from-black/80 to-transparent z-20 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Product Name & Image Counter */}
+            <div className="flex items-center gap-3 text-white min-w-0">
+              <span className="text-xs sm:text-sm font-bold truncate max-w-[180px] sm:max-w-md text-slate-200">
+                {productName}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white text-xs font-mono font-bold shrink-0">
+                {selectedImage + 1} / {product.images.length}
+              </span>
+            </div>
+
+            {/* Central Zoom Controls Pill */}
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/15 text-white">
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                disabled={zoomScale <= 1}
+                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+                title={language === 'ar' ? 'تصغير (-)' : 'Zoom out (-)'}
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              <span className="px-2 font-mono text-xs font-bold text-emerald-400 select-none min-w-[3.5rem] text-center">
+                {Math.round(zoomScale * 100)}%
+              </span>
+
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                disabled={zoomScale >= 4}
+                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+                title={language === 'ar' ? 'تكبير (+)' : 'Zoom in (+)'}
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              {zoomScale > 1 && (
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/25 flex items-center gap-1 transition-all cursor-pointer"
+                  title={language === 'ar' ? 'استعادة الحجم الطبيعي (0)' : 'Reset zoom (0)'}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'إعادة' : 'Reset'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={handleCloseZoomModal}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-white/10 cursor-pointer"
+              title={language === 'ar' ? 'إغلاق (Esc)' : 'Close (Esc)'}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Interactive Zoom Viewport (Image Area) */}
+          <div
+            className={`flex-1 relative flex items-center justify-center overflow-hidden p-4 select-none ${
+              zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'
+            }`}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onWheel={handleWheel}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                handleCloseZoomModal();
+              }
+            }}
+            onDoubleClick={handleToggleZoom}
+          >
+            {/* The Scaled/Panned Image Container */}
+            <div
+              className="max-h-[72vh] max-w-[90vw] flex items-center justify-center select-none"
+              style={{
+                transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomScale})`,
+                transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+              }}
+            >
+              <img
+                src={product.images[selectedImage] || product.images[0]}
+                alt={productName}
+                draggable={false}
+                className={`max-h-[72vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl select-none transition-shadow ${
+                  zoomScale > 1 ? 'shadow-black/80' : ''
+                }`}
+              />
+            </div>
+
+            {/* Next and Previous Arrow Buttons inside Zoom Viewport */}
+            {product.images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (language === 'ar') handlePrevImage(); else handleNextImage();
+                    handleResetZoom();
+                  }}
+                  className="absolute start-4 sm:start-8 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-md border border-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl z-20 cursor-pointer"
+                  title={language === 'ar' ? 'الصورة السابقة' : 'Previous image'}
+                >
+                  {language === 'ar' ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (language === 'ar') handleNextImage(); else handlePrevImage();
+                    handleResetZoom();
+                  }}
+                  className="absolute end-4 sm:end-8 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-md border border-white/15 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl z-20 cursor-pointer"
+                  title={language === 'ar' ? 'الصورة التالية' : 'Next image'}
+                >
+                  {language === 'ar' ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+                </button>
+              </>
+            )}
+
+            {/* Panning / Zooming visual indicator when zoomed */}
+            {zoomScale > 1 && (
+              <div className="absolute top-4 start-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white/95 text-xs font-semibold border border-white/15 flex items-center gap-1.5 pointer-events-none shadow-lg animate-in fade-in">
+                <Move className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{language === 'ar' ? 'اسحب الصورة للتحريك والاستكشاف' : 'Drag to pan around details'}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Bar: Thumbnails & Helpful Hints */}
+          <div
+            className="p-4 bg-gradient-to-t from-black/80 to-transparent z-20 space-y-2.5 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Thumbnails Strip */}
+            {product.images.length > 1 && (
+              <div className="flex items-center justify-center gap-2 overflow-x-auto py-1">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedImage(idx);
+                      handleResetZoom();
+                    }}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                      selectedImage === idx
+                        ? 'border-emerald-500 ring-2 ring-emerald-400/50 scale-105 shadow-lg'
+                        : 'border-white/20 opacity-50 hover:opacity-100 hover:border-white/40'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover select-none" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Usage Tip Badge */}
+            <div className="text-center text-[11px] text-white/60 font-medium select-none">
+              {language === 'ar'
+                ? '💡 انقر مرتين للتكبير السريع • عجلة الفأرة للتقريب والتبعيد • اسحب لتحريك الصورة • اضغط ESC للإغلاق'
+                : '💡 Double click to zoom • Scroll to zoom in/out • Drag to pan • Press ESC to exit'}
+            </div>
           </div>
         </div>
       )}
