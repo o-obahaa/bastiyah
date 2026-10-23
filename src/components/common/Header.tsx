@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCategory, ANONYMOUS_USER_AVATAR } from '../../types';
+import { filterProductsBySearch, matchCategorySearch } from '../../utils/searchUtils';
 import { 
   ShoppingBag, 
   Heart, 
@@ -79,41 +80,21 @@ export const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Arabic text normalization for flexible matching
-  const normalizeArabic = (text: string) => {
-    return text
-      .toLowerCase()
-      .trim()
-      .replace(/[أإآ]/g, 'ا')
-      .replace(/[ة]/g, 'ه')
-      .replace(/[يى]/g, 'ي')
-      .replace(/[\u064B-\u065F]/g, '');
-  };
-
   const cleanQuery = searchQuery.trim();
-  const normalizedQ = normalizeArabic(cleanQuery);
 
-  // Filter matching products
+  // Multi-lingual, typo-tolerant search across titles, descriptions, categories, tags & specs
   const allMatchingProducts = cleanQuery.length > 0
-    ? products.filter((p) => {
-        const name = getProductName(p);
-        const tagline = getProductTagline(p);
-        const cat = getCategoryName(p.category);
-        const tags = (p.tags || []).join(' ');
-        const haystack = `${name} ${tagline} ${cat} ${tags}`;
-        return normalizeArabic(haystack).includes(normalizedQ);
-      })
+    ? filterProductsBySearch(products, searchQuery)
     : [];
 
   const suggestedProducts = allMatchingProducts.slice(0, 5);
   const totalMatchingCount = allMatchingProducts.length;
 
-  // Filter matching categories
+  // Filter matching categories (bilingual: Arabic & English)
   const matchingCategories = cleanQuery.length >= 2
-    ? (Array.from(new Set(products.map((p) => p.category))) as ProductCategory[]).filter((cat) => {
-        const catName = getCategoryName(cat);
-        return normalizeArabic(catName).includes(normalizedQ);
-      })
+    ? (Array.from(new Set(products.map((p) => p.category))) as ProductCategory[]).filter((cat) =>
+        matchCategorySearch(cat, searchQuery)
+      )
     : [];
 
   const handleSelectProduct = (product: any) => {

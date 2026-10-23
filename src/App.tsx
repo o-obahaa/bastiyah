@@ -23,6 +23,7 @@ import { WishlistPage } from './components/store/WishlistPage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { getStorePathLabel } from './utils/urlUtils';
+import { filterProductsBySearch } from './utils/searchUtils';
 
 export function App() {
   const { 
@@ -58,17 +59,9 @@ export function App() {
       result = result.filter((p) => p.stock > 0);
     }
 
-    // Search query filter (matches both English and Arabic)
+    // Search query filter (matches both English and Arabic, full descriptions, specs, and spelling variations)
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.nameAr && p.nameAr.toLowerCase().includes(q)) ||
-          getProductName(p).toLowerCase().includes(q) ||
-          p.tagline.toLowerCase().includes(q) ||
-          (p.tags && p.tags.some((tag) => tag.toLowerCase().includes(q)))
-      );
+      result = filterProductsBySearch(result, searchQuery);
     }
 
     // Sort
