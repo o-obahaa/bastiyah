@@ -170,6 +170,48 @@ async function connectToWhatsApp() {
       }
     }
   });
+
+  // 4. Interactive WhatsApp Commands Listener (Manage Orders via Chat)
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    try {
+      if (!messages || messages.length === 0) return;
+      const m = messages[0];
+
+      if (!m.message || m.key.fromMe || m.key.remoteJid === 'status@broadcast') return;
+
+      const senderJid = m.key.remoteJid;
+      const incomingText = m.message.conversation || m.message.extendedTextMessage?.text || '';
+      const quotedText =
+        m.message.extendedTextMessage?.contextInfo?.quotedMessage?.conversation ||
+        m.message.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text ||
+        '';
+
+      if (!incomingText.trim()) return;
+
+      console.log(`[Bastiyah Gateway] 💬 Incoming message from ${senderJid}: "${incomingText}"`);
+
+      // Forward to Convex WhatsApp command handler
+      const res = await fetch(`${CONVEX_SITE_URL}/whatsapp-command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: incomingText,
+          quotedText,
+          senderPhone: senderJid ? senderJid.replace('@s.whatsapp.net', '') : '',
+        }),
+      });
+
+      if (res.ok) {
+        const { reply } = await res.json().catch(() => ({}));
+        if (reply && typeof reply === 'string') {
+          await sock.sendMessage(senderJid, { text: reply }, { quoted: m });
+          console.log(`[Bastiyah Gateway] 🤖 Replied to ${senderJid} with command response.`);
+        }
+      }
+    } catch (err) {
+      console.warn('[Bastiyah Gateway] Error processing incoming command message:', err.message);
+    }
+  });
 }
 
 // 1. Dashboard Web UI for QR Code scanning

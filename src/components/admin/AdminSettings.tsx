@@ -35,7 +35,8 @@ import {
   AlertCircle,
   FileText,
   Copy,
-  Eye
+  Eye,
+  Bot
 } from 'lucide-react';
 import { formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
 import { Order } from '../../types';
@@ -844,6 +845,74 @@ export const AdminSettings: React.FC = () => {
                       {sampleOrderMessage}
                     </div>
                   )}
+                </div>
+
+                {/* WhatsApp Interactive Orders Management Cheat-Sheet */}
+                <div className="pt-3 border-t border-slate-200/70 space-y-2">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-xs">
+                    <Bot className="w-4 h-4 text-emerald-600" />
+                    <span>{language === 'ar' ? 'إدارة الطلبات عبر محادثة واتساب (أوامر الرد الآلي 🤖)' : 'Manage Orders via WhatsApp Chat (Bot Commands 🤖)'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    {language === 'ar' 
+                      ? 'يمكن لمدير المتجر التحكم الكامل بحالة أي طلب بالرد المباشر في محادثة واتساب بالكلمات التالية:'
+                      : 'The store manager can update order statuses directly in the WhatsApp chat using these commands:'}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div className="font-bold text-emerald-700 flex items-center gap-1 font-mono text-[11px]">
+                        <span>تأكيد #PAN-88240</span>
+                      </div>
+                      <p className="text-slate-500 text-[10px]">
+                        {language === 'ar' ? 'قبول الطلب وتغيير حالته إلى (قيد التجهيز والتغليف 📦)' : 'Confirm order and mark as processing'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div className="font-bold text-indigo-700 flex items-center gap-1 font-mono text-[11px]">
+                        <span>شحن #PAN-88240 WAS-991</span>
+                      </div>
+                      <p className="text-slate-500 text-[10px]">
+                        {language === 'ar' ? 'تسليم للمندوب مع حفظ كود التتبع وتغيير الحالة لـ (تم الشحن 🚚)' : 'Ship order with tracking number'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div className="font-bold text-emerald-800 flex items-center gap-1 font-mono text-[11px]">
+                        <span>تسليم #PAN-88240</span>
+                      </div>
+                      <p className="text-slate-500 text-[10px]">
+                        {language === 'ar' ? 'تأكيد استلام الزبون للطلب وتحصيل المبلغ (تم التوصيل ✅)' : 'Mark as delivered and completed'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div className="font-bold text-rose-700 flex items-center gap-1 font-mono text-[11px]">
+                        <span>الغاء #PAN-88240</span>
+                      </div>
+                      <p className="text-slate-500 text-[10px]">
+                        {language === 'ar' ? 'إلغاء الطلب فوراً وتحديث اللوحة (ملغي ❌)' : 'Cancel order'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div className="font-bold text-slate-800 flex items-center gap-1 font-mono text-[11px]">
+                        <span>تفاصيل #PAN-88240</span>
+                      </div>
+                      <p className="text-slate-500 text-[10px]">
+                        {language === 'ar' ? 'استرجاع تفاصيل العميل، العنوان والمنتجات المطلوبة 📋' : 'Show full order items and customer address'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div className="font-bold text-slate-800 flex items-center gap-1 font-mono text-[11px]">
+                        <span>طلبات / مساعدة</span>
+                      </div>
+                      <p className="text-slate-500 text-[10px]">
+                        {language === 'ar' ? 'عرض قائمة أحدث الطلبات أو قائمة أوامر التحكم' : 'List recent orders or help cheat sheet'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

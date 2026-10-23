@@ -96,3 +96,47 @@ export const updateStatus = mutation({
     await ctx.db.patch(args.id, updates);
   },
 });
+
+export const updateStatusByOrderNumber = mutation({
+  args: {
+    orderNumber: v.string(),
+    status: v.string(),
+    trackingNumber: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const cleanNum = args.orderNumber.trim().toUpperCase().replace('#', '');
+    const orders = await ctx.db.query("orders").collect();
+    const order = orders.find((o) => o.orderNumber.toUpperCase().replace('#', '') === cleanNum || o.orderNumber.toUpperCase().endsWith(cleanNum));
+
+    if (!order) {
+      return { success: false, error: `الطلب رقم #${args.orderNumber} غير موجود في المتجر` };
+    }
+
+    const updates: { status: string; trackingNumber?: string } = {
+      status: args.status,
+    };
+    if (args.trackingNumber) {
+      updates.trackingNumber = args.trackingNumber;
+    }
+
+    await ctx.db.patch(order._id, updates);
+    return { success: true, order: { ...order, ...updates } };
+  },
+});
+
+export const getOrderByNumber = query({
+  args: { orderNumber: v.string() },
+  handler: async (ctx, args) => {
+    const cleanNum = args.orderNumber.trim().toUpperCase().replace('#', '');
+    const orders = await ctx.db.query("orders").collect();
+    return orders.find((o) => o.orderNumber.toUpperCase().replace('#', '') === cleanNum || o.orderNumber.toUpperCase().endsWith(cleanNum)) || null;
+  },
+});
+
+export const getRecentOrders = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 5;
+    return await ctx.db.query("orders").order("desc").take(limit);
+  },
+});
