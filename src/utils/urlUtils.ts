@@ -51,8 +51,17 @@ export const getCustomDomainRoot = (): string => {
 /**
  * Returns the full working URL for a store
  * e.g. https://panda.bastiyah.com or https://panda.bastiyah.com/admin
+ * In local/dev or Vercel preview environments, returns safe path on current origin
  */
 export const getStoreDisplayUrl = (slug: string, isStoreAdmin: boolean = false): string => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname.toLowerCase();
+    const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
+    if (isLocalOrVercel) {
+      const origin = window.location.origin;
+      return isStoreAdmin ? `${origin}/store/${slug}/admin` : `${origin}/store/${slug}`;
+    }
+  }
   const root = getCustomDomainRoot();
   const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
   const base = `${protocol}//${slug}.${root}`;
@@ -130,4 +139,62 @@ export const getSharedCustomerCookie = (): any | null => {
     }
   }
   return null;
+};
+
+/**
+ * Persists custom hosted stores across subdomains (*.bastiyah.com)
+ */
+export const setSharedStoresCookie = (allStores: any[]) => {
+  if (typeof document === 'undefined') return;
+  const root = getCustomDomainRoot();
+  const domainPart = root && !root.includes('localhost') ? `; domain=.${root}` : '';
+  const initialSlugs = new Set(['panda', 'royal-oud', 'velvet']);
+  const customStores = allStores.filter((s) => s.slug && !initialSlugs.has(s.slug.toLowerCase()));
+  if (customStores.length === 0) {
+    document.cookie = `bastiyah_shared_stores=; path=/${domainPart}; max-age=0; SameSite=Lax`;
+    return;
+  }
+  try {
+    // Keep compact summary for cookie size limits (under 4KB)
+    const summaries = customStores.map((s) => ({
+      id: s.id,
+      slug: s.slug,
+      name: s.name,
+      nameAr: s.nameAr,
+      tagline: s.tagline,
+      taglineAr: s.taglineAr,
+      category: s.category,
+      categoryAr: s.categoryAr,
+      ownerName: s.ownerName,
+      ownerEmail: s.ownerEmail,
+      ownerPhone: s.ownerPhone,
+      adminPassword: s.adminPassword,
+      status: s.status,
+      plan: s.plan,
+      createdAt: s.createdAt,
+      design: s.design,
+      settings: s.settings,
+    }));
+    const val = encodeURIComponent(JSON.stringify(summaries));
+    document.cookie = `bastiyah_shared_stores=${val}; path=/${domainPart}; max-age=2592000; SameSite=Lax`;
+  } catch (e) {
+    console.warn('Failed to set shared stores cookie:', e);
+  }
+};
+
+/**
+ * Retrieves custom hosted stores shared across subdomains (*.bastiyah.com)
+ */
+export const getSharedStoresCookie = (): any[] => {
+  if (typeof document === 'undefined') return [];
+  const match = document.cookie.match(/(?:^|;\s*)bastiyah_shared_stores=([^;]*)/);
+  if (match && match[1]) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(match[1]));
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 };

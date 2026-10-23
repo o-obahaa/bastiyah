@@ -41,7 +41,9 @@ import {
   getStorePathLabel, 
   getPlatformDisplayUrl,
   setSharedCustomerCookie,
-  getSharedCustomerCookie
+  getSharedCustomerCookie,
+  setSharedStoresCookie,
+  getSharedStoresCookie
 } from '../utils/urlUtils';
 import {
   playNotificationChime,
@@ -226,6 +228,58 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
+export const hydrateCustomStore = (s: any): HostedStore => {
+  const cleanSlug = s.slug || `store-${Date.now()}`;
+  let starterProducts: Product[] = INITIAL_PRODUCTS.slice(0, 6);
+  const cat = (s.category || '').toLowerCase();
+  if (cat.includes('perfume') || cat.includes('oud')) {
+    starterProducts = OUD_PRODUCTS;
+  } else if (cat.includes('fashion') || cat.includes('luxury')) {
+    starterProducts = FASHION_PRODUCTS;
+  }
+  return {
+    id: s.id || `store-${cleanSlug}`,
+    slug: cleanSlug,
+    name: s.name || cleanSlug,
+    nameAr: s.nameAr || s.name || cleanSlug,
+    tagline: s.tagline || `Welcome to ${s.name || cleanSlug}`,
+    taglineAr: s.taglineAr || `أهلاً بكم في ${s.nameAr || s.name || cleanSlug}`,
+    description: s.description || `Official store hosted at /store/${cleanSlug}.`,
+    descriptionAr: s.descriptionAr || `متجر إلكتروني رسمي مستضاف عبر منصة بسطية.`,
+    category: s.category || 'Specialty Store',
+    categoryAr: s.categoryAr || s.category || 'متجر مختص',
+    ownerName: s.ownerName || 'Store Owner',
+    ownerEmail: s.ownerEmail || `admin@${cleanSlug}.com`,
+    ownerPhone: s.ownerPhone || '+964 770 123 4567',
+    adminPassword: s.adminPassword || 'merchant123',
+    status: s.status || 'active',
+    plan: s.plan || 'Growth',
+    createdAt: s.createdAt || new Date().toISOString(),
+    design: s.design || {
+      themeColor: 'emerald',
+      layoutStyle: 'modern-split',
+      logoEmoji: '🛍️',
+      headerStyle: 'light',
+      cardRadius: 'rounded',
+    },
+    settings: s.settings || {
+      storeName: s.name || cleanSlug,
+      supportEmail: s.ownerEmail || `support@${cleanSlug}.com`,
+      currency: 'د.ع',
+      freeShippingThreshold: 50000,
+      standardShippingFee: 5000,
+      taxRate: 0,
+    },
+    products: Array.isArray(s.products) && s.products.length > 0 ? s.products : starterProducts.map((p, idx) => ({
+      ...p,
+      id: `${cleanSlug}-prod-${idx + 1}`,
+    })),
+    orders: Array.isArray(s.orders) ? s.orders : [],
+    customers: Array.isArray(s.customers) ? s.customers : [],
+    coupons: Array.isArray(s.coupons) ? s.coupons : INITIAL_COUPONS,
+  };
+};
+
 export const detectInitialRouting = (allStores: HostedStore[]): { storeId: string; page: ActivePage; productId?: string } => {
   if (typeof window === 'undefined') {
     return {
@@ -279,7 +333,14 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   if (storePathMatch) {
     const slug = storePathMatch[1].toLowerCase();
     const subRoute = storePathMatch[2]?.toLowerCase();
-    const found = allStores.find((s) => s.slug.toLowerCase() === slug || s.id === slug);
+    let found = allStores.find((s) => s.slug.toLowerCase() === slug || s.id === slug);
+    if (!found) {
+      const sharedStores = getSharedStoresCookie();
+      const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === slug || cs.id === slug);
+      if (cookieMatch) {
+        found = hydrateCustomStore(cookieMatch);
+      }
+    }
     if (found) {
       const isStoreAdmin = subRoute === 'admin' || searchParams.get('admin') === 'true';
       const targetPage: ActivePage = isStoreAdmin 
@@ -288,6 +349,13 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
       return {
         storeId: found.id,
         page: targetPage,
+        productId: queryProduct,
+      };
+    } else {
+      const isStoreAdmin = subRoute === 'admin' || searchParams.get('admin') === 'true';
+      return {
+        storeId: `store-${slug}`,
+        page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
         productId: queryProduct,
       };
     }
@@ -312,7 +380,14 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   const segments = pathname.replace(/^\//, '').split('/');
   const directSlug = segments[0]?.toLowerCase();
   if (directSlug && directSlug !== 'store' && directSlug !== 'owner' && directSlug !== 'product' && directSlug !== 'p' && directSlug !== '') {
-    const found = allStores.find((s) => s.slug.toLowerCase() === directSlug || s.id === directSlug);
+    let found = allStores.find((s) => s.slug.toLowerCase() === directSlug || s.id === directSlug);
+    if (!found) {
+      const sharedStores = getSharedStoresCookie();
+      const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === directSlug || cs.id === directSlug);
+      if (cookieMatch) {
+        found = hydrateCustomStore(cookieMatch);
+      }
+    }
     if (found) {
       const isStoreAdmin = segments[1] === 'admin' || searchParams.get('admin') === 'true';
       return {
@@ -372,6 +447,27 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
         productId: queryProduct,
       };
     }
+
+    // Check shared cross-subdomain cookie (*.bastiyah.com)
+    const sharedStores = getSharedStoresCookie();
+    const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === sub);
+    if (cookieMatch) {
+      const isStoreAdmin = pathname === '/admin' || pathname.startsWith('/admin') || searchParams.get('admin') === 'true';
+      return {
+        storeId: cookieMatch.id || `store-${cookieMatch.slug}`,
+        page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
+        productId: queryProduct,
+      };
+    }
+
+    // On any store subdomain, do not drop shopper/merchant onto bastiyah platform landing page.
+    // Keep them inside the store context.
+    const isStoreAdmin = pathname === '/admin' || pathname.startsWith('/admin') || searchParams.get('admin') === 'true';
+    return {
+      storeId: `store-${sub}`,
+      page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
+      productId: queryProduct,
+    };
   }
 
   // 8. Default: Bastiyah Platform Landing Page!
@@ -412,12 +508,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Hosted Stores State
   const [stores, setStores] = useState<HostedStore[]>(() => {
+    let baseStores: HostedStore[] = INITIAL_HOSTED_STORES;
     const saved = localStorage.getItem('bastiyah_stores_v1');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((s: any) => {
+          baseStores = parsed.map((s: any) => {
             const initMatch = INITIAL_HOSTED_STORES.find((init) => init.id === s.id);
             const needsIraqiPhone = !s.ownerPhone || s.ownerPhone.startsWith('+966') || s.ownerPhone.startsWith('+971');
             const needsIraqiCurrency = !s.settings?.currency || s.settings?.currency === '$';
@@ -470,7 +567,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // fallback to initial
       }
     }
-    return INITIAL_HOSTED_STORES;
+
+    // Merge custom stores from shared cross-subdomain cookie (*.bastiyah.com)
+    try {
+      const shared = getSharedStoresCookie();
+      if (Array.isArray(shared) && shared.length > 0) {
+        const existingSlugs = new Set(baseStores.map((s) => (s.slug || '').toLowerCase()));
+        const missingFromShared = shared.filter((ss) => ss.slug && !existingSlugs.has(ss.slug.toLowerCase()));
+        if (missingFromShared.length > 0) {
+          const hydrated = missingFromShared.map(hydrateCustomStore);
+          baseStores = [...hydrated, ...baseStores];
+          try {
+            localStorage.setItem('bastiyah_stores_v1', JSON.stringify(baseStores));
+          } catch {}
+        }
+      }
+    } catch {}
+
+    return baseStores;
   });
 
   // Initial Routing
@@ -1423,6 +1537,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Persist multi-store state
   useEffect(() => {
     localStorage.setItem('bastiyah_stores_v1', JSON.stringify(stores));
+    setSharedStoresCookie(stores);
   }, [stores]);
 
   useEffect(() => {
@@ -1481,8 +1596,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               coupons: localMatch?.coupons || INITIAL_COUPONS,
             };
           });
-          return [...formattedRemote, ...existingNotInRemote];
+          const merged = [...formattedRemote, ...existingNotInRemote];
+          setSharedStoresCookie(merged);
+          return merged;
         });
+
+        // If the user arrived at a store via subdomain or path that was pending Convex sync, activate it
+        if (typeof window !== 'undefined') {
+          const host = window.location.hostname.toLowerCase();
+          const parts = host.split('.');
+          const isLocalOrVercelHost = host.includes('localhost') || host.includes('127.0.0.1') || host.endsWith('.vercel.app');
+          const sub = !isLocalOrVercelHost && parts.length >= 3 && parts[0] !== 'www' ? parts[0] : null;
+          const pathSlugMatch = window.location.pathname.match(/^\/store\/([a-z0-9-]+)/i);
+          const requestedSlug = sub && sub !== 'owner' ? sub : (pathSlugMatch ? pathSlugMatch[1].toLowerCase() : null);
+          if (requestedSlug) {
+            const matchedStore = remoteStores.find((rs) => rs.slug.toLowerCase() === requestedSlug);
+            if (matchedStore) {
+              setActiveStoreId(matchedStore._id || matchedStore.id || `store-${matchedStore.slug}`);
+              const isStoreAdmin = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin') || window.location.pathname.includes('/admin') || window.location.search.includes('admin=true');
+              setCurrentPage(isStoreAdmin ? 'admin' : 'home');
+            }
+          }
+        }
       })
       .catch((err) => {
         console.warn('Convex stores sync query note:', err);
@@ -1548,8 +1683,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               coupons: localMatch?.coupons || INITIAL_COUPONS,
             };
           });
-          return [...formattedRemote, ...existingNotInRemote];
+          const merged = [...formattedRemote, ...existingNotInRemote];
+          setSharedStoresCookie(merged);
+          return merged;
         });
+
+        // If the user arrived at a store via subdomain or path that was pending Convex sync, activate it
+        if (typeof window !== 'undefined') {
+          const host = window.location.hostname.toLowerCase();
+          const parts = host.split('.');
+          const isLocalOrVercelHost = host.includes('localhost') || host.includes('127.0.0.1') || host.endsWith('.vercel.app');
+          const sub = !isLocalOrVercelHost && parts.length >= 3 && parts[0] !== 'www' ? parts[0] : null;
+          const pathSlugMatch = window.location.pathname.match(/^\/store\/([a-z0-9-]+)/i);
+          const requestedSlug = sub && sub !== 'owner' ? sub : (pathSlugMatch ? pathSlugMatch[1].toLowerCase() : null);
+          if (requestedSlug) {
+            const matchedStore = remoteStores.find((rs) => rs.slug.toLowerCase() === requestedSlug);
+            if (matchedStore) {
+              setActiveStoreId(matchedStore._id || matchedStore.id || `store-${matchedStore.slug}`);
+              const isStoreAdmin = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin') || window.location.pathname.includes('/admin') || window.location.search.includes('admin=true');
+              setCurrentPage(isStoreAdmin ? 'admin' : 'home');
+            }
+          }
+        }
       }
     } catch (err: any) {
       console.error('Seed Convex failed:', err);
@@ -1846,14 +2001,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!found) return;
 
     const customRoot = getCustomDomainRoot();
-    if (customRoot) {
-      const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+    const isLocalOrVercel = currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.endsWith('.vercel.app');
+
+    // Only redirect cross-domain if on production custom domain AND the user is already on a separate store subdomain (not apex and not owner)
+    if (!isLocalOrVercel && customRoot && currentHost.endsWith(customRoot) && currentHost !== customRoot && currentHost !== `www.${customRoot}`) {
       const targetHost = `${found.slug}.${customRoot}`;
       const isTargetAdmin = targetPage === 'admin';
       const targetUrl = getStoreDisplayUrl(found.slug, isTargetAdmin);
-
-      // If we are navigating to another subdomain (e.g. from bastiyah.com to panda.bastiyah.com, or between subdomains)
-      if (currentHost !== targetHost || (isTargetAdmin && !window.location.pathname.includes('/admin'))) {
+      if (currentHost !== targetHost) {
         window.location.href = targetUrl;
         return;
       }
@@ -1964,7 +2120,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       coupons: INITIAL_COUPONS,
     };
 
-    setStores((prev) => [newStore, ...prev]);
+    setStores((prev) => {
+      const updated = [newStore, ...prev];
+      setSharedStoresCookie(updated);
+      return updated;
+    });
+
+    // Also persist to Convex if connected
+    if (convexClient) {
+      convexClient
+        .mutation(api.stores.create, {
+          slug: cleanSlug,
+          name: newStore.name,
+          nameAr: newStore.nameAr,
+          tagline: newStore.tagline,
+          taglineAr: newStore.taglineAr,
+          description: newStore.description,
+          descriptionAr: newStore.descriptionAr,
+          category: newStore.category,
+          categoryAr: newStore.categoryAr,
+          ownerName: newStore.ownerName,
+          ownerEmail: newStore.ownerEmail,
+          plan: newStore.plan,
+          design: {
+            themeColor: newStore.design.themeColor,
+            layoutStyle: newStore.design.layoutStyle,
+            logoEmoji: newStore.design.logoEmoji,
+            headerStyle: newStore.design.headerStyle,
+            cardRadius: newStore.design.cardRadius || 'rounded',
+          },
+        })
+        .then(() => console.log('Store synced to Convex:', cleanSlug))
+        .catch((err) => console.warn('Convex create store sync note:', err));
+    }
     addToast(
       language === 'ar'
         ? `🎉 تم إطلاق المتجر بنجاح على /store/${cleanSlug}!`
