@@ -543,207 +543,33 @@ export const FASHION_PRODUCTS: Product[] = [
   },
 ];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-1001',
-    orderNumber: 'PANDA-82914',
-    date: '2026-10-08T14:22:00Z',
-    customer: {
-      fullName: 'Sophia Martinez',
-      email: 'sophia.m@example.com',
-      phone: '+1 (555) 234-5678',
-      address: '742 Evergreen Terrace',
-      city: 'San Francisco',
-      state: 'CA',
-      zipCode: '94107',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-1',
-        productName: 'Aura Studio Wireless ANC Headphones',
-        productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80',
-        price: 249,
-        quantity: 1,
-      },
-      {
-        productId: 'prod-7',
-        productName: 'Aero Minimalist Desk Mat & Cable Tray',
-        productImage: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=200&q=80',
-        price: 49,
-        quantity: 1,
-      },
-    ],
-    subtotal: 298,
-    discount: 29.8,
-    shipping: 0,
-    tax: 22.79,
-    total: 290.99,
-    status: 'shipped',
-    paymentMethod: 'Cash on Delivery',
-    courier: 'واصل إكسبريس (Wasel Express)',
-    trackingNumber: 'WAS-BG-994821',
-  },
-  {
-    id: 'ord-1002',
-    orderNumber: 'PANDA-82915',
-    date: '2026-10-09T09:15:00Z',
-    customer: {
-      fullName: 'Marcus Vance',
-      email: 'marcus.vance@techlead.co',
-      phone: '+1 (555) 876-1234',
-      address: '1200 Grand Avenue, Apt 4B',
-      city: 'Seattle',
-      state: 'WA',
-      zipCode: '98101',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-2',
-        productName: 'Chronos V4 Titanium Smartwatch',
-        productImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=200&q=80',
-        price: 349,
-        quantity: 1,
-      },
-    ],
-    subtotal: 349,
-    discount: 0,
-    shipping: 0,
-    tax: 29.66,
-    total: 378.66,
-    status: 'processing',
-    paymentMethod: 'Cash on Delivery',
-    courier: 'الزاجل إكسبريس (Al-Zajel)',
-    trackingNumber: 'ZJL-BA-102948',
-  },
-  {
-    id: 'ord-1003',
-    orderNumber: 'PANDA-82916',
-    date: '2026-10-09T18:40:00Z',
-    customer: {
-      fullName: 'Elena Rostova',
-      email: 'elena.rostova@design.studio',
-      phone: '+1 (555) 432-8765',
-      address: '350 5th Avenue, Suite 19',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10118',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-3',
-        productName: 'Horizon Pro Mechanical Keyboard',
-        productImage: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=200&q=80',
-        price: 189,
-        quantity: 1,
-      },
-      {
-        productId: 'prod-6',
-        productName: 'Lumina Magnetic Balance Desk Lamp',
-        productImage: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=200&q=80',
-        price: 119,
-        quantity: 1,
-      },
-    ],
-    subtotal: 308,
-    discount: 61.6,
-    shipping: 0,
-    tax: 20.94,
-    total: 267.34,
-    status: 'pending',
-    paymentMethod: 'Credit Card',
-  },
-  {
-    id: 'ord-1004',
-    orderNumber: 'PANDA-82890',
-    date: '2026-10-05T11:00:00Z',
-    customer: {
-      fullName: 'David Chen',
-      email: 'd.chen@california.edu',
-      phone: '+1 (555) 901-2345',
-      address: '500 University Ave',
-      city: 'Palo Alto',
-      state: 'CA',
-      zipCode: '94301',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-5',
-        productName: 'Voyager Full-Grain Leather Duffel',
-        productImage: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=200&q=80',
-        price: 279,
-        quantity: 1,
-      },
-    ],
-    subtotal: 279,
-    discount: 0,
-    shipping: 0,
-    tax: 23.71,
-    total: 302.71,
-    status: 'delivered',
-    paymentMethod: 'Cash on Delivery',
-    courier: 'أرامكس العراق (Aramex)',
-    trackingNumber: 'ARX-ER-882736',
-  },
-];
+export const isMockOrder = (o: any): boolean => {
+  if (!o) return false;
+  const id = String(o.id || '');
+  if (id.startsWith('ord-100') || id.startsWith('ord-oud-') || id.startsWith('ord-vel-')) return true;
+  const num = String(o.orderNumber || '');
+  if (num.startsWith('PANDA-829') || num.startsWith('PANDA-828') || num.startsWith('OUD-904') || num.startsWith('VEL-401')) return true;
+  const name = o.customer?.fullName || '';
+  if (name === 'Sophia Martinez' || name === 'Marcus Vance' || name === 'Elena Rostova' || name === 'David Chen' || name === 'Faisal Al-Harbi' || name === 'Layla Al-Qasimi') return true;
+  const email = String(o.customer?.email || '').toLowerCase();
+  if (email.endsWith('@example.com') || email.endsWith('@california.edu') || email.endsWith('@techlead.co') || email.endsWith('@design.studio') || email.endsWith('@riyadh.sa') || email.endsWith('@dubai-design.ae')) return true;
+  return false;
+};
 
-export const INITIAL_CUSTOMERS: Customer[] = [
-  {
-    id: 'cust-1',
-    name: 'حيدر علي العراقي',
-    phone: '+964 770 123 4567',
-    email: 'haidar.ali@customer.iq',
-    avatar: ANONYMOUS_USER_AVATAR,
-    city: 'بغداد (الكرخ)',
-    country: 'جمهورية العراق',
-    ordersCount: 4,
-    totalSpent: 890.50,
-    joinedDate: '2025-11-12',
-    isPhoneVerified: true,
-  },
-  {
-    id: 'cust-2',
-    name: 'مريم التميمي',
-    phone: '+964 780 234 5678',
-    email: 'maryam.t@customer.iq',
-    avatar: ANONYMOUS_USER_AVATAR,
-    city: 'البصرة',
-    country: 'جمهورية العراق',
-    ordersCount: 2,
-    totalSpent: 512.40,
-    joinedDate: '2026-01-04',
-    isPhoneVerified: true,
-  },
-  {
-    id: 'cust-3',
-    name: 'عمر الدليمي',
-    phone: '+964 750 345 6789',
-    email: 'omar.dulaimi@customer.iq',
-    avatar: ANONYMOUS_USER_AVATAR,
-    city: 'أربيل',
-    country: 'جمهورية العراق',
-    ordersCount: 3,
-    totalSpent: 730.00,
-    joinedDate: '2025-08-20',
-    isPhoneVerified: true,
-  },
-  {
-    id: 'cust-4',
-    name: 'زينب الشمري',
-    phone: '+964 771 987 6543',
-    email: 'zainab.sh@customer.iq',
-    avatar: ANONYMOUS_USER_AVATAR,
-    city: 'النجف الأشرف',
-    country: 'جمهورية العراق',
-    ordersCount: 1,
-    totalSpent: 302.71,
-    joinedDate: '2026-02-15',
-    isPhoneVerified: true,
-  },
-];
+export const isMockCustomer = (c: any): boolean => {
+  if (!c) return false;
+  const id = String(c.id || '');
+  if (id === 'cust-1' || id === 'cust-2' || id === 'cust-3' || id === 'cust-4' || id === 'cust-5' || id === 'cust-oud-1' || id === 'cust-vel-1') return true;
+  const name = c.name || '';
+  if (name === 'Sophia Martinez' || name === 'Marcus Vance' || name === 'Elena Rostova' || name === 'David Chen' || name === 'Faisal Al-Harbi' || name === 'Layla Al-Qasimi' || name === 'حيدر علي العراقي' || name === 'مريم التميمي' || name === 'عمر الدليمي' || name === 'زينب الشمري') return true;
+  const email = String(c.email || '').toLowerCase();
+  if (email.endsWith('@customer.iq') || email.endsWith('@example.com') || email.endsWith('@riyadh.sa') || email.endsWith('@dubai-design.ae')) return true;
+  return false;
+};
+
+export const INITIAL_ORDERS: Order[] = [];
+
+export const INITIAL_CUSTOMERS: Customer[] = [];
 
 export const INITIAL_HOSTED_STORES: HostedStore[] = [
   {
@@ -992,61 +818,8 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
       taxRate: 0,
     },
     products: OUD_PRODUCTS,
-    orders: [
-      {
-        id: 'ord-oud-1',
-        orderNumber: 'OUD-90412',
-        date: '2026-10-10T16:10:00Z',
-        customer: {
-          fullName: 'Faisal Al-Harbi',
-          email: 'faisal@riyadh.sa',
-          phone: '+966 50 123 4567',
-          address: 'Olaya Towers, Suite 402',
-          city: 'Riyadh',
-          state: 'Riyadh',
-          zipCode: '11564',
-          country: 'Saudi Arabia',
-        },
-        items: [
-          {
-            productId: 'oud-1',
-            productName: 'Royal Cambodian Aged Oud Extrait',
-            productImage: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=200&q=80',
-            price: 320,
-            quantity: 1,
-          },
-          {
-            productId: 'oud-4',
-            productName: 'Imperial White Musk Crystal Tola',
-            productImage: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=200&q=80',
-            price: 125,
-            quantity: 2,
-          },
-        ],
-        subtotal: 570,
-        discount: 0,
-        shipping: 0,
-        tax: 28.5,
-        total: 598.5,
-        status: 'delivered',
-        paymentMethod: 'Cash on Delivery',
-        courier: 'دي إتش إل العراق (DHL Express)',
-        trackingNumber: 'DHL-IQ-8821940',
-      },
-    ],
-    customers: [
-      {
-        id: 'cust-oud-1',
-        name: 'Faisal Al-Harbi',
-        email: 'faisal@riyadh.sa',
-        avatar: ANONYMOUS_USER_AVATAR,
-        city: 'Riyadh',
-        country: 'Saudi Arabia',
-        ordersCount: 3,
-        totalSpent: 1240.0,
-        joinedDate: '2026-02-05',
-      },
-    ],
+    orders: [],
+    customers: [],
     coupons: [
       {
         code: 'MAJLIS15',
@@ -1156,54 +929,8 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
       taxRate: 0,
     },
     products: FASHION_PRODUCTS,
-    orders: [
-      {
-        id: 'ord-vel-1',
-        orderNumber: 'VEL-40129',
-        date: '2026-10-11T13:45:00Z',
-        customer: {
-          fullName: 'Layla Al-Qasimi',
-          email: 'layla@dubai-design.ae',
-          phone: '+971 55 987 6543',
-          address: 'Downtown Boulevard, Residence 12',
-          city: 'Dubai',
-          state: 'Dubai',
-          zipCode: '00000',
-          country: 'United Arab Emirates',
-        },
-        items: [
-          {
-            productId: 'fash-1',
-            productName: 'Milano Hand-Stitched Silk Abaya & Trench',
-            productImage: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=200&q=80',
-            price: 420,
-            quantity: 1,
-          },
-        ],
-        subtotal: 420,
-        discount: 0,
-        shipping: 0,
-        tax: 29.4,
-        total: 449.4,
-        status: 'processing',
-        paymentMethod: 'Cash on Delivery',
-        courier: 'أرامكس العراق (Aramex)',
-        trackingNumber: 'ARX-BG-9910245',
-      },
-    ],
-    customers: [
-      {
-        id: 'cust-vel-1',
-        name: 'Layla Al-Qasimi',
-        email: 'layla@dubai-design.ae',
-        avatar: ANONYMOUS_USER_AVATAR,
-        city: 'Dubai',
-        country: 'United Arab Emirates',
-        ordersCount: 2,
-        totalSpent: 869.4,
-        joinedDate: '2026-03-01',
-      },
-    ],
+    orders: [],
+    customers: [],
     coupons: [
       {
         code: 'ATELIER20',

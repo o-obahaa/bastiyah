@@ -69,6 +69,7 @@ import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle, HostedStore, Order, OrderStatus } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getFutureCustomDomainUrl } from '../../utils/urlUtils';
+import { isMockOrder, isMockCustomer } from '../../data/mockData';
 
 const EMOJI_OPTIONS = ['🛍️', '👑', '☕', '👗', '⚡', '🏺', '🌿', '💎', '🦢', '🐼', '👟', '⌚', '🎧', '🕯️', '🎨', '🏪'];
 
@@ -720,7 +721,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       storeThemeColor: StoreThemeColor;
     }> = [];
     stores.forEach((store) => {
-      store.orders.forEach((ord) => {
+      (store.orders || []).forEach((ord) => {
+        if (isMockOrder(ord)) return;
         list.push({
           ...ord,
           storeId: store.id,
@@ -776,6 +778,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
     // 1. Ingest registered universal users from platform auth
     platformUniversalCustomers?.forEach((u) => {
+      if (isMockCustomer(u)) return;
       const key = normalizeKey(u.phone, u.email, u.name);
       if (!key) return;
       map.set(key, {
@@ -797,7 +800,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
     // 2. Ingest customer directories from all hosted stores
     stores.forEach((store) => {
-      store.customers?.forEach((c) => {
+      (store.customers || []).forEach((c) => {
+        if (isMockCustomer(c)) return;
         const key = normalizeKey(c.phone, c.email, c.name);
         if (!key) return;
         const existing = map.get(key);
@@ -826,6 +830,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
     // 3. Ingest and link all live orders across all stores (allOrdersFlat)
     allOrdersFlat.forEach((ord) => {
+      if (isMockOrder(ord)) return;
       const cust = ord.customer;
       const key = normalizeKey(cust.phone, cust.email, cust.fullName);
       if (!key) return;
@@ -984,7 +989,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       map.set(cat.en, { count: 0, products: 0, revenue: 0, en: cat.en, ar: cat.ar });
     });
     stores.forEach((s) => {
-      const rev = s.orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
+      const realOrders = (s.orders || []).filter((o) => !isMockOrder(o));
+      const rev = realOrders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
       const entry = map.get(s.category) || { count: 0, products: 0, revenue: 0, en: s.category, ar: s.category };
       entry.count += 1;
       entry.products += s.products.length;
@@ -1841,7 +1847,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
                             <span className="text-[10px] text-slate-500 font-bold uppercase block">{language === 'ar' ? 'الطلبات' : 'Orders'}</span>
                             <span className="text-xs font-black text-indigo-600 font-mono mt-0.5 block">
-                              {store.orders.length}
+                              {(store.orders || []).filter((o) => !isMockOrder(o)).length}
                             </span>
                           </div>
                         </div>
@@ -1925,7 +1931,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {processedStores.map((store) => {
-                        const revenue = store.orders
+                        const realOrders = (store.orders || []).filter((o) => !isMockOrder(o));
+                        const revenue = realOrders
                           .filter((o) => o.status !== 'cancelled')
                           .reduce((sum, o) => sum + o.total, 0);
 
@@ -1958,7 +1965,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                             <td className="py-3.5 px-4">
                               <div className="font-mono">
                                 <span className="font-bold text-emerald-600">${revenue.toFixed(2)}</span>
-                                <span className="text-slate-400 text-[11px] ms-1.5">({store.orders.length} {language === 'ar' ? 'طلب' : 'orders'})</span>
+                                <span className="text-slate-400 text-[11px] ms-1.5">({realOrders.length} {language === 'ar' ? 'طلب' : 'orders'})</span>
                               </div>
                             </td>
                             <td className="py-3.5 px-4">
@@ -2052,8 +2059,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               <div className="space-y-3">
                 {stores
                   .map((s) => {
-                    const rev = s.orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
-                    return { ...s, totalRev: rev };
+                    const realOrders = (s.orders || []).filter((o) => !isMockOrder(o));
+                    const rev = realOrders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
+                    return { ...s, totalRev: rev, realOrdersCount: realOrders.length };
                   })
                   .sort((a, b) => b.totalRev - a.totalRev)
                   .map((st, idx) => {
@@ -2071,7 +2079,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           </div>
                           <div className="text-end font-mono">
                             <strong className="text-emerald-600 text-sm font-black">${st.totalRev.toFixed(2)}</strong>
-                            <span className="text-slate-500 text-[11px] ms-2">({st.orders.length} {language === 'ar' ? 'طلب' : 'orders'})</span>
+                            <span className="text-slate-500 text-[11px] ms-2">({st.realOrdersCount} {language === 'ar' ? 'طلب' : 'orders'})</span>
                           </div>
                         </div>
 
@@ -2286,7 +2294,19 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {processedUniversalCustomers.length === 0 ? (
+                    {universalCustomers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                          <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                          <p className="text-xs font-bold text-slate-700">
+                            {language === 'ar' ? 'لا يوجد عملاء مسجلين حتى الآن' : 'No registered customers yet'}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            {language === 'ar' ? 'تم تنظيف كافة الحسابات الوهمية. سيظهر المشترون الفعليون هنا فور تسجيلهم أو شرائهم.' : 'All dummy customer records have been purged. Real shoppers will appear here upon registration or purchase.'}
+                          </p>
+                        </td>
+                      </tr>
+                    ) : processedUniversalCustomers.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
                           {language === 'ar' ? 'لا يوجد عملاء مطابقين لنتائج البحث' : 'No customers match the current search filter'}
@@ -2419,11 +2439,23 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             </div>
 
             {/* Orders Feed List */}
-            {processedOrders.length === 0 ? (
+            {allOrdersFlat.length === 0 ? (
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-xs">
+                <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-800 font-brand mb-1">
+                  {language === 'ar' ? 'لا توجد طلبات واردة حتى الآن' : 'No incoming orders yet'}
+                </h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  {language === 'ar'
+                    ? 'تم مسح كافة الطلبات الوهمية بنجاح. ستظهر طلبات الشراء الحقيقية هنا فورياً عند إتمام أي زبون لعملية الشراء في أي من المتاجر.'
+                    : 'All mock orders have been purged. Real checkouts from any hosted store will appear here live in real-time.'}
+                </p>
+              </div>
+            ) : processedOrders.length === 0 ? (
               <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-xs">
                 <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <h3 className="text-base font-bold text-slate-800 font-brand">
-                  {language === 'ar' ? 'لا توجد طلبات مطابقة' : 'No orders found matching filters'}
+                  {language === 'ar' ? 'لا توجد طلبات مطابقة لخيارات الفرز' : 'No orders found matching filters'}
                 </h3>
               </div>
             ) : (

@@ -32,6 +32,8 @@ import {
   FASHION_PRODUCTS,
   INITIAL_COUPONS, 
   INITIAL_CUSTOMERS,
+  isMockOrder,
+  isMockCustomer,
 } from '../data/mockData';
 import { translations, PRODUCT_ARABIC_TRANSLATIONS } from '../i18n/translations';
 import { getThemeClasses, ThemeClasses } from '../utils/themeUtils';
@@ -500,6 +502,17 @@ export const phonesMatch = (p1?: string, p2?: string): boolean => {
   return n1 === n2;
 };
 
+// Cross-tab broadcast realtime sync helper
+export const broadcastPlatformSync = (data: any) => {
+  if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+    try {
+      const channel = new BroadcastChannel('bastiyah_realtime_sync_v2');
+      channel.postMessage(data);
+      channel.close();
+    } catch {}
+  }
+};
+
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Language State
   const [language, setLanguage] = useState<Language>(() => {
@@ -507,7 +520,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (saved === 'ar' || saved === 'en') ? saved : 'en';
   });
 
-  // Hosted Stores State
+  // Hosted Stores State (Strictly cleansed of any legacy mock/random orders & customers)
   const [stores, setStores] = useState<HostedStore[]>(() => {
     let baseStores: HostedStore[] = INITIAL_HOSTED_STORES;
     const saved = localStorage.getItem('bastiyah_stores_v1');
@@ -526,7 +539,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 sku: p.sku || initProd?.sku || `${(s.slug || 'SKU').toUpperCase().slice(0, 3)}-${String(idx + 1).padStart(2, '0')}`,
               };
             });
-            const updatedCustomers = (s.customers || []).map((c: any) => ({
+            // Strictly filter out any mock/random generated orders and customers
+            const cleanedOrders = (s.orders || []).filter((o: any) => !isMockOrder(o));
+            const cleanedCustomers = (s.customers || []).filter((c: any) => !isMockCustomer(c)).map((c: any) => ({
               ...c,
               avatar: (!c.avatar || c.avatar.includes('unsplash.com')) ? ANONYMOUS_USER_AVATAR : c.avatar,
             }));
@@ -535,7 +550,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const resolvedWhatsappPhone = s.settings?.notificationSettings?.whatsappAlertPhone || (s.slug === 'panda' ? '9647714834776' : resolvedOwnerPhone.replace(/\D/g, ''));
             return {
               ...s,
-              customers: updatedCustomers,
+              orders: cleanedOrders,
+              customers: cleanedCustomers,
               products: updatedProducts,
               ownerPhone: resolvedOwnerPhone,
               design: {
@@ -568,6 +584,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // fallback to initial
       }
     }
+
+    // Always ensure baseStores orders and customers are 100% cleansed
+    baseStores = baseStores.map((st) => ({
+      ...st,
+      orders: (st.orders || []).filter((o: any) => !isMockOrder(o)),
+      customers: (st.customers || []).filter((c: any) => !isMockCustomer(c)),
+    }));
+
+    try {
+      localStorage.setItem('bastiyah_stores_v1', JSON.stringify(baseStores));
+      setSharedStoresCookie(baseStores);
+    } catch {}
 
     // Merge custom stores from shared cross-subdomain cookie (*.bastiyah.com)
     try {
@@ -876,34 +904,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
-  // Persistent platform-wide universal customer registry
+  // Persistent platform-wide universal customer registry (Strictly clean of random/dummy users)
   const [universalCustomers, setUniversalCustomers] = useState<CustomerUser[]>(() => {
     try {
       const saved = localStorage.getItem('bastiyah_universal_customers_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const cleaned = parsed.filter((c: any) => !isMockCustomer(c));
+          try {
+            localStorage.setItem('bastiyah_universal_customers_v1', JSON.stringify(cleaned));
+          } catch {}
+          return cleaned;
         }
       }
     } catch (e) {
       // ignore
     }
-
-    // Initialize universal customer profiles from initial mock customers
-    return INITIAL_CUSTOMERS.map((c) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone || '',
-      email: c.email,
-      city: c.city,
-      state: c.city.includes('بغداد') ? 'بغداد (العاصمة)' : c.city,
-      address: c.address || (c.phone?.includes('770') ? 'حي المنصور - شارع 14 رمضان' : 'الشارع العام - قرب السوق التجاري'),
-      landmark: c.landmark || 'قرب المركز التجاري',
-      avatar: c.avatar || ANONYMOUS_USER_AVATAR,
-      authenticatedVia: 'phone_auth' as const,
-      authenticatedAt: c.joinedDate || new Date().toISOString(),
-    }));
+    return [];
   });
 
   useEffect(() => {
@@ -932,7 +950,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Real-time synchronization across multiple open browser tabs / store windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'bastiyah_current_customer') {
+      if (e.key === 'bastiyah_stores_v1') {
+        try {
+          const val = e.newValue ? JSON.parse(e.newValue) : null;
+          if (Array.isArray(val)) {
+            const cleaned = val.map((s: any) => ({
+              ...s,
+              orders: (s.orders || []).filter((o: any) => !isMockOrder(o)),
+              customers: (s.customers || []).filter((c: any) => !isMockCustomer(c)),
+            }));
+            setStores(cleaned);
+          }
+        } catch {
+          // ignore
+        }
+      } else if (e.key === 'bastiyah_current_customer') {
         try {
           const val = e.newValue ? JSON.parse(e.newValue) : null;
           setCurrentCustomer(val);
@@ -942,8 +974,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else if (e.key === 'bastiyah_universal_customers_v1') {
         try {
           const val = e.newValue ? JSON.parse(e.newValue) : [];
-          if (Array.isArray(val) && val.length > 0) {
-            setUniversalCustomers(val);
+          if (Array.isArray(val)) {
+            const cleaned = val.filter((c: any) => !isMockCustomer(c));
+            setUniversalCustomers(cleaned);
           }
         } catch {
           // ignore
@@ -952,7 +985,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    // Cross-tab BroadcastChannel for zero-latency reactive updates
+    let channel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+      try {
+        channel = new BroadcastChannel('bastiyah_realtime_sync_v2');
+        channel.onmessage = (event) => {
+          const data = event.data;
+          if (!data) return;
+          if (data.type === 'STORES_UPDATED' && Array.isArray(data.stores)) {
+            setStores(data.stores);
+          } else if (data.type === 'UNIVERSAL_CUSTOMERS_UPDATED' && Array.isArray(data.customers)) {
+            setUniversalCustomers(data.customers);
+          } else if (data.type === 'CURRENT_CUSTOMER_UPDATED') {
+            setCurrentCustomer(data.customer || null);
+          } else if (data.type === 'ORDER_PLACED' && Array.isArray(data.stores)) {
+            setStores(data.stores);
+            if (Array.isArray(data.universalCustomers)) {
+              setUniversalCustomers(data.universalCustomers);
+            }
+          }
+        };
+      } catch {}
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (channel) {
+        channel.close();
+      }
+    };
   }, []);
 
   // Synchronize customers across all hosted stores on initial mount so all stores share registered customers
@@ -2647,6 +2710,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       orderAmount: cartTotal,
       activeStoreId: activeStore.id,
     });
+
+    broadcastPlatformSync({
+      type: 'ORDER_PLACED',
+      storeId: activeStore.id,
+      order: newOrder,
+    });
+
     clearCart();
     setAppliedCoupon(null);
     setCurrentPage('order-success');
@@ -2665,6 +2735,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...store,
       orders: store.orders.map((order) => (order.id === orderId ? { ...order, status } : order)),
     }));
+    broadcastPlatformSync({
+      type: 'ORDER_STATUS_UPDATED',
+      storeId: activeStore.id,
+      orderId,
+      status,
+    });
     addToast(
       language === 'ar' ? `تم تحديث حالة الطلب إلى "${status}"` : `Order status updated to "${status.toUpperCase()}"`, 
       'success'
@@ -2689,6 +2765,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...store,
       orders: store.orders.map((order) => (order.id === orderId ? { ...order, ...updates } : order)),
     }));
+    broadcastPlatformSync({
+      type: 'ORDER_UPDATED',
+      storeId: activeStore.id,
+      orderId,
+      updates,
+    });
     addToast(
       language === 'ar' ? 'تم تحديث بيانات الطلب بنجاح' : 'Order details updated successfully',
       'success'
