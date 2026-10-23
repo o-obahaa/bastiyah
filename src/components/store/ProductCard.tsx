@@ -128,96 +128,102 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Product Content Details */}
-      <div className={`${isCompact ? 'p-3 sm:p-3.5 gap-2.5' : isLargeOrSpacious ? 'p-5 sm:p-6 gap-4' : 'p-4 sm:p-5 gap-3 sm:gap-4'} flex flex-col flex-1 justify-between`}>
-        <div>
+      <div className={`${isCompact ? 'p-3 sm:p-3.5' : isLargeOrSpacious ? 'p-4 sm:p-5' : 'p-3.5 sm:p-4'} flex flex-col flex-1 justify-between`}>
+        <div className="flex-1 flex flex-col">
           {/* Category & Star Rating Header Row */}
-          <div className="flex items-center justify-between mb-1.5 gap-2">
+          <div className="flex items-center justify-between mb-1.5 gap-1.5">
             <span 
-              className={`font-bold uppercase tracking-wider ${isCompact ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'} truncate`} 
+              className={`font-semibold uppercase tracking-wider ${isCompact ? 'text-[10px] sm:text-[11px]' : 'text-[11px] sm:text-xs'} truncate flex-1 min-w-0`} 
               style={{ color: theme.hex }}
             >
               {categoryName}
             </span>
-            <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-lg text-amber-950 shrink-0">
-              <Star className={`${isCompact ? 'w-3 h-3' : 'w-3.5 h-3.5'} fill-amber-400 text-amber-400`} />
-              <span className={`${isCompact ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'} font-black font-mono leading-none`}>{product.rating}</span>
-              <span className="text-slate-400 text-[11px] sm:text-xs leading-none">({product.reviewCount})</span>
+            <div className="flex items-center gap-1 bg-amber-50/90 border border-amber-200/70 px-1.5 py-0.5 rounded-md text-amber-950 shrink-0">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+              <span className="text-[11px] font-black font-mono leading-none">{product.rating}</span>
+              {!isCompact && (
+                <span className="text-slate-400 text-[10px] leading-none hidden sm:inline">({product.reviewCount})</span>
+              )}
             </div>
           </div>
 
-          {/* Product Name (Full 2 lines visibility, prominent and bold) */}
+          {/* Product Name (Properly sized so full text appears clearly) */}
           <h3
             onClick={handleCardClick}
-            className={`font-extrabold ${
+            className={`font-bold ${
               isCompact 
-                ? 'text-xs sm:text-sm min-h-[2.4rem] sm:min-h-[2.6rem]' 
+                ? 'text-xs sm:text-[13px] line-clamp-2 sm:line-clamp-3 leading-snug' 
                 : isLargeOrSpacious 
-                ? 'text-base sm:text-lg md:text-xl min-h-[3.2rem] sm:min-h-[3.6rem]' 
-                : 'text-sm sm:text-base md:text-lg min-h-[2.8rem] sm:min-h-[3.25rem]'
-            } text-slate-900 line-clamp-2 leading-snug hover:text-emerald-700 transition-colors cursor-pointer`}
+                ? 'text-base sm:text-lg leading-snug line-clamp-2 sm:line-clamp-3' 
+                : 'text-[13px] sm:text-sm md:text-base leading-snug line-clamp-2 sm:line-clamp-3'
+            } text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer`}
             title={productName}
           >
             {productName}
           </h3>
 
           {/* Product Tagline / Short description */}
-          <p className={`${isCompact ? 'text-[11px] line-clamp-1 min-h-[1.4rem]' : isLargeOrSpacious ? 'text-xs sm:text-sm line-clamp-2 min-h-[2.6rem]' : 'text-xs sm:text-sm line-clamp-2 min-h-[2.4rem] sm:min-h-[2.6rem]'} text-slate-500 mt-1 leading-relaxed`}>
-            {productTagline}
-          </p>
+          {productTagline && (
+            <p className={`${isCompact ? 'text-[10px] sm:text-[11px]' : 'text-[11px] sm:text-xs'} text-slate-500 mt-1 line-clamp-2 leading-relaxed`}>
+              {productTagline}
+            </p>
+          )}
         </div>
 
         {/* Price and Cart button footer */}
-        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className={`${isCompact ? 'text-base sm:text-lg' : isLargeOrSpacious ? 'text-xl sm:text-2xl md:text-3xl' : 'text-lg sm:text-xl md:text-2xl'} font-black text-slate-950 font-brand tracking-tight`}>
+        <div className="pt-2.5 mt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+          <div className="flex flex-col min-w-0">
+            {/* Price and Currency together - NEVER wrapped or broken */}
+            <div className="flex items-baseline gap-1 whitespace-nowrap">
+              <span className={`${isCompact ? 'text-base sm:text-lg' : isLargeOrSpacious ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'} font-black text-slate-950 font-brand tracking-tight`}>
                 {product.price.toLocaleString()}
               </span>
-              <span className="text-xs sm:text-sm font-bold text-slate-600">
+              <span className={`${isCompact ? 'text-[10px] sm:text-xs' : 'text-xs'} font-bold text-slate-600`}>
                 {activeStore.settings.currency || 'د.ع'}
               </span>
-              {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-[11px] sm:text-xs text-slate-400 line-through font-medium ms-1">
-                  {product.originalPrice.toLocaleString()} {activeStore.settings.currency || 'د.ع'}
-                </span>
-              )}
             </div>
 
-            {/* Live Stock Indicator Dot & Label */}
+            {/* Struck-through original price (if discounted) */}
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-[10px] sm:text-[11px] text-slate-400 line-through font-medium whitespace-nowrap block">
+                {product.originalPrice.toLocaleString()} {activeStore.settings.currency || 'د.ع'}
+              </span>
+            )}
+
+            {/* Stock indicator: only show if out of stock or low stock (Available note removed) */}
             {isOutOfStock ? (
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-500 shrink-0" />
-                <span className="text-xs font-bold text-rose-600 block">{t.outOfStock}</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                <span className="text-[10px] sm:text-xs font-bold text-rose-600 leading-none">{t.outOfStock}</span>
               </div>
             ) : isLowStock ? (
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-xs font-bold text-amber-700 block">
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-[10px] sm:text-xs font-bold text-amber-700 leading-none">
                   {t.onlyLeft.replace('{count}', String(product.stock))}
                 </span>
               </div>
-            ) : (
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="text-xs font-bold text-emerald-700 block">
-                  {t.inStock}
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Add to Cart Button */}
           <button
             onClick={() => addToCart(product)}
             disabled={isOutOfStock}
-            className={`${isCompact ? 'px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs' : isLargeOrSpacious ? 'px-4 py-2.5 sm:px-5 sm:py-3 text-sm' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0 ${
+            className={`${
+              isCompact 
+                ? 'px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs' 
+                : isLargeOrSpacious 
+                ? 'px-4 py-2.5 sm:px-5 sm:py-3 text-sm' 
+                : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'
+            } rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0 whitespace-nowrap ${
               isOutOfStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                 : 'text-white hover:brightness-105'
             }`}
             style={!isOutOfStock ? { backgroundColor: theme.hex } : undefined}
           >
-            <ShoppingBag className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
+            <ShoppingBag className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'} shrink-0`} />
             <span>{t.addToBag}</span>
           </button>
         </div>
