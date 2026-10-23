@@ -59,4 +59,83 @@ http.route({
   }),
 });
 
+/**
+ * 2. Self-Hosted WhatsApp Session Persistence:
+ * Syncs Baileys auth files to Convex so that Render never loses session on restart or sleep.
+ */
+http.route({
+  path: "/whatsapp-session",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const files = await ctx.runQuery("whatsappAuth:getAllSessionFiles" as any, {});
+    return new Response(JSON.stringify(files), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/whatsapp-session",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const { key, value } = await request.json();
+      if (!key || value === undefined) {
+        return new Response(JSON.stringify({ error: "key and value are required" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      await ctx.runMutation("whatsappAuth:saveSessionFile" as any, { key, value });
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+http.route({
+  path: "/whatsapp-session",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const url = new URL(request.url);
+      const key = url.searchParams.get("key");
+
+      if (key) {
+        await ctx.runMutation("whatsappAuth:removeSessionFile" as any, { key });
+      } else {
+        await ctx.runMutation("whatsappAuth:clearAllSessionFiles" as any, {});
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
 export default http;

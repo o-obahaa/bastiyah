@@ -130,4 +130,11 @@ export default defineSchema({
     description: v.string(),
   })
     .index("by_store", ["storeId"]),
+
+  whatsapp_auth: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["key"]),
 });

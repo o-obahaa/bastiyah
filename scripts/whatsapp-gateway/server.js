@@ -15,6 +15,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const AUTH_DIR = path.join(__dirname, 'auth_session');
 
+const CONVEX_SITE_URL = process.env.CONVEX_SITE_URL || 'https://fine-lemming-449.convex.site';
+const GATEWAY_PUBLIC_URL = process.env.GATEWAY_URL || 'https://bastiyah-whatsapp.onrender.com';
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -31,7 +34,74 @@ if (!fs.existsSync(AUTH_DIR)) {
   fs.mkdirSync(AUTH_DIR, { recursive: true });
 }
 
+/**
+ * 1. Restore WhatsApp session files from Convex database on container startup.
+ * This guarantees the user NEVER has to scan the QR code again across restarts or deploys.
+ */
+async function restoreSessionFromConvex() {
+  try {
+    const res = await fetch(`${CONVEX_SITE_URL}/whatsapp-session`);
+    if (res.ok) {
+      const files = await res.json();
+      const fileNames = Object.keys(files);
+      if (fileNames.length > 0) {
+        console.log(`[Bastiyah Gateway] 🔄 Restoring ${fileNames.length} session files from Convex...`);
+        for (const [filename, content] of Object.entries(files)) {
+          const filePath = path.join(AUTH_DIR, filename);
+          fs.writeFileSync(filePath, content, 'utf8');
+        }
+        console.log(`[Bastiyah Gateway] ✅ Session successfully restored from Convex! No QR scan needed.`);
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn('[Bastiyah Gateway] Could not restore session from Convex:', err.message);
+  }
+  return false;
+}
+
+/**
+ * 2. Backup session files from AUTH_DIR into Convex database.
+ */
+async function syncAllAuthFilesToConvex() {
+  try {
+    if (!fs.existsSync(AUTH_DIR)) return;
+    const files = fs.readdirSync(AUTH_DIR);
+    for (const f of files) {
+      if (f.endsWith('.json')) {
+        const fullPath = path.join(AUTH_DIR, f);
+        const content = fs.readFileSync(fullPath, 'utf8');
+        await fetch(`${CONVEX_SITE_URL}/whatsapp-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: f, value: content }),
+        }).catch(() => {});
+      }
+    }
+    console.log(`[Bastiyah Gateway] 💾 Synced ${files.length} session files to Convex cloud persistence.`);
+  } catch (err) {
+    console.warn('[Bastiyah Gateway] Error syncing auth files to Convex:', err.message);
+  }
+}
+
+/**
+ * 3. Clear session files from Convex on manual logout.
+ */
+async function clearConvexSession() {
+  try {
+    await fetch(`${CONVEX_SITE_URL}/whatsapp-session`, {
+      method: 'DELETE',
+    });
+    console.log('[Bastiyah Gateway] 🗑️ Cleared Convex session storage.');
+  } catch (err) {
+    console.warn('[Bastiyah Gateway] Error clearing Convex session:', err.message);
+  }
+}
+
 async function connectToWhatsApp() {
+  // First attempt restoring any existing session from Convex
+  await restoreSessionFromConvex();
+
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version, isLatest } = await fetchLatestBaileysVersion();
 
@@ -48,7 +118,10 @@ async function connectToWhatsApp() {
     keepAliveIntervalMs: 25000,
   });
 
-  sock.ev.on('creds.update', saveCreds);
+  sock.ev.on('creds.update', async () => {
+    await saveCreds();
+    syncAllAuthFilesToConvex();
+  });
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -73,6 +146,8 @@ async function connectToWhatsApp() {
       currentQrDataUrl = null;
       connectedPhone = sock?.user?.id ? sock.user.id.split(':')[0] : 'Unknown';
       console.log(`\n✅ [Bastiyah Gateway] Successfully connected to WhatsApp! Phone: +${connectedPhone}\n`);
+      // Sync keys and credentials to Convex cloud database immediately
+      syncAllAuthFilesToConvex();
     }
 
     if (connection === 'close') {
@@ -90,6 +165,7 @@ async function connectToWhatsApp() {
         try {
           fs.rmSync(AUTH_DIR, { recursive: true, force: true });
         } catch (e) {}
+        clearConvexSession();
         setTimeout(connectToWhatsApp, 2000);
       }
     }
@@ -130,7 +206,11 @@ app.get('/', (req, res) => {
         </div>
         <h2 class="text-base font-bold text-emerald-300">الرقم متصل وجاهز للإرسال!</h2>
         <p class="text-xs text-slate-300 font-mono" dir="ltr">+${connectedPhone}</p>
-        <p class="text-[11px] text-emerald-400/80">يتم إرسال أكواد التحقق للزبائن فوراً من هاتفك بدون أي شروط من فيسبوك.</p>
+        <div class="pt-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 rounded-full text-[11px] font-bold">
+            🔒 الجلسة محفوظة بالسحابة (لن تطلب مسح QR مرة أخرى)
+          </span>
+        </div>
       </div>
 
       <div class="pt-2">
@@ -160,7 +240,7 @@ app.get('/', (req, res) => {
 
         <div class="flex items-center justify-center gap-2 text-[11px] text-emerald-400">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>يتم تحديث الرمز تلقائياً</span>
+          <span>يتم تحديث الرمز تلقائياً - المسح لمرة واحدة فقط</span>
         </div>
       </div>
     `
@@ -192,6 +272,11 @@ app.get('/status', (req, res) => {
   });
 });
 
+// QR shortcut
+app.get('/qr', (req, res) => {
+  res.redirect('/');
+});
+
 // 3. Send WhatsApp OTP endpoint
 app.post('/send-otp', async (req, res) => {
   try {
@@ -204,7 +289,7 @@ app.post('/send-otp', async (req, res) => {
     if (connectionStatus !== 'CONNECTED' || !sock) {
       return res.status(503).json({
         success: false,
-        error: 'WhatsApp gateway is not connected. Please scan QR at http://localhost:3001',
+        error: 'WhatsApp gateway is not connected. Please scan QR at gateway URL',
       });
     }
 
@@ -289,6 +374,7 @@ app.post('/logout', async (req, res) => {
   try {
     fs.rmSync(AUTH_DIR, { recursive: true, force: true });
   } catch (e) {}
+  await clearConvexSession();
   connectionStatus = 'DISCONNECTED';
   connectedPhone = null;
   currentQrDataUrl = null;
@@ -302,4 +388,11 @@ app.listen(PORT, () => {
   console.log(`👉 Open http://localhost:${PORT} in your browser to scan QR`);
   console.log(`======================================================\n`);
   connectToWhatsApp();
+
+  // Heartbeat keep-alive ping every 8 minutes to prevent Render free-tier instance from sleeping
+  setInterval(() => {
+    fetch(`${GATEWAY_PUBLIC_URL}/status`)
+      .then(() => console.log('[Bastiyah Gateway] 💓 Heartbeat keep-alive ping dispatched.'))
+      .catch(() => {});
+  }, 8 * 60 * 1000);
 });
