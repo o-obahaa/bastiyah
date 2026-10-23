@@ -179,6 +179,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const {
     stores,
     activeStore,
+    universalCustomers: platformUniversalCustomers,
     switchStore,
     goToPlatform,
     createHostedStore,
@@ -270,6 +271,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   // Merchants Tab State
   const [merchantSearch, setMerchantSearch] = useState('');
   const [merchantPlanFilter, setMerchantPlanFilter] = useState<'all' | 'Starter' | 'Growth' | 'Enterprise'>('all');
+  const [customerSearch, setCustomerSearch] = useState('');
   const [revealedPasswordStoreId, setRevealedPasswordStoreId] = useState<string | null>(null);
   const [showAddMerchantModal, setShowAddMerchantModal] = useState(false);
   const [newMerchantStoreId, setNewMerchantStoreId] = useState(stores[0]?.id || '');
@@ -418,7 +420,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
       if (!auto || auto.length < 2) {
-        auto = `store-${Math.floor(100 + Math.random() * 900)}`;
+        auto = `store-${stores.length + 1}`;
       }
       setNewCustomSlug(auto);
     }
@@ -684,6 +686,22 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     addToast(language === 'ar' ? 'تم تحديث كلمة المرور للمشرف العام' : 'Master password updated successfully', 'success');
   };
 
+  // Direct order status update across stores from Owner Console
+  const handleUpdatePlatformOrderStatus = (newStatus: OrderStatus) => {
+    if (!selectedOrderDetails) return;
+    const store = stores.find((s) => s.id === selectedOrderDetails.storeId);
+    if (!store) return;
+    const updatedOrders = store.orders.map((o) =>
+      o.id === selectedOrderDetails.id ? { ...o, status: newStatus } : o
+    );
+    updateHostedStore(store.id, { orders: updatedOrders });
+    setSelectedOrderDetails({ ...selectedOrderDetails, status: newStatus });
+    addToast(
+      language === 'ar' ? `تم تحديث حالة الطلب إلى "${newStatus}" بنجاح` : `Order status updated to "${newStatus}" successfully`,
+      'success'
+    );
+  };
+
   // Aggregated Platform KPIs
   const totalStores = stores.length;
   const activeCount = stores.filter((s) => s.status === 'active').length;
@@ -723,22 +741,72 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     .reduce((sum, o) => sum + o.total, 0);
   const averageOrderValue = totalPlatformOrders > 0 ? totalPlatformRevenue / totalPlatformOrders : 0;
 
-  // Universal Cross-Store Customers (Bug Fix: c.ordersCount ?? 0 rather than c.ordersCount || 1)
+  // Universal Cross-Store Customers:
+  // Aggregated dynamically from registered platform accounts, store customer lists, and all actual orders.
+  // Real orders count and total spent are linked 100% directly to allOrdersFlat (no random data).
   const universalCustomers = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; phone?: string; email?: string; ordersCount: number; totalSpent: number; storeCount: number; stores: string[] }>();
+    type UniversalEntry = {
+      id: string;
+      name: string;
+      phone?: string;
+      email?: string;
+      city?: string;
+      state?: string;
+      address?: string;
+      ordersCount: number;
+      totalSpent: number;
+      storeCount: number;
+      stores: string[];
+      lastOrderDate?: string;
+      authenticatedVia?: string;
+      authenticatedAt?: string;
+    };
+
+    const normalizeKey = (phone?: string, email?: string, name?: string) => {
+      if (phone) {
+        const clean = phone.replace(/\D/g, '');
+        if (clean.length >= 7) return `phone:${clean.slice(-10)}`;
+      }
+      if (email && email.includes('@')) return `email:${email.trim().toLowerCase()}`;
+      if (name) return `name:${name.trim().toLowerCase()}`;
+      return '';
+    };
+
+    const map = new Map<string, UniversalEntry>();
+
+    // 1. Ingest registered universal users from platform auth
+    platformUniversalCustomers?.forEach((u) => {
+      const key = normalizeKey(u.phone, u.email, u.name);
+      if (!key) return;
+      map.set(key, {
+        id: u.id,
+        name: u.name,
+        phone: u.phone,
+        email: u.email,
+        city: u.city,
+        state: u.state,
+        address: u.address,
+        ordersCount: 0,
+        totalSpent: 0,
+        storeCount: 0,
+        stores: [],
+        authenticatedVia: u.authenticatedVia,
+        authenticatedAt: u.authenticatedAt,
+      });
+    });
+
+    // 2. Ingest customer directories from all hosted stores
     stores.forEach((store) => {
       store.customers?.forEach((c) => {
-        const key = (c.phone || c.email || c.name).trim().toLowerCase();
+        const key = normalizeKey(c.phone, c.email, c.name);
         if (!key) return;
-        const cOrders = typeof c.ordersCount === 'number' ? c.ordersCount : 0;
-        const cSpent = typeof c.totalSpent === 'number' ? c.totalSpent : 0;
         const existing = map.get(key);
         if (existing) {
-          existing.ordersCount += cOrders;
-          existing.totalSpent += cSpent;
+          if (!existing.phone && c.phone) existing.phone = c.phone;
+          if (!existing.email && c.email) existing.email = c.email;
+          if (!existing.city && c.city) existing.city = c.city;
           if (!existing.stores.includes(store.name)) {
             existing.stores.push(store.name);
-            existing.storeCount += 1;
           }
         } else {
           map.set(key, {
@@ -746,16 +814,77 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             name: c.name,
             phone: c.phone,
             email: c.email,
-            ordersCount: cOrders,
-            totalSpent: cSpent,
+            city: c.city,
+            ordersCount: 0,
+            totalSpent: 0,
             storeCount: 1,
             stores: [store.name],
           });
         }
       });
     });
-    return Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent);
-  }, [stores]);
+
+    // 3. Ingest and link all live orders across all stores (allOrdersFlat)
+    allOrdersFlat.forEach((ord) => {
+      const cust = ord.customer;
+      const key = normalizeKey(cust.phone, cust.email, cust.fullName);
+      if (!key) return;
+
+      let entry = map.get(key);
+      if (!entry) {
+        entry = {
+          id: `cust-ord-${cust.phone?.replace(/\D/g, '') || ord.id}`,
+          name: cust.fullName,
+          phone: cust.phone,
+          email: cust.email,
+          city: cust.city,
+          state: cust.state,
+          address: cust.address,
+          ordersCount: 0,
+          totalSpent: 0,
+          storeCount: 0,
+          stores: [],
+        };
+        map.set(key, entry);
+      }
+
+      // Link order directly
+      entry.ordersCount += 1;
+      if (ord.status !== 'cancelled') {
+        entry.totalSpent += ord.total;
+      }
+      if (!entry.stores.includes(ord.storeName)) {
+        entry.stores.push(ord.storeName);
+      }
+      if (!entry.lastOrderDate || new Date(ord.date).getTime() > new Date(entry.lastOrderDate).getTime()) {
+        entry.lastOrderDate = ord.date;
+      }
+    });
+
+    // Finalize store counts
+    map.forEach((entry) => {
+      entry.storeCount = entry.stores.length;
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent || b.ordersCount - a.ordersCount);
+  }, [platformUniversalCustomers, stores, allOrdersFlat]);
+
+  // Filtered Universal Customers for Tab 3 Search
+  const processedUniversalCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return universalCustomers;
+    const q = customerSearch.toLowerCase().trim();
+    const cleanQ = q.replace(/\D/g, '');
+    return universalCustomers.filter((c) => {
+      return (
+        c.name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(q)) ||
+        (cleanQ.length >= 4 && c.phone && c.phone.replace(/\D/g, '').includes(cleanQ)) ||
+        (c.email && c.email.toLowerCase().includes(q)) ||
+        (c.city && c.city.toLowerCase().includes(q)) ||
+        c.stores.some((s: string) => s.toLowerCase().includes(q))
+      );
+    });
+  }, [universalCustomers, customerSearch]);
 
   // MRR & ARR Calculations
   const starterCount = stores.filter((s) => s.plan === 'Starter').length;
@@ -2117,19 +2246,31 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
             {/* Universal Customers Insights Section */}
             <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 font-brand flex items-center gap-2">
                     <Users className="w-4 h-4 text-purple-600" />
                     <span>{language === 'ar' ? 'سجل العملاء الموحد عبر المنصة (Universal Customer Insights)' : 'Universal Cross-Store Shoppers'}</span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    {language === 'ar' ? 'قاعدة بيانات المشترين عبر كافة المتاجر ومرات شرائهم' : 'Aggregated customer profiles across all hosted stores'}
+                    {language === 'ar' ? 'بيانات المشترين الفعلية المرتبطة لحظياً بطلبات كافة المتاجر المستضافة بدون بيانات وهمية' : 'Live unified shopper registry strictly linked to actual multi-store checkouts with zero fake data'}
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                  {universalCustomers.length} {language === 'ar' ? 'عميل نشط' : 'Customers'}
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 self-start sm:self-auto">
+                  {processedUniversalCustomers.length} {language === 'ar' ? 'عميل مسجل' : 'Registered Customers'}
                 </span>
+              </div>
+
+              {/* Customer Search Bar */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  placeholder={language === 'ar' ? 'بحث عن عميل بالاسم، رقم الهاتف، المدينة، أو المتجر...' : 'Search customers by name, phone, city, or store...'}
+                  className="w-full ps-9 pe-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-purple-500"
+                />
               </div>
 
               <div className="overflow-x-auto">
@@ -2140,27 +2281,63 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                       <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'الهاتف' : 'Phone'}</th>
                       <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'الطلبات' : 'Orders'}</th>
                       <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'إجمالي الإنفاق' : 'Total Spent'}</th>
-                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'المتاجر التي اشترى منها' : 'Stores Visited'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'المتاجر المرتبطة' : 'Linked Stores'}</th>
+                      <th className="py-2.5 px-4 text-end">{language === 'ar' ? 'إجراءات' : 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {universalCustomers.slice(0, 20).map((cust) => (
-                      <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-4 font-bold text-slate-900">{cust.name}</td>
-                        <td className="py-3 px-4 font-mono text-slate-600" dir="ltr">{cust.phone || cust.email || 'N/A'}</td>
-                        <td className="py-3 px-4 font-mono font-bold text-slate-800">{cust.ordersCount}</td>
-                        <td className="py-3 px-4 font-mono font-bold text-emerald-600">${cust.totalSpent.toFixed(2)}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex flex-wrap gap-1">
-                            {cust.stores.map((sName) => (
-                              <span key={sName} className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
-                                {sName}
-                              </span>
-                            ))}
-                          </div>
+                    {processedUniversalCustomers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                          {language === 'ar' ? 'لا يوجد عملاء مطابقين لنتائج البحث' : 'No customers match the current search filter'}
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      processedUniversalCustomers.map((cust) => (
+                        <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3 px-4">
+                            <p className="font-bold text-slate-900">{cust.name}</p>
+                            {cust.city && (
+                              <span className="text-[10px] text-slate-500 font-normal">
+                                📍 {cust.city}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-600" dir="ltr">{cust.phone || cust.email || 'N/A'}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-800">
+                            {cust.ordersCount}
+                          </td>
+                          <td className="py-3 px-4 font-mono font-bold text-emerald-600">${cust.totalSpent.toFixed(2)}</td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-wrap gap-1">
+                              {cust.stores.length > 0 ? (
+                                cust.stores.map((sName) => (
+                                  <span key={sName} className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
+                                    {sName}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">
+                                  {language === 'ar' ? 'حساب جديد' : 'New account'}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-end">
+                            <button
+                              onClick={() => {
+                                setOrderSearch(cust.phone || cust.name);
+                                setActiveOwnerTab('orders');
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] border border-purple-200 transition-colors"
+                              title={language === 'ar' ? 'عرض طلبات العميل عبر كافة المتاجر' : 'View customer orders across all stores'}
+                            >
+                              {language === 'ar' ? 'عرض الطلبات' : 'View Orders'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -3455,9 +3632,21 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
             </div>
 
-            {/* Total Footer */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            {/* Total & Direct Status Footer */}
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs text-slate-500 font-bold">{language === 'ar' ? 'تحديث الحالة:' : 'Change Status:'}</span>
+                <select
+                  value={selectedOrderDetails.status}
+                  onChange={(e) => handleUpdatePlatformOrderStatus(e.target.value as OrderStatus)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-amber-500 cursor-pointer"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="processing">Processing</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
                 {getStatusBadge(selectedOrderDetails.status)}
               </div>
 
@@ -3471,6 +3660,14 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
             <div className="pt-2 flex items-center justify-end gap-3">
               <button
+                type="button"
+                onClick={() => setSelectedOrderDetails(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+              >
+                {language === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   const targetStoreId = selectedOrderDetails.storeId;
                   setSelectedOrderDetails(null);

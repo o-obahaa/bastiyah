@@ -95,6 +95,7 @@ interface StoreContextType {
 
   // Customer User Authentication & Account Management
   currentCustomer: CustomerUser | null;
+  universalCustomers: CustomerUser[];
   isCustomerAuthModalOpen: boolean;
   setIsCustomerAuthModalOpen: (open: boolean) => void;
   isCustomerAccountModalOpen: boolean;
@@ -2501,7 +2502,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     notes?: string
   ): Order => {
     const prefix = activeStore.slug.toUpperCase().slice(0, 5);
-    const orderNumber = `${prefix}-${Math.floor(10000 + Math.random() * 90000)}`;
+    const orderSeq = 1001 + (activeStore.orders?.length || 0);
+    const orderNumber = `${prefix}-${orderSeq}`;
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
       orderNumber,
@@ -2839,6 +2841,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         // Customer WhatsApp Auth & Account Profile
         currentCustomer,
+        universalCustomers,
         isCustomerAuthModalOpen,
         setIsCustomerAuthModalOpen,
         isCustomerAccountModalOpen,
