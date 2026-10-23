@@ -21,7 +21,9 @@ import {
   Edit3,
   Package,
   Truck,
-  ChevronLeft
+  ChevronLeft,
+  Tag,
+  TrendingUp
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -44,6 +46,9 @@ export const Header: React.FC = () => {
     selectedCategory,
     setSelectedCategory,
     getCategoryName,
+    getProductName,
+    getProductTagline,
+    setSelectedProductId,
     currentCustomer,
     setIsCustomerAuthModalOpen,
     setIsCustomerAccountModalOpen,
@@ -53,7 +58,9 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -61,8 +68,79 @@ export const Header: React.FC = () => {
     }
   }, [isSearchOpen]);
 
+  // Click outside listener to dismiss suggestions dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSuggestionsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Arabic text normalization for flexible matching
+  const normalizeArabic = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[يى]/g, 'ي')
+      .replace(/[\u064B-\u065F]/g, '');
+  };
+
+  const cleanQuery = searchQuery.trim();
+  const normalizedQ = normalizeArabic(cleanQuery);
+
+  // Filter matching products
+  const allMatchingProducts = cleanQuery.length > 0
+    ? products.filter((p) => {
+        const name = getProductName(p);
+        const tagline = getProductTagline(p);
+        const cat = getCategoryName(p.category);
+        const tags = (p.tags || []).join(' ');
+        const haystack = `${name} ${tagline} ${cat} ${tags}`;
+        return normalizeArabic(haystack).includes(normalizedQ);
+      })
+    : [];
+
+  const suggestedProducts = allMatchingProducts.slice(0, 5);
+  const totalMatchingCount = allMatchingProducts.length;
+
+  // Filter matching categories
+  const matchingCategories = cleanQuery.length >= 2
+    ? (Array.from(new Set(products.map((p) => p.category))) as ProductCategory[]).filter((cat) => {
+        const catName = getCategoryName(cat);
+        return normalizeArabic(catName).includes(normalizedQ);
+      })
+    : [];
+
+  const handleSelectProduct = (product: any) => {
+    setSelectedProductId(product.id);
+    setCurrentPage('product-detail');
+    setIsSuggestionsOpen(false);
+    setIsSearchOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
+  const handleSelectCategory = (cat: ProductCategory) => {
+    setSelectedCategory(cat);
+    setCurrentPage('shop');
+    setIsSuggestionsOpen(false);
+    setIsSearchOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
+  const handleViewAllResults = () => {
+    setCurrentPage('shop');
+    setIsSuggestionsOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSuggestionsOpen(false);
     if (currentPage !== 'shop') {
       setCurrentPage('shop');
     }
@@ -475,48 +553,259 @@ export const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Toggleable Search Bar (Desktop & Mobile when Search Icon is active) */}
+        {/* Toggleable Search Bar & Instant Suggestions (Desktop & Mobile) */}
         {isSearchOpen && (
-          <div className="pb-3.5 pt-1 transition-all">
-            <form onSubmit={handleSearchSubmit} className="relative w-full max-w-xl mx-auto">
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full py-2.5 text-sm rounded-2xl border shadow-sm focus:outline-none transition-all ${
-                  isDarkHeader
-                    ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-white'
-                    : 'bg-white hover:bg-slate-50 focus:bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 focus:border-slate-400'
-                } ${language === 'ar' ? 'pr-11 pl-10' : 'pl-11 pr-10'}`}
-              />
-              <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
-                language === 'ar' ? 'right-4' : 'left-4'
-              }`} />
-              {searchQuery ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-1 rounded-full ${
-                    language === 'ar' ? 'left-3' : 'right-3'
+          <div className="pb-3.5 pt-1 transition-all relative">
+            <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto">
+              <form onSubmit={handleSearchSubmit} className="relative w-full">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setIsSuggestionsOpen(true);
+                  }}
+                  onFocus={() => setIsSuggestionsOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setIsSuggestionsOpen(false);
+                      setIsSearchOpen(false);
+                    }
+                  }}
+                  className={`w-full py-2.5 text-sm rounded-2xl border shadow-sm focus:outline-none transition-all ${
+                    isDarkHeader
+                      ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-white'
+                      : 'bg-white hover:bg-slate-50 focus:bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 focus:border-slate-400'
+                  } ${language === 'ar' ? 'pr-11 pl-10' : 'pl-11 pr-10'}`}
+                />
+                <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
+                  language === 'ar' ? 'right-4' : 'left-4'
+                }`} />
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      if (searchInputRef.current) searchInputRef.current.focus();
+                    }}
+                    className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-1 rounded-full ${
+                      language === 'ar' ? 'left-3' : 'right-3'
+                    }`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSearchOpen(false);
+                      setIsSuggestionsOpen(false);
+                    }}
+                    className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-1 rounded-full ${
+                      language === 'ar' ? 'left-3' : 'right-3'
+                    }`}
+                    title={language === 'ar' ? 'إغلاق' : 'Close'}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </form>
+
+              {/* Instant Search Suggestions Dropdown */}
+              {isSuggestionsOpen && (
+                <div
+                  className={`absolute top-full start-0 end-0 mt-2 z-50 rounded-2xl shadow-2xl border overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 max-h-[75vh] overflow-y-auto scrollbar-thin ${
+                    isDarkHeader
+                      ? 'bg-slate-900/98 border-slate-700 text-white'
+                      : 'bg-white/98 border-slate-200 text-slate-800'
                   }`}
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsSearchOpen(false)}
-                  className={`absolute top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 p-1 rounded-full ${
-                    language === 'ar' ? 'left-3' : 'right-3'
-                  }`}
-                  title={language === 'ar' ? 'إغلاق' : 'Close'}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                  {cleanQuery.length > 0 ? (
+                    <>
+                      {/* Matching Categories Shortcuts */}
+                      {matchingCategories.length > 0 && (
+                        <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                          <span className="text-[11px] font-bold text-slate-400 block mb-2">
+                            {language === 'ar' ? 'الأقسام المطابقة:' : 'Matching Categories:'}
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {matchingCategories.map((cat) => {
+                              const count = products.filter((p) => p.category === cat).length;
+                              return (
+                                <button
+                                  key={cat}
+                                  type="button"
+                                  onClick={() => handleSelectCategory(cat)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-slate-700 dark:text-slate-200 transition-all shadow-2xs group"
+                                >
+                                  <Tag className="w-3 h-3 text-emerald-600" />
+                                  <span>{getCategoryName(cat)}</span>
+                                  <span className="text-[10px] text-slate-400 font-mono">({count})</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Matching Products List */}
+                      {suggestedProducts.length > 0 ? (
+                        <div>
+                          <div className="p-2 space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 px-2 py-1 block">
+                              {language === 'ar' ? 'المنتجات المقترحة:' : 'Suggested Products:'}
+                            </span>
+                            {suggestedProducts.map((p) => {
+                              const pName = getProductName(p);
+                              const pTagline = getProductTagline(p);
+                              return (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => handleSelectProduct(p)}
+                                  className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between gap-3 text-start group"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <img
+                                      src={p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=150&q=80'}
+                                      alt={pName}
+                                      className="w-11 h-11 rounded-lg object-cover bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-100 dark:border-slate-700 group-hover:scale-105 transition-transform"
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-emerald-600 transition-colors">
+                                        {pName}
+                                      </p>
+                                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                        {pTagline || getCategoryName(p.category)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-end shrink-0">
+                                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono block">
+                                      {activeStore.settings.currency}{p.price.toLocaleString()}
+                                    </span>
+                                    {p.stock <= 0 && (
+                                      <span className="text-[9px] text-rose-500 font-bold">
+                                        {language === 'ar' ? 'نفد' : 'Out of stock'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* View All Results Button Footer */}
+                          <div className="p-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+                            <span className="text-xs text-slate-500">
+                              {language === 'ar'
+                                ? `تم العثور على ${totalMatchingCount} نتيجة بحث`
+                                : `Found ${totalMatchingCount} results`}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleViewAllResults}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all active:scale-95"
+                              style={{ backgroundColor: theme.hex }}
+                            >
+                              <span>{language === 'ar' ? 'عرض كافة النتائج' : 'View All Results'}</span>
+                              <ArrowRight className={`w-3.5 h-3.5 ${language === 'ar' ? 'rotate-180' : ''}`} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Empty Search State */
+                        <div className="p-6 text-center space-y-2">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                            <Search className="w-5 h-5" />
+                          </div>
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                            {language === 'ar' ? `لا توجد نتائج مطابقة لـ "${cleanQuery}"` : `No matches found for "${cleanQuery}"`}
+                          </p>
+                          <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                            {language === 'ar'
+                              ? 'تأكد من كتابة الكلمات بشكل صحيح أو تصفح التصنيفات الشائعة أدناه'
+                              : 'Check for typos or try browsing our popular categories'}
+                          </p>
+                          <div className="pt-2 flex justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategory('All');
+                                setCurrentPage('shop');
+                                setIsSuggestionsOpen(false);
+                                setIsSearchOpen(false);
+                              }}
+                              className="px-3.5 py-1.5 rounded-full text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all"
+                            >
+                              {language === 'ar' ? 'تصفح جميع المنتجات' : 'Browse All Products'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Initial Focus: Popular Categories & Trending Products */
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-2">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>{language === 'ar' ? 'أقسام التسوق الشائعة:' : 'Popular Categories:'}</span>
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {storeCategories.map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => handleSelectCategory(cat)}
+                              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                            >
+                              {getCategoryName(cat)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Featured Products Shortcut */}
+                      {products.filter((p) => p.featured).slice(0, 3).length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                            {language === 'ar' ? 'منتجات مميزة قد تعجبك:' : 'Featured Products:'}
+                          </span>
+                          <div className="space-y-1">
+                            {products.filter((p) => p.featured).slice(0, 3).map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => handleSelectProduct(p)}
+                                className="w-full p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-between gap-2 text-start"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <img
+                                    src={p.images?.[0] || ''}
+                                    alt=""
+                                    className="w-8 h-8 rounded-lg object-cover bg-slate-100 shrink-0"
+                                  />
+                                  <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                                    {getProductName(p)}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">
+                                  {activeStore.settings.currency}{p.price.toLocaleString()}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
-            </form>
+            </div>
           </div>
         )}
       </div>
