@@ -1,4 +1,5 @@
 import { Product, Order, Customer, Coupon, StoreSettings, HostedStore, ANONYMOUS_USER_AVATAR } from '../types';
+import { DEFAULT_STORE_LOGOS } from '../constants/blankLogo';
 
 export const INITIAL_SETTINGS: StoreSettings = {
   storeName: 'Panda Store',
@@ -862,10 +863,12 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     status: 'active',
     plan: 'Enterprise',
     createdAt: '2026-01-10T09:00:00Z',
+    logo: DEFAULT_STORE_LOGOS.panda,
     design: {
       themeColor: 'emerald',
       layoutStyle: 'modern-split',
       logoEmoji: '🐼',
+      customLogoUrl: DEFAULT_STORE_LOGOS.panda,
       headerStyle: 'light',
       cardRadius: 'rounded',
       heroConfig: {
@@ -1024,10 +1027,12 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     status: 'active',
     plan: 'Growth',
     createdAt: '2026-02-01T12:00:00Z',
+    logo: DEFAULT_STORE_LOGOS['royal-oud'],
     design: {
       themeColor: 'amber',
       layoutStyle: 'luxury-centered',
       logoEmoji: '👑',
+      customLogoUrl: DEFAULT_STORE_LOGOS['royal-oud'],
       headerStyle: 'dark',
       cardRadius: 'rounded',
       heroConfig: {
@@ -1120,10 +1125,12 @@ export const INITIAL_HOSTED_STORES: HostedStore[] = [
     status: 'active',
     plan: 'Enterprise',
     createdAt: '2026-02-14T15:00:00Z',
+    logo: DEFAULT_STORE_LOGOS.velvet,
     design: {
       themeColor: 'rose',
       layoutStyle: 'minimal-editorial',
       logoEmoji: '🦢',
+      customLogoUrl: DEFAULT_STORE_LOGOS.velvet,
       headerStyle: 'light',
       cardRadius: 'sharp',
       heroConfig: {

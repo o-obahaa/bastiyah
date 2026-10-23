@@ -562,8 +562,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               customers: finalCustomers,
               products: updatedProducts,
               ownerPhone: resolvedOwnerPhone,
+              logo: s.logo || s.design?.customLogoUrl || initMatch?.logo || '',
               design: {
                 ...s.design,
+                customLogoUrl: s.design?.customLogoUrl || s.logo || initMatch?.design?.customLogoUrl || '',
                 heroConfig: s.design?.heroConfig ? {
                   ...s.design.heroConfig,
                   fullWidth: false,
@@ -2328,14 +2330,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateHostedStore = (storeId: string, updates: Partial<HostedStore>) => {
     setStores((prev) =>
       prev.map((s) => {
-        if (s.id !== storeId) return s;
-        const updated = { ...s, ...updates };
+        if (s.id !== storeId && s.slug !== storeId) return s;
+        const newLogo = updates.logo !== undefined ? updates.logo : (updates.design?.customLogoUrl || s.logo || s.design?.customLogoUrl);
+        const updated: HostedStore = {
+          ...s,
+          ...updates,
+          logo: newLogo,
+          design: {
+            ...s.design,
+            ...(updates.design || {}),
+            customLogoUrl: newLogo,
+          },
+        };
         if (updates.name) {
           updated.settings = { ...updated.settings, storeName: updates.name };
         }
         return updated;
       })
     );
+    broadcastPlatformSync({
+      type: 'STORE_UPDATED',
+      storeId,
+      updates,
+    });
     addToast(
       language === 'ar' ? 'تم تحديث بيانات المتجر بنجاح' : 'Store details updated successfully',
       'success'
@@ -2367,13 +2384,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateStoreDesign = (designUpdates: Partial<StoreDesign>, storeId?: string) => {
-    mutateActiveStore(
-      (store) => ({
-        ...store,
-        design: { ...store.design, ...designUpdates },
-      }),
-      storeId
+    const targetId = storeId || activeStore.id;
+    setStores((prev) =>
+      prev.map((s) => {
+        if (s.id !== targetId && s.slug !== targetId) return s;
+        const newLogo = designUpdates.customLogoUrl !== undefined ? designUpdates.customLogoUrl : (s.logo || s.design?.customLogoUrl);
+        return {
+          ...s,
+          logo: newLogo,
+          design: {
+            ...s.design,
+            ...designUpdates,
+            customLogoUrl: newLogo,
+          },
+        };
+      })
     );
+    broadcastPlatformSync({
+      type: 'STORE_DESIGN_UPDATED',
+      storeId: targetId,
+      designUpdates,
+    });
     addToast(
       language === 'ar' ? '✨ تم تحديث تصميم وهوية المتجر!' : '✨ Store design & theme updated!',
       'success'

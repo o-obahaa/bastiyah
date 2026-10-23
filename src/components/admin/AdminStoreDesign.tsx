@@ -188,7 +188,8 @@ export const AdminStoreDesign: React.FC = () => {
       });
 
       setCustomLogoUrl(result.url);
-      updateStoreDesign({ customLogoUrl: result.url });
+      updateStoreDesign({ customLogoUrl: result.url }, activeStore.id);
+      updateHostedStore(activeStore.id, { logo: result.url });
       addToast(
         language === 'ar' ? 'تم رفع وحفظ شعار المتجر بنجاح!' : 'Store logo uploaded and saved successfully!',
         'success'
@@ -241,6 +242,7 @@ export const AdminStoreDesign: React.FC = () => {
       nameAr: nameAr.trim() || name.trim(),
       tagline: tagline.trim(),
       taglineAr: taglineAr.trim() || tagline.trim(),
+      logo: customLogoUrl.trim() || undefined,
     });
 
     // Save design enhancements
@@ -253,7 +255,7 @@ export const AdminStoreDesign: React.FC = () => {
       whatsappNumber: whatsappNumber.trim() || undefined,
       instagramUrl: instagramUrl.trim() || undefined,
       tiktokUrl: tiktokUrl.trim() || undefined,
-    });
+    }, activeStore.id);
 
     addToast(
       language === 'ar' ? 'تم حفظ هوية ومظهر المتجر بنجاح!' : 'Store identity & appearance saved successfully!',

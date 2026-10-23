@@ -70,7 +70,7 @@ import { StoreThemeColor, StoreLayoutStyle, HostedStore, Order, OrderStatus } fr
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 import { isMockOrder, isMockCustomer } from '../../data/mockData';
-import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
+import { BLANK_STORE_LOGO_URL, getStoreLogo, DEFAULT_STORE_LOGOS } from '../../constants/blankLogo';
 
 const CATEGORY_PRESETS = [
   { en: 'Specialty Coffee & Artisan', ar: 'قهوة مختصة وحرفيات' },
@@ -412,6 +412,12 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       plan: editPlan,
       status: editStatus,
       logo: editLogoUrl,
+      design: {
+        ...editingStore.design,
+        themeColor: editThemeColor,
+        layoutStyle: editLayoutStyle,
+        customLogoUrl: editLogoUrl,
+      },
     });
 
     updateStoreDesign(
@@ -584,6 +590,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       themeColor: preset.themeColor,
       layoutStyle: preset.layoutStyle,
       logoEmoji: preset.logoEmoji,
+      customLogoUrl: (DEFAULT_STORE_LOGOS as any)[preset.slug] || '',
+      logo: (DEFAULT_STORE_LOGOS as any)[preset.slug] || '',
       currency: 'د.ع',
     });
   };
@@ -1804,9 +1812,44 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                         {/* Top Store Header */}
                         <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden p-1 shadow-2xs">
+                            <label
+                              className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform overflow-hidden p-1 shadow-2xs relative cursor-pointer group/logo"
+                              title={language === 'ar' ? 'انقر لتغيير أو رفع شعار المتجر مباشرة' : 'Click to upload/change store logo'}
+                            >
                               <img src={getStoreLogo(store)} alt="" className="w-full h-full object-contain" />
-                            </div>
+                              <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover/logo:opacity-100 flex items-center justify-center text-white transition-opacity rounded-2xl">
+                                <Upload className="w-4 h-4 text-amber-400" />
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                      if (typeof reader.result === 'string') {
+                                        const newUrl = reader.result;
+                                        updateHostedStore(store.id, {
+                                          logo: newUrl,
+                                          design: {
+                                            ...store.design,
+                                            customLogoUrl: newUrl,
+                                          },
+                                        });
+                                        updateStoreDesign({ customLogoUrl: newUrl }, store.id);
+                                        addToast(
+                                          language === 'ar' ? `تم تحديث شعار (${store.nameAr || store.name}) بنجاح!` : `Logo updated for ${store.name}!`,
+                                          'success'
+                                        );
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                            </label>
                             <div>
                               <div className="flex items-center gap-1.5">
                                 <h3 className="text-base font-bold text-slate-900 font-brand group-hover:text-amber-600 transition-colors">
