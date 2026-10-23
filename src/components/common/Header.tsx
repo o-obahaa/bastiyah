@@ -479,8 +479,8 @@ export const Header: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <div className="min-w-0 hidden xs:block">
-                  <span className="font-black text-base sm:text-xl tracking-tight block leading-tight text-white truncate max-w-[110px] sm:max-w-xs">
+                <div className="min-w-0 flex flex-col justify-center">
+                  <span className="font-black text-sm sm:text-base md:text-xl tracking-tight block leading-tight text-white truncate max-w-[110px] sm:max-w-[200px] md:max-w-xs">
                     {displayStoreName}
                   </span>
                 </div>
