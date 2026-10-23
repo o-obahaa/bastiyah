@@ -165,27 +165,50 @@ http.route({
 
       const lower = raw.toLowerCase();
 
-      // 1. HELP MENU
-      if (["مساعدة", "اوامر", "أوامر", "تعليمات", "help", "commands", "?"].includes(lower)) {
-        const helpText =
-          `🤖 *أوامر إدارة متجر بستية عبر واتساب:*\n` +
+      // 1. MAIN INTERACTIVE BOT MENU
+      if (["قائمة", "منيو", "menu", "مساعدة", "اوامر", "أوامر", "تعليمات", "help", "commands", "?"].includes(lower)) {
+        const menuText =
+          `🤖 *بوت إدارة متجر بستية - القائمة التفاعلية:* \n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `• *تأكيد [رقم الطلب]* 👈 تحويل لقيد التجهيز\n` +
-          `• *شحن [رقم الطلب] [كود التتبع]* 👈 تعيين الشحن والتتبع\n` +
-          `• *تسليم [رقم الطلب]* 👈 تم التوصيل للزبون\n` +
-          `• *الغاء [رقم الطلب]* 👈 إلغاء الطلب\n` +
-          `• *تفاصيل [رقم الطلب]* 👈 عرض بيانات ومحتوى الطلب\n` +
-          `• *طلبات* 👈 عرض أحدث الطلبات المسجلة\n` +
+          `أرسل رقم الخيار للتحكم بالمتجر:\n\n` +
+          `1️⃣ *عرض أحدث الطلبات* (أرسل 1)\n` +
+          `2️⃣ *إحصائيات المبيعات والأرباح* (أرسل 2)\n` +
+          `3️⃣ *تأكيد أحدث طلب وارد* (أرسل 3)\n` +
+          `4️⃣ *دليل أوامر الشحن والإلغاء* (أرسل 4)\n\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `💡 *مثال:* تأكيد #PAN-88240 أو الرد على إشعار الطلب بكلمة (تأكيد) أو (شحن)`;
-        return new Response(JSON.stringify({ reply: helpText }), {
+          `💡 *للتحكم السريع بأي طلب:*\n` +
+          `رد مباشرة على إشعار أي طلب بالرقم:\n` +
+          `• 1️⃣ لتأكيد وتجهيز الطلب\n` +
+          `• 2️⃣ لشحن الطلب للمندوب\n` +
+          `• 3️⃣ لتأكيد التسليم واستلام المبلغ\n` +
+          `• 4️⃣ لإلغاء الطلب`;
+        return new Response(JSON.stringify({ reply: menuText }), {
           status: 200,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
         });
       }
 
-      // 2. RECENT ORDERS LIST
-      if (["طلبات", "الطلبات", "orders", "recent"].includes(lower)) {
+      // 2. STORE SALES & REVENUE STATS (Option 2 or 'احصائيات' or 'مبيعات')
+      if (["احصائيات", "إحصائيات", "مبيعات", "ارباح", "أرباح", "stats", "revenue"].includes(lower) || (lower === "2" && !orderNumber)) {
+        const summary: any = await ctx.runQuery("orders:getStoreSummary" as any, {});
+        const statsText =
+          `📊 *إحصائيات مبيعات متجر بستية:*\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `📦 إجمالي الطلبات: *${summary.totalOrders} طلب*\n` +
+          `🟡 قيد المراجعة والتجهيز: *${summary.pendingOrders} طلب*\n` +
+          `✅ الطلبات المسلمة بنجاح: *${summary.deliveredOrders} طلب*\n` +
+          `❌ الطلبات الملغاة: *${summary.cancelledOrders} طلب*\n` +
+          `💵 إجمالي المبيعات المحصلة: *د.ع ${summary.totalRevenue.toLocaleString()}*\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `💡 أرسل *1* لعرض أحدث الطلبات، أو *قائمة* للقائمة الرئيسية.`;
+        return new Response(JSON.stringify({ reply: statsText }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      }
+
+      // 3. RECENT ORDERS LIST (Option 1 or 'طلبات')
+      if (["طلبات", "الطلبات", "orders", "recent"].includes(lower) || (lower === "1" && !orderNumber)) {
         const recent: any[] = await ctx.runQuery("orders:getRecentOrders" as any, { limit: 5 });
         if (!recent || recent.length === 0) {
           return new Response(
@@ -204,20 +227,49 @@ http.route({
         recent.forEach((o, i) => {
           listText += `${i + 1}. *#${o.orderNumber}* (${o.customer.fullName})\n   المبلغ: د.ع ${o.total.toLocaleString()} | الحالة: ${statusMap[o.status] || o.status}\n\n`;
         });
-        listText += `💡 للتحكم بأي طلب أرسل: *تأكيد [رقم الطلب]* أو *شحن [رقم الطلب]*`;
+        listText += `💡 للتحكم بأي طلب: أرسل *تأكيد [رقم الطلب]* أو *شحن [رقم الطلب]*`;
         return new Response(JSON.stringify({ reply: listText }), {
           status: 200,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
         });
       }
 
-      // If no order number matched for order actions, check if it's an action keyword
-      if (!orderNumber) {
-        const isActionKeyword = /^(تأكيد|تاكيد|تجهيز|قبول|شحن|تسليم|تم|الغاء|إلغاء|تفاصيل|معلومات|confirm|ship|deliver|cancel|info)/i.test(raw);
+      // 4. CHEAT SHEET (Option 4)
+      if (lower === "4" && !orderNumber) {
+        const guideText =
+          `📖 *دليل أوامر البوت السريعة:*\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `• *تأكيد [رقم الطلب]* 👈 قبول وتجهيز الطلب\n` +
+          `• *شحن [رقم الطلب] [كود التتبع]* 👈 شحن الطلب\n` +
+          `• *تسليم [رقم الطلب]* 👈 تم التوصيل واستلام المبلغ\n` +
+          `• *الغاء [رقم الطلب]* 👈 إلغاء الطلب\n` +
+          `• *تفاصيل [رقم الطلب]* 👈 عرض محتويات وعنوان الطلب\n` +
+          `• *طلبات* 👈 عرض أحدث الطلبات\n` +
+          `• *مبيعات* 👈 إحصائيات المبيعات والأرباح\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `💡 أرسل *قائمة* للعودة للقائمة التفاعلية.`;
+        return new Response(JSON.stringify({ reply: guideText }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      }
+
+      // If no order number specified in message or quote, but action number 1-5 sent, resolve to latest order
+      let targetOrderNumber = orderNumber;
+      if (!targetOrderNumber) {
+        const latestOrder: any = await ctx.runQuery("orders:getLatestOrder" as any, {});
+        if (latestOrder) {
+          targetOrderNumber = latestOrder.orderNumber;
+        }
+      }
+
+      // If still no order number matched for order actions, prompt user
+      if (!targetOrderNumber) {
+        const isActionKeyword = /^(تأكيد|تاكيد|تجهيز|قبول|شحن|تسليم|تم|الغاء|إلغاء|تفاصيل|معلومات|confirm|ship|deliver|cancel|info|[1-5])/i.test(raw);
         if (isActionKeyword) {
           return new Response(
             JSON.stringify({
-              reply: `⚠️ يرجى تحديد رقم الطلب مع الأمر.\nمثال: \`تأكيد #PAN-88240\` أو اكتب \`مساعدة\` لعرض قائمة الأوامر.`,
+              reply: `⚠️ يرجى تحديد رقم الطلب أو كتابة \`قائمة\` لعرض خيارات البوت.`,
             }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
@@ -228,16 +280,16 @@ http.route({
         });
       }
 
-      // 3. CONFIRM / PROCESSING
-      if (/^(تأكيد|تاكيد|تجهيز|قبول|موافقة|confirm|1\b)/i.test(raw)) {
+      // 5. CONFIRM / PROCESSING (Option 1 or 'تأكيد' or Option 3 from main menu)
+      if (/^(تأكيد|تاكيد|تجهيز|قبول|موافقة|confirm|1\b|3\b)/i.test(raw)) {
         const res: any = await ctx.runMutation("orders:updateStatusByOrderNumber" as any, {
-          orderNumber,
+          orderNumber: targetOrderNumber,
           status: "processing",
         });
         if (res.success) {
           return new Response(
             JSON.stringify({
-              reply: `✅ *تم تأكيد الطلب #${orderNumber} بنجاح!*\n\nالحالة الآن: *قيد التجهيز والتغليف* 📦\nيمكنك شحنه لاحقاً بإرسال: \`شحن #${orderNumber} [كود التتبع]\``,
+              reply: `✅ *تم تأكيد الطلب #${targetOrderNumber} بنجاح!*\n\nالحالة الآن: *قيد التجهيز والتغليف* 📦\nيمكنك شحنه لاحقاً بإرسال: \`شحن #${targetOrderNumber} [كود التتبع]\` أو الرد برقم 2.`,
             }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
@@ -249,20 +301,23 @@ http.route({
         }
       }
 
-      // 4. SHIP WITH OPTIONAL TRACKING
-      if (/^(شحن|ارسال|إرسال|ship)/i.test(raw)) {
+      // 6. SHIP WITH OPTIONAL TRACKING (Option 2 with order context or 'شحن')
+      if (/^(شحن|ارسال|إرسال|ship|2\b)/i.test(raw)) {
         const parts = raw.split(/\s+/).filter(Boolean);
-        const trackingCode = parts.length >= 3 ? parts.slice(2).join(" ") : undefined;
+        let trackingCode: string | undefined = undefined;
+        if (parts.length >= 2 && !/^(2|شحن|ship)$/i.test(parts[parts.length - 1])) {
+          trackingCode = parts.slice(1).join(" ").replace(/#?[A-Za-z0-9]+-[0-9]+/i, "").trim() || undefined;
+        }
 
         const res: any = await ctx.runMutation("orders:updateStatusByOrderNumber" as any, {
-          orderNumber,
+          orderNumber: targetOrderNumber,
           status: "shipped",
           trackingNumber: trackingCode,
         });
         if (res.success) {
           return new Response(
             JSON.stringify({
-              reply: `🚚 *تم شحن الطلب #${orderNumber} بنجاح!*\n\nالحالة الآن: *تم الشحن وتسليمه للمندوب* 🚀${trackingCode ? `\n📍 كود التتبع: \`${trackingCode}\`` : ""}\nتم تحديث لوحة التحكم تلقائياً.`,
+              reply: `🚚 *تم شحن الطلب #${targetOrderNumber} بنجاح!*\n\nالحالة الآن: *تم الشحن وتسليمه للمندوب* 🚀${trackingCode ? `\n📍 كود التتبع: \`${trackingCode}\`` : ""}\nتم تحديث لوحة التحكم تلقائياً.`,
             }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
@@ -274,16 +329,16 @@ http.route({
         }
       }
 
-      // 5. DELIVERED
-      if (/^(تسليم|تم|وصل|deliver|done)/i.test(raw)) {
+      // 7. DELIVERED (Option 3 or 'تسليم' / 'تم')
+      if (/^(تسليم|تم|وصل|deliver|done|3\b)/i.test(raw)) {
         const res: any = await ctx.runMutation("orders:updateStatusByOrderNumber" as any, {
-          orderNumber,
+          orderNumber: targetOrderNumber,
           status: "delivered",
         });
         if (res.success) {
           return new Response(
             JSON.stringify({
-              reply: `🎉 *تم تسليم الطلب #${orderNumber} بنجاح!*\n\nالحالة الآن: *تم التوصيل واستلام المبلغ (مكتمل)* ✅`,
+              reply: `🎉 *تم تسليم الطلب #${targetOrderNumber} بنجاح!*\n\nالحالة الآن: *تم التوصيل واستلام المبلغ (مكتمل)* ✅`,
             }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
@@ -295,16 +350,16 @@ http.route({
         }
       }
 
-      // 6. CANCEL
-      if (/^(الغاء|إلغاء|رفض|cancel)/i.test(raw)) {
+      // 8. CANCEL (Option 4 or 'الغاء')
+      if (/^(الغاء|إلغاء|رفض|cancel|4\b)/i.test(raw)) {
         const res: any = await ctx.runMutation("orders:updateStatusByOrderNumber" as any, {
-          orderNumber,
+          orderNumber: targetOrderNumber,
           status: "cancelled",
         });
         if (res.success) {
           return new Response(
             JSON.stringify({
-              reply: `❌ *تم إلغاء الطلب #${orderNumber}.*\nتم تحديث حالة الطلب في لوحة التحكم إلى (ملغي).`,
+              reply: `❌ *تم إلغاء الطلب #${targetOrderNumber}.*\nتم تحديث حالة الطلب في لوحة التحكم إلى (ملغي).`,
             }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
@@ -316,12 +371,12 @@ http.route({
         }
       }
 
-      // 7. ORDER DETAILS / INFO
-      if (/^(تفاصيل|معلومات|استعلام|بيانات|info)/i.test(raw)) {
-        const order: any = await ctx.runQuery("orders:getOrderByNumber" as any, { orderNumber });
+      // 9. ORDER DETAILS / INFO (Option 5 or 'تفاصيل')
+      if (/^(تفاصيل|معلومات|استعلام|بيانات|info|5\b)/i.test(raw)) {
+        const order: any = await ctx.runQuery("orders:getOrderByNumber" as any, { orderNumber: targetOrderNumber });
         if (!order) {
           return new Response(
-            JSON.stringify({ reply: `⚠️ لم يتم العثور على طلب برقم #${orderNumber}.` }),
+            JSON.stringify({ reply: `⚠️ لم يتم العثور على طلب برقم #${targetOrderNumber}.` }),
             { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
           );
         }
@@ -338,7 +393,7 @@ http.route({
           `💵 *الإجمالي:* د.ع ${order.total.toLocaleString()}\n` +
           `📊 *الحالة:* ${order.status}\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `💡 للتحكم: أرسل *تأكيد #${order.orderNumber}* أو *شحن #${order.orderNumber}*`;
+          `💡 خيارات سريعة: رد برقم الخيار:\n1️⃣ تأكيد | 2️⃣ شحن | 3️⃣ تم التوصيل | 4️⃣ إلغاء`;
         return new Response(JSON.stringify({ reply: infoMsg }), {
           status: 200,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },

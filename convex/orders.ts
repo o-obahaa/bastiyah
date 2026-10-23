@@ -140,3 +140,32 @@ export const getRecentOrders = query({
     return await ctx.db.query("orders").order("desc").take(limit);
   },
 });
+
+export const getStoreSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const orders = await ctx.db.query("orders").collect();
+    const totalOrders = orders.length;
+    const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
+    const deliveredOrders = orders.filter((o) => o.status === "delivered").length;
+    const cancelledOrders = orders.filter((o) => o.status === "cancelled").length;
+    const totalRevenue = orders
+      .filter((o) => o.status !== "cancelled")
+      .reduce((sum, o) => sum + (o.total || 0), 0);
+
+    return {
+      totalOrders,
+      pendingOrders,
+      deliveredOrders,
+      cancelledOrders,
+      totalRevenue,
+    };
+  },
+});
+
+export const getLatestOrder = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("orders").order("desc").first();
+  },
+});
