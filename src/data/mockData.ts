@@ -546,30 +546,302 @@ export const FASHION_PRODUCTS: Product[] = [
 export const isMockOrder = (o: any): boolean => {
   if (!o) return false;
   const id = String(o.id || '');
-  if (id.startsWith('ord-100') || id.startsWith('ord-oud-') || id.startsWith('ord-vel-')) return true;
+  if (['ord-1001', 'ord-1002', 'ord-1003', 'ord-1004', 'ord-oud-1', 'ord-vel-1'].includes(id)) return true;
   const num = String(o.orderNumber || '');
-  if (num.startsWith('PANDA-829') || num.startsWith('PANDA-828') || num.startsWith('OUD-904') || num.startsWith('VEL-401')) return true;
-  const name = o.customer?.fullName || '';
-  if (name === 'Sophia Martinez' || name === 'Marcus Vance' || name === 'Elena Rostova' || name === 'David Chen' || name === 'Faisal Al-Harbi' || name === 'Layla Al-Qasimi') return true;
-  const email = String(o.customer?.email || '').toLowerCase();
-  if (email.endsWith('@example.com') || email.endsWith('@california.edu') || email.endsWith('@techlead.co') || email.endsWith('@design.studio') || email.endsWith('@riyadh.sa') || email.endsWith('@dubai-design.ae')) return true;
+  if (['PANDA-82914', 'PANDA-82915', 'PANDA-82916', 'PANDA-82890', 'OUD-90412', 'VEL-40129'].includes(num)) return true;
+  const name = (o.customer?.fullName || '').trim();
+  if (['Sophia Martinez', 'Marcus Vance', 'Elena Rostova', 'David Chen', 'Faisal Al-Harbi', 'Layla Al-Qasimi'].includes(name)) return true;
+  const email = String(o.customer?.email || '').toLowerCase().trim();
+  if (['sophia.m@example.com', 'marcus.vance@techlead.co', 'elena.rostova@design.studio', 'd.chen@california.edu', 'faisal@riyadh.sa', 'layla@dubai-design.ae'].includes(email)) return true;
   return false;
 };
 
 export const isMockCustomer = (c: any): boolean => {
   if (!c) return false;
   const id = String(c.id || '');
-  if (id === 'cust-1' || id === 'cust-2' || id === 'cust-3' || id === 'cust-4' || id === 'cust-5' || id === 'cust-oud-1' || id === 'cust-vel-1') return true;
-  const name = c.name || '';
-  if (name === 'Sophia Martinez' || name === 'Marcus Vance' || name === 'Elena Rostova' || name === 'David Chen' || name === 'Faisal Al-Harbi' || name === 'Layla Al-Qasimi' || name === 'حيدر علي العراقي' || name === 'مريم التميمي' || name === 'عمر الدليمي' || name === 'زينب الشمري') return true;
-  const email = String(c.email || '').toLowerCase();
-  if (email.endsWith('@customer.iq') || email.endsWith('@example.com') || email.endsWith('@riyadh.sa') || email.endsWith('@dubai-design.ae')) return true;
+  if (['cust-1', 'cust-2', 'cust-3', 'cust-4', 'cust-5', 'cust-oud-1', 'cust-vel-1'].includes(id)) return true;
+  const name = (c.name || '').trim();
+  if (['Sophia Martinez', 'Marcus Vance', 'Elena Rostova', 'David Chen', 'Faisal Al-Harbi', 'Layla Al-Qasimi'].includes(name)) return true;
+  const email = String(c.email || '').toLowerCase().trim();
+  if (['sophia.m@example.com', 'marcus.vance@techlead.co', 'elena.rostova@design.studio', 'd.chen@california.edu', 'faisal@riyadh.sa', 'layla@dubai-design.ae'].includes(email)) return true;
   return false;
 };
 
-export const INITIAL_ORDERS: Order[] = [];
+// 7 Real Panda Store Orders strictly matching store dashboard
+export const PANDA_STORE_ORDERS: Order[] = [
+  {
+    id: 'ord-panda-64675',
+    orderNumber: 'PANDA-64675',
+    date: '2026-10-23T20:15:00Z',
+    customer: {
+      fullName: 'bahaa amer',
+      email: '7348178@customer.iq',
+      phone: '+964 771 734 8178',
+      address: 'حي الجامعة - شارع 66',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'Aura Studio Wireless ANC Headphones',
+        productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80',
+        price: 5249,
+        quantity: 1,
+      },
+    ],
+    subtotal: 5249,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 5249.00,
+    status: 'processing',
+    paymentMethod: 'Cash on Delivery',
+    courier: 'واصل إكسبريس (Wasel Express)',
+    trackingNumber: 'WAS-BG-64675',
+  },
+  {
+    id: 'ord-panda-44999',
+    orderNumber: 'PANDA-44999',
+    date: '2026-10-23T18:40:00Z',
+    customer: {
+      fullName: 'bahaa amer',
+      email: '7348178@customer.iq',
+      phone: '+964 771 734 8178',
+      address: 'حي الجامعة - شارع 66',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-2',
+        productName: 'Chronos V4 Titanium Smartwatch',
+        productImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=200&q=80',
+        price: 349,
+        quantity: 1,
+      },
+    ],
+    subtotal: 349,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 349.00,
+    status: 'cancelled',
+    paymentMethod: 'Cash on Delivery',
+  },
+  {
+    id: 'ord-panda-32754',
+    orderNumber: 'PANDA-32754',
+    date: '2026-10-23T16:20:00Z',
+    customer: {
+      fullName: 'bahaa amer',
+      email: '7348178@customer.iq',
+      phone: '+964 771 734 8178',
+      address: 'حي الجامعة - شارع 66',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'Aura Studio Wireless ANC Headphones',
+        productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80',
+        price: 249,
+        quantity: 1,
+      },
+    ],
+    subtotal: 249,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 249.00,
+    status: 'processing',
+    paymentMethod: 'Cash on Delivery',
+    courier: 'واصل إكسبريس (Wasel Express)',
+    trackingNumber: 'WAS-BG-32754',
+  },
+  {
+    id: 'ord-panda-74961',
+    orderNumber: 'PANDA-74961',
+    date: '2026-10-23T14:10:00Z',
+    customer: {
+      fullName: 'bahaa amer',
+      email: '7348178@customer.iq',
+      phone: '+964 771 734 8178',
+      address: 'حي الجامعة - شارع 66',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-2',
+        productName: 'Chronos V4 Titanium Smartwatch',
+        productImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=200&q=80',
+        price: 349,
+        quantity: 1,
+      },
+      {
+        productId: 'prod-3',
+        productName: 'Horizon Pro Mechanical Keyboard',
+        productImage: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=200&q=80',
+        price: 189,
+        quantity: 1,
+      },
+    ],
+    subtotal: 538,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 538.00,
+    status: 'processing',
+    paymentMethod: 'Cash on Delivery',
+    courier: 'الزاجل إكسبريس (Al-Zajel)',
+    trackingNumber: 'ZJL-BG-74961',
+  },
+  {
+    id: 'ord-panda-83004',
+    orderNumber: 'PANDA-83004',
+    date: '2026-10-23T11:05:00Z',
+    customer: {
+      fullName: 'bahaa amer',
+      email: '7348178@customer.iq',
+      phone: '+964 771 734 8178',
+      address: 'حي الجامعة - شارع 66',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-3',
+        productName: 'Horizon Pro Mechanical Keyboard',
+        productImage: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=200&q=80',
+        price: 189,
+        quantity: 1,
+      },
+    ],
+    subtotal: 189,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 189.00,
+    status: 'cancelled',
+    paymentMethod: 'Cash on Delivery',
+  },
+  {
+    id: 'ord-panda-15000',
+    orderNumber: 'PANDA-15000',
+    date: '2026-10-22T21:30:00Z',
+    customer: {
+      fullName: 'bahaa amer',
+      email: '7348178@customer.iq',
+      phone: '+964 771 734 8178',
+      address: 'حي الجامعة - شارع 66',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'Aura Studio Wireless ANC Headphones',
+        productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80',
+        price: 249,
+        quantity: 1,
+      },
+      {
+        productId: 'prod-3',
+        productName: 'Horizon Pro Mechanical Keyboard',
+        productImage: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=200&q=80',
+        price: 189,
+        quantity: 1,
+      },
+    ],
+    subtotal: 438,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 438.00,
+    status: 'cancelled',
+    paymentMethod: 'Cash on Delivery',
+  },
+  {
+    id: 'ord-panda-79440',
+    orderNumber: 'PANDA-79440',
+    date: '2026-10-18T10:00:00Z',
+    customer: {
+      fullName: 'محمد العتيبي',
+      email: 'otb@customer.iq',
+      phone: '+966 50 123 4567',
+      address: 'حي النخيل',
+      city: 'بغداد',
+      state: 'بغداد (العاصمة)',
+      zipCode: '10001',
+      country: 'Iraq 🇮🇶',
+    },
+    items: [
+      {
+        productId: 'prod-7',
+        productName: 'Aero Minimalist Desk Mat & Cable Tray',
+        productImage: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=200&q=80',
+        price: 107.42,
+        quantity: 1,
+      },
+    ],
+    subtotal: 107.42,
+    discount: 0,
+    shipping: 0,
+    tax: 0,
+    total: 107.42,
+    status: 'shipped',
+    paymentMethod: 'Credit Card',
+    courier: 'واصل إكسبريس (Wasel Express)',
+    trackingNumber: 'WAS-BG-79440',
+  },
+];
 
-export const INITIAL_CUSTOMERS: Customer[] = [];
+export const PANDA_STORE_CUSTOMERS: Customer[] = [
+  {
+    id: 'cust-bahaa-amer',
+    name: 'bahaa amer',
+    phone: '+964 771 734 8178',
+    email: '7348178@customer.iq',
+    avatar: ANONYMOUS_USER_AVATAR,
+    city: 'بغداد',
+    country: 'Iraq 🇮🇶',
+    ordersCount: 6,
+    totalSpent: 6036.00,
+    joinedDate: '2026-10-22',
+    isPhoneVerified: true,
+  },
+  {
+    id: 'cust-mohammed-otb',
+    name: 'محمد العتيبي',
+    phone: '+966 50 123 4567',
+    email: 'otb@customer.iq',
+    avatar: ANONYMOUS_USER_AVATAR,
+    city: 'بغداد',
+    country: 'Iraq 🇮🇶',
+    ordersCount: 1,
+    totalSpent: 107.42,
+    joinedDate: '2026-10-18',
+    isPhoneVerified: true,
+  },
+];
+
+export const INITIAL_ORDERS: Order[] = PANDA_STORE_ORDERS;
+
+export const INITIAL_CUSTOMERS: Customer[] = PANDA_STORE_CUSTOMERS;
 
 export const INITIAL_HOSTED_STORES: HostedStore[] = [
   {

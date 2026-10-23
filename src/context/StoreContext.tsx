@@ -529,7 +529,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           baseStores = parsed.map((s: any) => {
-            const initMatch = INITIAL_HOSTED_STORES.find((init) => init.id === s.id);
+            const initMatch = INITIAL_HOSTED_STORES.find((init) => init.id === s.id || init.slug === s.slug);
             const needsIraqiPhone = !s.ownerPhone || s.ownerPhone.startsWith('+966') || s.ownerPhone.startsWith('+971');
             const needsIraqiCurrency = !s.settings?.currency || s.settings?.currency === '$';
             const updatedProducts = (s.products || []).map((p: any, idx: number) => {
@@ -541,17 +541,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             });
             // Strictly filter out any mock/random generated orders and customers
             const cleanedOrders = (s.orders || []).filter((o: any) => !isMockOrder(o));
+            const finalOrders = (cleanedOrders.length === 0 && initMatch?.orders && initMatch.orders.length > 0)
+              ? initMatch.orders
+              : cleanedOrders;
             const cleanedCustomers = (s.customers || []).filter((c: any) => !isMockCustomer(c)).map((c: any) => ({
               ...c,
               avatar: (!c.avatar || c.avatar.includes('unsplash.com')) ? ANONYMOUS_USER_AVATAR : c.avatar,
             }));
+            const finalCustomers = (cleanedCustomers.length === 0 && initMatch?.customers && initMatch.customers.length > 0)
+              ? initMatch.customers
+              : cleanedCustomers;
             const defaultOwnerPhone = s.slug === 'panda' ? '+964 771 483 4776' : (initMatch?.ownerPhone || '+964 770 123 4567');
             const resolvedOwnerPhone = needsIraqiPhone ? defaultOwnerPhone : s.ownerPhone;
             const resolvedWhatsappPhone = s.settings?.notificationSettings?.whatsappAlertPhone || (s.slug === 'panda' ? '9647714834776' : resolvedOwnerPhone.replace(/\D/g, ''));
             return {
               ...s,
-              orders: cleanedOrders,
-              customers: cleanedCustomers,
+              orders: finalOrders,
+              customers: finalCustomers,
               products: updatedProducts,
               ownerPhone: resolvedOwnerPhone,
               design: {
@@ -1000,10 +1006,54 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setUniversalCustomers(data.customers);
           } else if (data.type === 'CURRENT_CUSTOMER_UPDATED') {
             setCurrentCustomer(data.customer || null);
-          } else if (data.type === 'ORDER_PLACED' && Array.isArray(data.stores)) {
-            setStores(data.stores);
+          } else if (data.type === 'ORDER_PLACED') {
+            if (Array.isArray(data.stores)) {
+              setStores(data.stores);
+            } else if (data.order && data.storeId) {
+              setStores((prevStores) =>
+                prevStores.map((st) => {
+                  if (st.id === data.storeId || st.slug === data.storeId) {
+                    const exists = (st.orders || []).some((o) => o.id === data.order.id || o.orderNumber === data.order.orderNumber);
+                    if (exists) return st;
+                    return {
+                      ...st,
+                      orders: [data.order, ...(st.orders || [])],
+                    };
+                  }
+                  return st;
+                })
+              );
+            }
             if (Array.isArray(data.universalCustomers)) {
               setUniversalCustomers(data.universalCustomers);
+            }
+          } else if (data.type === 'ORDER_STATUS_UPDATED') {
+            if (data.storeId && data.orderId && data.status) {
+              setStores((prevStores) =>
+                prevStores.map((st) => {
+                  if (st.id === data.storeId || st.slug === data.storeId) {
+                    return {
+                      ...st,
+                      orders: (st.orders || []).map((o) => o.id === data.orderId ? { ...o, status: data.status } : o),
+                    };
+                  }
+                  return st;
+                })
+              );
+            }
+          } else if (data.type === 'ORDER_UPDATED') {
+            if (data.storeId && data.orderId && data.updates) {
+              setStores((prevStores) =>
+                prevStores.map((st) => {
+                  if (st.id === data.storeId || st.slug === data.storeId) {
+                    return {
+                      ...st,
+                      orders: (st.orders || []).map((o) => o.id === data.orderId ? { ...o, ...data.updates } : o),
+                    };
+                  }
+                  return st;
+                })
+              );
             }
           }
         };
@@ -1856,7 +1906,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const mutateActiveStore = (updater: (store: HostedStore) => HostedStore, targetStoreId?: string) => {
     const idToUpdate = targetStoreId || activeStore.id;
     setStores((prev) =>
-      prev.map((s) => (s.id === idToUpdate ? updater(s) : s))
+      prev.map((s) => (s.id === idToUpdate || s.slug === idToUpdate ? updater(s) : s))
     );
   };
 
@@ -2095,9 +2145,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const goToPlatform = (targetPage: 'landing' | 'admin' = 'landing') => {
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+    const isLocalOrVercel = currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.endsWith('.vercel.app');
     const customRoot = getCustomDomainRoot();
-    if (customRoot) {
-      const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+    if (!isLocalOrVercel && customRoot) {
       if (currentHost !== customRoot && currentHost !== `www.${customRoot}`) {
         window.location.href = getPlatformDisplayUrl(targetPage === 'admin' ? 'owner-admin' : 'landing');
         return;
