@@ -58,7 +58,11 @@ import {
   Coins,
   FileJson,
   RotateCcw,
-  CheckCheck
+  CheckCheck,
+  Building2,
+  Sparkle,
+  ArrowRight,
+  Send
 } from 'lucide-react';
 import { ImageUploader } from '../common/ImageUploader';
 import { useStore } from '../../context/StoreContext';
@@ -66,16 +70,107 @@ import { StoreThemeColor, StoreLayoutStyle, HostedStore, Order, OrderStatus } fr
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 
-const EMOJI_OPTIONS = ['🐼', '👑', '🦢', '💎', '🌿', '⚡', '🏺', '👟', '⌚', '🎧', '🕯️', '🛍️', '👗', '☕', '🎨', '🏪'];
+const EMOJI_OPTIONS = ['🛍️', '👑', '☕', '👗', '⚡', '🏺', '🌿', '💎', '🦢', '🐼', '👟', '⌚', '🎧', '🕯️', '🎨', '🏪'];
 
 const CATEGORY_PRESETS = [
-  { en: 'Clothing & Fashion', ar: 'أزياء وملابس' },
-  { en: 'Beauty & Cosmetics', ar: 'تجميل ومستحضرات' },
-  { en: 'Electronics & Tech', ar: 'إلكترونيات وتقنية' },
+  { en: 'Specialty Coffee & Artisan', ar: 'قهوة مختصة وحرفيات' },
   { en: 'Perfumes & Oud', ar: 'عطور وعود فاخر' },
+  { en: 'Clothing & Fashion', ar: 'أزياء وملابس' },
+  { en: 'Electronics & Tech', ar: 'إلكترونيات وتقنية' },
+  { en: 'Beauty & Cosmetics', ar: 'تجميل ومستحضرات' },
   { en: 'Home & Architecture', ar: 'منزل وديكور' },
   { en: 'Handmade & Crafts', ar: 'حرفيات وإبداع' },
-  { en: 'Specialty Coffee & Artisan', ar: 'قهوة مختصة وحرفيات' },
+];
+
+const LAYOUT_OPTIONS: Array<{ id: StoreLayoutStyle; labelEn: string; labelAr: string; descEn: string; descAr: string }> = [
+  { id: 'modern-split', labelEn: 'Modern Split', labelAr: 'عصري منقسم', descEn: 'Split hero with card highlight', descAr: 'واجهة عصرية منقسمة مع إبراز البطاقات' },
+  { id: 'luxury-centered', labelEn: 'Luxury Centered', labelAr: 'ملكي فاخر', descEn: 'Centered luxury aesthetic with dark banner', descAr: 'طابع فاخر متمركز مع خلفية داكنة' },
+  { id: 'minimal-editorial', labelEn: 'Minimal Editorial', labelAr: 'تبسيطي تحريري', descEn: 'Magazine typography and sharp frames', descAr: 'خطوط عريضة أنيقة وطابع المجلات' },
+  { id: 'vibrant-banner', labelEn: 'Vibrant Banner', labelAr: 'بانر حيوي', descEn: 'Full-bleed banner with dynamic gradients', descAr: 'بانر ملون عريض مع تدرجات جذابة' },
+];
+
+const THEME_COLOR_OPTIONS: Array<{ id: StoreThemeColor; labelEn: string; labelAr: string; bgClass: string }> = [
+  { id: 'emerald', labelEn: 'Emerald Green', labelAr: 'أخضر زمردي', bgClass: 'bg-emerald-500' },
+  { id: 'indigo', labelEn: 'Royal Indigo', labelAr: 'نيلي ملكي', bgClass: 'bg-indigo-600' },
+  { id: 'amber', labelEn: 'Warm Amber', labelAr: 'عنبري دافئ', bgClass: 'bg-amber-500' },
+  { id: 'rose', labelEn: 'Velvet Rose', labelAr: 'وردي فيلفيت', bgClass: 'bg-rose-500' },
+  { id: 'cyan', labelEn: 'Electric Cyan', labelAr: 'سماوي كهربائي', bgClass: 'bg-cyan-500' },
+  { id: 'violet', labelEn: 'Imperial Violet', labelAr: 'بنفسجي إمبراطوري', bgClass: 'bg-violet-600' },
+];
+
+const CURRENCY_OPTIONS = [
+  { code: 'IQD', symbol: 'د.ع', labelEn: 'Iraqi Dinar (د.ع)', labelAr: 'دينار عراقي (د.ع)' },
+  { code: 'USD', symbol: '$', labelEn: 'US Dollar ($)', labelAr: 'دولار أمريكي ($)' },
+  { code: 'SAR', symbol: 'ر.س', labelEn: 'Saudi Riyal (ر.س)', labelAr: 'ريال سعودي (ر.س)' },
+  { code: 'AED', symbol: 'د.إ', labelEn: 'UAE Dirham (د.إ)', labelAr: 'درهم إماراتي (د.إ)' },
+];
+
+const QUICK_PRESETS = [
+  {
+    name: 'Artisan Specialty Coffee',
+    nameAr: 'مقهى الحرفيين المختص',
+    slug: 'artisan-coffee',
+    category: 'Specialty Coffee & Artisan',
+    categoryAr: 'قهوة مختصة وحرفيات',
+    themeColor: 'amber' as StoreThemeColor,
+    layoutStyle: 'modern-split' as StoreLayoutStyle,
+    logoEmoji: '☕',
+    tagline: 'Artisan roasted beans & specialty brews',
+    taglineAr: 'محاصيل بن مختصة وتحميص طازج فاخر',
+    plan: 'Growth' as const,
+  },
+  {
+    name: 'Royal Oud & Perfumes',
+    nameAr: 'العود الملكي للعطور',
+    slug: 'royal-oud',
+    category: 'Perfumes & Oud',
+    categoryAr: 'عطور وعود فاخر',
+    themeColor: 'amber' as StoreThemeColor,
+    layoutStyle: 'luxury-centered' as StoreLayoutStyle,
+    logoEmoji: '👑',
+    tagline: 'Authentic royal oud and luxury oriental fragrances',
+    taglineAr: 'أرقى دهن العود والأطياب الملكية الفاخرة',
+    plan: 'Enterprise' as const,
+  },
+  {
+    name: 'Velvet Haute Couture',
+    nameAr: 'بوتيك فيلفيت للأزياء',
+    slug: 'velvet-boutique',
+    category: 'Clothing & Fashion',
+    categoryAr: 'أزياء وملابس',
+    themeColor: 'rose' as StoreThemeColor,
+    layoutStyle: 'minimal-editorial' as StoreLayoutStyle,
+    logoEmoji: '👗',
+    tagline: 'Contemporary luxury fashion & curated wardrobe',
+    taglineAr: 'أزياء راقية وتصاميم معاصرة للمناسبات',
+    plan: 'Growth' as const,
+  },
+  {
+    name: 'Volt Tech & Audio',
+    nameAr: 'فولت للإلكترونيات الذكية',
+    slug: 'volt-tech',
+    category: 'Electronics & Tech',
+    categoryAr: 'إلكترونيات وتقنية',
+    themeColor: 'cyan' as StoreThemeColor,
+    layoutStyle: 'vibrant-banner' as StoreLayoutStyle,
+    logoEmoji: '⚡',
+    tagline: 'Premium electronics, gadgets and audiophile tech',
+    taglineAr: 'أحدث الأجهزة الذكية وملحقات الصوت الاحترافية',
+    plan: 'Growth' as const,
+  },
+  {
+    name: 'Lumina Home & Decor',
+    nameAr: 'لومينا للمنزل العصري',
+    slug: 'lumina-home',
+    category: 'Home & Architecture',
+    categoryAr: 'منزل وديكور',
+    themeColor: 'emerald' as StoreThemeColor,
+    layoutStyle: 'modern-split' as StoreLayoutStyle,
+    logoEmoji: '🏺',
+    tagline: 'Scandinavian furniture & interior architectural design',
+    taglineAr: 'إكسسوارات ديكور اسكندنافية ولمسات معمارية أنيقة',
+    plan: 'Starter' as const,
+  },
 ];
 
 export type OwnerAdminTab = 'stores' | 'analytics' | 'merchants' | 'orders' | 'plans' | 'settings';
@@ -116,13 +211,18 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // View Mode for Stores tab: 'cards' vs 'table'
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   // Stores Filter & Search States
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'maintenance' | 'suspended'>('all');
   const [planFilter, setPlanFilter] = useState<'all' | 'Starter' | 'Growth' | 'Enterprise'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'revenue' | 'orders' | 'products' | 'name'>('newest');
+
+  // Quick Inline Store Add state
+  const [quickStoreName, setQuickStoreName] = useState('');
+  const [quickCategoryIndex, setQuickCategoryIndex] = useState(0);
+  const [quickPlan, setQuickPlan] = useState<'Starter' | 'Growth' | 'Enterprise'>('Growth');
 
   // Copy indicator & Modals
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -136,6 +236,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [editTagline, setEditTagline] = useState('');
   const [editTaglineAr, setEditTaglineAr] = useState('');
   const [editCategory, setEditCategory] = useState('');
+  const [editCategoryAr, setEditCategoryAr] = useState('');
   const [editOwnerName, setEditOwnerName] = useState('');
   const [editOwnerEmail, setEditOwnerEmail] = useState('');
   const [editOwnerPhone, setEditOwnerPhone] = useState('');
@@ -145,8 +246,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [editThemeColor, setEditThemeColor] = useState<StoreThemeColor>('emerald');
   const [editLayoutStyle, setEditLayoutStyle] = useState<StoreLayoutStyle>('modern-split');
   const [editLogoEmoji, setEditLogoEmoji] = useState('🛍️');
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
-  // Create Modal Form State
+  // Comprehensive Create Modal Form State
   const [newStoreName, setNewStoreName] = useState('');
   const [newStoreNameAr, setNewStoreNameAr] = useState('');
   const [newCustomSlug, setNewCustomSlug] = useState('');
@@ -162,6 +264,8 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [newThemeColor, setNewThemeColor] = useState<StoreThemeColor>('emerald');
   const [newLayoutStyle, setNewLayoutStyle] = useState<StoreLayoutStyle>('modern-split');
   const [newLogoEmoji, setNewLogoEmoji] = useState('🛍️');
+  const [newCurrency, setNewCurrency] = useState('IQD');
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // Merchants Tab State
   const [merchantSearch, setMerchantSearch] = useState('');
@@ -172,27 +276,6 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [newMerchantName, setNewMerchantName] = useState('');
   const [newMerchantPhone, setNewMerchantPhone] = useState('+964 770 123 4567');
   const [newMerchantPassword, setNewMerchantPassword] = useState('merchant123');
-
-  const handleAddMerchantByOwner = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMerchantStoreId) {
-      addToast(language === 'ar' ? 'يرجى اختيار المتجر' : 'Please select a store', 'error');
-      return;
-    }
-    if (!newMerchantPhone.trim() || newMerchantPhone.trim().length < 8) {
-      addToast(language === 'ar' ? 'يرجى إدخال رقم هاتف صالح لمدير المتجر' : 'Please provide a valid phone number', 'error');
-      return;
-    }
-    registerStoreMerchantByOwner(newMerchantStoreId, {
-      name: newMerchantName.trim() || 'Store Merchant',
-      phone: newMerchantPhone.trim(),
-      password: newMerchantPassword.trim() || 'merchant123',
-    });
-    setShowAddMerchantModal(false);
-    setNewMerchantName('');
-    setNewMerchantPhone('+964 770 123 4567');
-    setNewMerchantPassword('merchant123');
-  };
 
   // Orders Tab State
   const [orderSearch, setOrderSearch] = useState('');
@@ -214,7 +297,31 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const restoreFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Open Edit Modal
+  // Clipboard copy safe helper
+  const safeCopy = (text: string, label: string) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    } else {
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      try {
+        document.execCommand('copy');
+      } catch (_) {}
+      document.body.removeChild(el);
+    }
+    addToast(`${label}: ${text}`, 'info');
+  };
+
+  const handleCopyStoreLink = (store: HostedStore) => {
+    const link = getStoreDisplayUrl(store.slug);
+    safeCopy(link, t.linkCopied || 'Store link copied');
+    setCopiedId(store.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Helper to open Edit Modal
   const openEditModal = (store: HostedStore) => {
     setEditingStore(store);
     setEditName(store.name);
@@ -223,6 +330,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setEditTagline(store.tagline || '');
     setEditTaglineAr(store.taglineAr || '');
     setEditCategory(store.category);
+    setEditCategoryAr(store.categoryAr || store.category);
     setEditOwnerName(store.ownerName);
     setEditOwnerEmail(store.ownerEmail);
     setEditOwnerPhone(store.ownerPhone || '+964 770 123 4567');
@@ -232,6 +340,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setEditThemeColor(store.design.themeColor);
     setEditLayoutStyle(store.design.layoutStyle);
     setEditLogoEmoji(store.design.logoEmoji);
+    setShowEditPassword(false);
   };
 
   const handleSaveEditStore = (e: React.FormEvent) => {
@@ -242,6 +351,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
     if (!cleanedSlug || cleanedSlug.length < 2) {
@@ -258,7 +368,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       return;
     }
 
-    // Save Store Info Updates
+    // updateHostedStore already dispatches success toast internally
     updateHostedStore(editingStore.id, {
       name: editName.trim(),
       nameAr: editNameAr.trim() || editName.trim(),
@@ -266,6 +376,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       tagline: editTagline.trim(),
       taglineAr: editTaglineAr.trim() || editTagline.trim(),
       category: editCategory,
+      categoryAr: editCategoryAr || editCategory,
       ownerName: editOwnerName.trim() || 'Store Merchant',
       ownerEmail: editOwnerEmail.trim(),
       ownerPhone: editOwnerPhone.trim(),
@@ -274,7 +385,6 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       status: editStatus,
     });
 
-    // Save Design Updates
     updateStoreDesign(
       {
         themeColor: editThemeColor,
@@ -290,36 +400,26 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   // Quick Status Toggle on Any Store
   const handleToggleStoreStatus = (store: HostedStore, newStatus: 'active' | 'maintenance' | 'suspended') => {
     updateHostedStore(store.id, { status: newStatus });
-    addToast(
-      language === 'ar'
-        ? `تم تحديث حالة متجر (${store.name}) إلى: ${newStatus === 'active' ? 'نشط' : newStatus === 'maintenance' ? 'صيانة' : 'معلق'}`
-        : `Store (${store.name}) status updated to: ${newStatus}`,
-      'success'
-    );
   };
 
   // Quick Plan Change for Plans tab
   const handleQuickPlanChange = (storeId: string, newPlan: 'Starter' | 'Growth' | 'Enterprise') => {
     updateHostedStore(storeId, { plan: newPlan });
-    const targetStore = stores.find((s) => s.id === storeId);
-    addToast(
-      language === 'ar'
-        ? `تم تحديث باقة متجر (${targetStore?.name || storeId}) إلى: ${newPlan}`
-        : `Updated store (${targetStore?.name || storeId}) plan to: ${newPlan}`,
-      'success'
-    );
   };
 
   // Auto-generate clean slug from newStoreName unless manually edited
   const handleNewStoreNameChange = (val: string) => {
     setNewStoreName(val);
     if (!newSlugManuallyEdited) {
-      const auto = val
+      let auto = val
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
+      if (!auto || auto.length < 2) {
+        auto = `store-${Math.floor(100 + Math.random() * 900)}`;
+      }
       setNewCustomSlug(auto);
     }
   };
@@ -330,42 +430,42 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   );
   const isNewSlugValid = normalizedNewSlug.length >= 2 && !isNewSlugTaken;
 
+  // Handle Full Modal Store Creation
   const handleCreateStore = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStoreName.trim()) {
-      addToast(
-        language === 'ar' ? 'يرجى إدخال اسم المتجر' : 'Please enter a store name',
-        'error'
-      );
+      addToast(language === 'ar' ? 'يرجى إدخال اسم المتجر' : 'Please enter a store name', 'error');
       return;
     }
     if (!isNewSlugValid) {
       addToast(
-        language === 'ar'
-          ? 'يرجى اختيار رابط فرعي صالح وغير مستخدم'
-          : 'Please choose a valid, available subdomain slug',
+        language === 'ar' ? 'يرجى اختيار رابط فرعي صالح وغير مستخدم' : 'Please choose a valid, available subdomain slug',
         'error'
       );
       return;
     }
 
     const chosenCat = CATEGORY_PRESETS[newCategoryIndex];
-    const created = createHostedStore({
-      name: newStoreName,
-      nameAr: newStoreNameAr || newStoreName,
+    const currencySymbol = CURRENCY_OPTIONS.find((c) => c.code === newCurrency)?.symbol || 'د.ع';
+
+    // createHostedStore already dispatches success toast internally
+    createHostedStore({
+      name: newStoreName.trim(),
+      nameAr: newStoreNameAr.trim() || newStoreName.trim(),
       slug: normalizedNewSlug,
-      tagline: newTagline || `Curated ${chosenCat.en} hosted on Bastiyah`,
-      taglineAr: newTaglineAr || `أفضل منتجات ${chosenCat.ar} عبر منصة بسطية`,
+      tagline: newTagline.trim() || `Curated ${chosenCat.en} hosted on Bastiyah`,
+      taglineAr: newTaglineAr.trim() || `أفضل منتجات ${chosenCat.ar} عبر منصة بسطية`,
       category: chosenCat.en,
       categoryAr: chosenCat.ar,
-      ownerName: newOwnerName || 'Store Merchant',
-      ownerEmail: newOwnerEmail || `merchant@${normalizedNewSlug}.bastiyah.com`,
+      ownerName: newOwnerName.trim() || 'Store Merchant',
+      ownerEmail: newOwnerEmail.trim() || `merchant@${normalizedNewSlug}.bastiyah.com`,
       ownerPhone: newOwnerPhone.trim() || '+964 770 123 4567',
       adminPassword: newAdminPassword.trim() || 'merchant123',
       plan: newPlan,
       themeColor: newThemeColor,
       layoutStyle: newLayoutStyle,
       logoEmoji: newLogoEmoji,
+      currency: currencySymbol,
     });
 
     // Reset Form
@@ -380,22 +480,103 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     setNewOwnerPhone('+964 770 123 4567');
     setNewAdminPassword('merchant123');
     setShowCreateModal(false);
-
-    // Switch active store
-    switchStore(created.id, 'bastiyah-admin');
   };
 
-  const handleCopyStoreLink = (store: HostedStore) => {
-    const link = getStoreDisplayUrl(store.slug);
-    navigator.clipboard?.writeText(link);
-    setCopiedId(store.id);
-    addToast(`${t.linkCopied}: ${link}`, 'info');
-    setTimeout(() => setCopiedId(null), 2000);
+  // Handle Fast Inline Store Creation
+  const handleQuickAddStore = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!quickStoreName.trim()) {
+      addToast(language === 'ar' ? 'يرجى إدخال اسم المتجر للإطلاق السريع' : 'Please enter a store name', 'error');
+      return;
+    }
+
+    let slug = quickStoreName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    if (!slug || slug.length < 2) {
+      slug = `store-${Date.now().toString().slice(-4)}`;
+    }
+
+    // Ensure unique slug
+    if (stores.some((s) => s.slug.toLowerCase() === slug.toLowerCase())) {
+      slug = `${slug}-${Date.now().toString().slice(-3)}`;
+    }
+
+    const cat = CATEGORY_PRESETS[quickCategoryIndex];
+    createHostedStore({
+      name: quickStoreName.trim(),
+      nameAr: quickStoreName.trim(),
+      slug,
+      tagline: `Official store hosted on Bastiyah`,
+      taglineAr: `متجر إلكتروني رسمي مستضاف عبر بسطية`,
+      category: cat.en,
+      categoryAr: cat.ar,
+      ownerName: 'Store Merchant',
+      ownerEmail: `admin@${slug}.bastiyah.com`,
+      ownerPhone: '+964 770 123 4567',
+      adminPassword: 'merchant123',
+      plan: quickPlan,
+      themeColor: 'emerald',
+      layoutStyle: 'modern-split',
+      logoEmoji: '🛍️',
+      currency: 'د.ع',
+    });
+
+    setQuickStoreName('');
   };
 
-  const handleCopyText = (text: string, label: string) => {
-    navigator.clipboard?.writeText(text);
-    addToast(`${label}: ${text}`, 'info');
+  // Fast launch with template preset
+  const handleLaunchWithPreset = (preset: typeof QUICK_PRESETS[0]) => {
+    let slug = preset.slug;
+    if (stores.some((s) => s.slug.toLowerCase() === slug.toLowerCase())) {
+      slug = `${slug}-${Date.now().toString().slice(-3)}`;
+    }
+
+    createHostedStore({
+      name: preset.name,
+      nameAr: preset.nameAr,
+      slug,
+      tagline: preset.tagline,
+      taglineAr: preset.taglineAr,
+      category: preset.category,
+      categoryAr: preset.categoryAr,
+      ownerName: 'Store Merchant',
+      ownerEmail: `merchant@${slug}.bastiyah.com`,
+      ownerPhone: '+964 770 123 4567',
+      adminPassword: 'merchant123',
+      plan: preset.plan,
+      themeColor: preset.themeColor,
+      layoutStyle: preset.layoutStyle,
+      logoEmoji: preset.logoEmoji,
+      currency: 'د.ع',
+    });
+  };
+
+  const handleAddMerchantByOwner = (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetStoreId = newMerchantStoreId || stores[0]?.id;
+    if (!targetStoreId) {
+      addToast(language === 'ar' ? 'يرجى اختيار المتجر' : 'Please select a store', 'error');
+      return;
+    }
+    if (!newMerchantPhone.trim() || newMerchantPhone.trim().length < 8) {
+      addToast(language === 'ar' ? 'يرجى إدخال رقم هاتف صالح لمدير المتجر' : 'Please provide a valid phone number', 'error');
+      return;
+    }
+    registerStoreMerchantByOwner(targetStoreId, {
+      name: newMerchantName.trim() || 'Store Merchant',
+      phone: newMerchantPhone.trim(),
+      password: newMerchantPassword.trim() || 'merchant123',
+    });
+    setShowAddMerchantModal(false);
+    setNewMerchantName('');
+    setNewMerchantPhone('+964 770 123 4567');
+    setNewMerchantPassword('merchant123');
   };
 
   // Export Stores List as CSV
@@ -468,6 +649,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
         const storesToRestore = Array.isArray(parsed) ? parsed : parsed.stores;
         if (Array.isArray(storesToRestore) && storesToRestore.length > 0) {
           restorePlatformStores(storesToRestore);
+          addToast(language === 'ar' ? 'تمت استعادة المنصة بنجاح' : 'Platform restored successfully', 'success');
         } else {
           addToast(language === 'ar' ? 'ملف النسخة الاحتياطية غير صالح' : 'Invalid backup file structure', 'error');
         }
@@ -499,6 +681,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     updatePlatformAdminPassword(newAdminPasswordInput);
     setNewAdminPasswordInput('');
     setConfirmAdminPasswordInput('');
+    addToast(language === 'ar' ? 'تم تحديث كلمة المرور للمشرف العام' : 'Master password updated successfully', 'success');
   };
 
   // Aggregated Platform KPIs
@@ -539,6 +722,40 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     .filter((o) => o.status !== 'cancelled')
     .reduce((sum, o) => sum + o.total, 0);
   const averageOrderValue = totalPlatformOrders > 0 ? totalPlatformRevenue / totalPlatformOrders : 0;
+
+  // Universal Cross-Store Customers (Bug Fix: c.ordersCount ?? 0 rather than c.ordersCount || 1)
+  const universalCustomers = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; phone?: string; email?: string; ordersCount: number; totalSpent: number; storeCount: number; stores: string[] }>();
+    stores.forEach((store) => {
+      store.customers?.forEach((c) => {
+        const key = (c.phone || c.email || c.name).trim().toLowerCase();
+        if (!key) return;
+        const cOrders = typeof c.ordersCount === 'number' ? c.ordersCount : 0;
+        const cSpent = typeof c.totalSpent === 'number' ? c.totalSpent : 0;
+        const existing = map.get(key);
+        if (existing) {
+          existing.ordersCount += cOrders;
+          existing.totalSpent += cSpent;
+          if (!existing.stores.includes(store.name)) {
+            existing.stores.push(store.name);
+            existing.storeCount += 1;
+          }
+        } else {
+          map.set(key, {
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            email: c.email,
+            ordersCount: cOrders,
+            totalSpent: cSpent,
+            storeCount: 1,
+            stores: [store.name],
+          });
+        }
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent);
+  }, [stores]);
 
   // MRR & ARR Calculations
   const starterCount = stores.filter((s) => s.plan === 'Starter').length;
@@ -600,49 +817,36 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       if (merchantPlanFilter !== 'all' && s.plan !== merchantPlanFilter) return false;
       if (merchantSearch.trim()) {
         const q = merchantSearch.toLowerCase();
-        const matchesOwner = s.ownerName.toLowerCase().includes(q);
-        const matchesEmail = s.ownerEmail.toLowerCase().includes(q);
-        const matchesPhone = (s.ownerPhone || '').toLowerCase().includes(q);
-        const matchesStore = s.name.toLowerCase().includes(q) || (s.nameAr || '').toLowerCase().includes(q) || s.slug.toLowerCase().includes(q);
-        return matchesOwner || matchesEmail || matchesPhone || matchesStore;
+        return (
+          s.ownerName.toLowerCase().includes(q) ||
+          s.ownerEmail.toLowerCase().includes(q) ||
+          (s.ownerPhone || '').includes(q) ||
+          s.name.toLowerCase().includes(q) ||
+          s.slug.toLowerCase().includes(q)
+        );
       }
       return true;
     });
   }, [stores, merchantPlanFilter, merchantSearch]);
 
-  // Filtered Orders for Tab 4
+  // Cross-Store Filtered Orders for Tab 4
   const processedOrders = useMemo(() => {
     return allOrdersFlat.filter((ord) => {
       if (orderStoreFilter !== 'all' && ord.storeId !== orderStoreFilter) return false;
       if (orderStatusFilter !== 'all' && ord.status !== orderStatusFilter) return false;
       if (orderSearch.trim()) {
         const q = orderSearch.toLowerCase();
-        const matchesId = ord.id.toLowerCase().includes(q);
-        const matchesCustomer = ord.customer.fullName.toLowerCase().includes(q) || ord.customer.email.toLowerCase().includes(q) || ord.customer.phone.toLowerCase().includes(q);
-        const matchesCity = ord.customer.city.toLowerCase().includes(q);
-        return matchesId || matchesCustomer || matchesCity;
+        return (
+          ord.id.toLowerCase().includes(q) ||
+          ord.orderNumber.toLowerCase().includes(q) ||
+          ord.customer.fullName.toLowerCase().includes(q) ||
+          ord.customer.phone.toLowerCase().includes(q) ||
+          ord.storeName.toLowerCase().includes(q)
+        );
       }
       return true;
     });
   }, [allOrdersFlat, orderStoreFilter, orderStatusFilter, orderSearch]);
-
-  // Top Stores Leaderboard for Tab 2
-  const topStoresLeaderboard = useMemo(() => {
-    return [...stores]
-      .map((s) => {
-        const rev = s.orders
-          .filter((o) => o.status !== 'cancelled')
-          .reduce((sum, o) => sum + o.total, 0);
-        return {
-          store: s,
-          revenue: rev,
-          orderCount: s.orders.length,
-          productCount: s.products.length,
-          aov: s.orders.length > 0 ? rev / s.orders.length : 0,
-        };
-      })
-      .sort((a, b) => b.revenue - a.revenue);
-  }, [stores]);
 
   // Category breakdown for Tab 2
   const categoryStats = useMemo(() => {
@@ -681,21 +885,21 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const OWNER_TABS = [
     {
       id: 'stores' as OwnerAdminTab,
-      labelAr: 'المتاجر المسجلة',
-      labelEn: 'Registered Stores',
+      labelAr: 'المتاجر المستضافة',
+      labelEn: 'Hosted Stores',
       icon: Store,
       count: totalStores,
     },
     {
       id: 'analytics' as OwnerAdminTab,
-      labelAr: 'التحليلات والمبيعات',
+      labelAr: 'المبيعات والتحليلات',
       labelEn: 'Analytics & GMV',
       icon: BarChart3,
     },
     {
       id: 'merchants' as OwnerAdminTab,
-      labelAr: 'دليل التجار',
-      labelEn: 'Merchants Directory',
+      labelAr: 'دليل التجار والعملاء',
+      labelEn: 'Merchants & Shoppers',
       icon: Users,
       count: stores.length,
     },
@@ -708,7 +912,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
     },
     {
       id: 'plans' as OwnerAdminTab,
-      labelAr: 'الاشتراكات والفوترة',
+      labelAr: 'الباقات والاشتراكات',
       labelEn: 'Plans & MRR',
       icon: CreditCard,
     },
@@ -723,36 +927,54 @@ export const BastiyahOwnerAdmin: React.FC = () => {
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case 'pending':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">قيد الانتظار • Pending</span>;
+        return <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">قيد الانتظار • Pending</span>;
       case 'processing':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">قيد التجهيز • Processing</span>;
+        return <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">قيد التجهيز • Processing</span>;
       case 'shipped':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">تم الشحن • Shipped</span>;
+        return <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">تم الشحن • Shipped</span>;
       case 'delivered':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">تم التوصيل • Delivered</span>;
+        return <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">تم التوصيل • Delivered</span>;
       case 'cancelled':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">ملغي • Cancelled</span>;
+        return <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">ملغي • Cancelled</span>;
       default:
         return null;
     }
   };
 
+  const getPlanPill = (plan: HostedStore['plan']) => {
+    switch (plan) {
+      case 'Enterprise':
+        return <span className="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-800 border border-amber-300">Enterprise ($99)</span>;
+      case 'Growth':
+        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Growth ($29)</span>;
+      case 'Starter':
+      default:
+        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">Starter ($0)</span>;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24 selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-24 selection:bg-amber-500/20 selection:text-amber-900 font-sans">
       
+      {/* Background ambient accents */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-32 -start-32 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 -end-32 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl" />
+      </div>
+
       {/* 
         ========================================================================
-        1. MASTER ADMIN NAVIGATION BAR
+        1. MASTER ADMIN NAVIGATION BAR (LIGHT THEME BENTO HEADER)
         ========================================================================
       */}
-      <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 shadow-lg">
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-xs relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
           
           {/* Platform Identity */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => goToPlatform('landing')}
-              className="flex items-center gap-3 group text-start"
+              className="flex items-center gap-3 group text-start focus:outline-none"
               title="Return to Bastiyah Main Landing Page"
             >
               <img
@@ -762,86 +984,86 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               />
               <div className="flex flex-col">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-brand font-black text-xl tracking-tight text-white group-hover:text-amber-400 transition-colors">
+                  <span className="font-brand font-black text-xl tracking-tight text-slate-900 group-hover:text-amber-600 transition-colors">
                     بسطية
                   </span>
-                  <span className="text-stone-500 font-light text-xs">|</span>
-                  <span className="text-xs font-bold text-amber-500 tracking-wider font-sans uppercase">
+                  <span className="text-slate-300 font-light text-xs">|</span>
+                  <span className="text-xs font-bold text-amber-600 tracking-wider font-sans uppercase">
                     BASTIYAH
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className="text-[11px] text-slate-500 font-medium">
                     Owner SaaS Console
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
               </div>
             </button>
           </div>
 
-          {/* Top Actions */}
+          {/* Top Actions Bar */}
           <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Quick Export CSV */}
             <button
               onClick={handleExportCSV}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 transition-all shadow-xs"
               title="Export all stores to CSV"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-400" />
+              <Download className="w-3.5 h-3.5 text-indigo-600" />
               <span>{language === 'ar' ? 'تصدير CSV' : 'Export CSV'}</span>
             </button>
 
             {/* Cloud Infra Quick Toggle */}
             <button
               onClick={() => setShowCloudSection(!showCloudSection)}
-              className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+              className={`hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all shadow-xs ${
                 showCloudSection
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  ? 'bg-sky-50 text-sky-700 border-sky-300'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
               }`}
             >
-              <Server className="w-3.5 h-3.5 text-sky-400" />
+              <Server className="w-3.5 h-3.5 text-sky-600" />
               <span>{language === 'ar' ? 'السحابة' : 'Cloud'}</span>
             </button>
 
-            {/* Create New Store CTA Button */}
+            {/* PRIMARY: Create New Store CTA Button */}
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all hover:-translate-y-0.5"
+              className="px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-amber-500/25 transition-all hover:-translate-y-0.5 active:translate-y-0"
             >
-              <Plus className="w-4 h-4" />
-              <span>{language === 'ar' ? 'متجر جديد' : 'New Store'}</span>
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>{language === 'ar' ? '+ إضافة متجر جديد' : '+ New Store'}</span>
             </button>
 
             {/* Back to Platform Landing */}
             <button
               onClick={() => goToPlatform('landing')}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5"
+              className="p-2.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 transition-all shadow-xs flex items-center gap-1.5"
               title="Return to Main Landing Page"
             >
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
+              <Globe className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">{language === 'ar' ? 'الموقع' : 'Site'}</span>
             </button>
 
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className="flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 transition-all shadow-xs"
             >
               <span>{language === 'en' ? 'العربية' : 'EN'}</span>
             </button>
 
             {/* Authenticated Platform Admin Pill & Logout */}
-            <div className="flex items-center gap-1.5 sm:gap-2 ps-1.5 sm:ps-2 border-s border-slate-800">
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[11px] font-mono text-slate-300" dir="ltr">{platformAdminEmail}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 ps-1.5 sm:ps-2 border-s border-slate-200">
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px] font-mono text-slate-700" dir="ltr">{platformAdminEmail}</span>
               </div>
 
               <button
                 onClick={logoutPlatformAdmin}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 transition-all shadow-xs"
                 title={language === 'ar' ? 'تسجيل الخروج من لوحة تحكم المنصة' : 'Log Out of Platform Admin'}
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -852,34 +1074,189 @@ export const BastiyahOwnerAdmin: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6 sm:space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6 sm:space-y-8 relative z-10">
         
         {/* 
           ========================================================================
-          2. OWNER NAVIGATION TABS
+          2. OWNER HERO TITLE & METRIC TICKER
           ========================================================================
         */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800/80">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold mb-2">
-              <Crown className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold mb-2">
+              <Crown className="w-3.5 h-3.5 text-amber-600" />
               <span>{language === 'ar' ? 'لوحة تحكم مالك المنصة' : 'Bastiyah Platform Owner Portal'}</span>
               <span>•</span>
-              <span className="font-mono text-[11px]">Core v2.4 Enterprise</span>
+              <span className="font-mono text-[11px] text-amber-700">Core v2.4 Enterprise</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white font-brand tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 font-brand tracking-tight">
               {language === 'ar' ? 'مركز قيادة منصة بسطية السحابية' : 'Bastiyah Platform Command Center'}
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-mono hidden md:inline">
-              MRR: <strong className="text-emerald-400">${mrr.toLocaleString()}</strong> | GMV: <strong className="text-amber-400">${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+          {/* Quick Metrics Capsule */}
+          <div className="flex items-center gap-3 bg-white border border-slate-200/80 px-4 py-2.5 rounded-2xl shadow-xs text-xs font-medium">
+            <span className="flex items-center gap-1.5">
+              <span className="text-slate-500">MRR:</span>
+              <strong className="text-indigo-600 font-bold">${mrr.toLocaleString()}</strong>
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-slate-500">GMV:</span>
+              <strong className="text-emerald-600 font-bold">${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-slate-500">{language === 'ar' ? 'المتاجر:' : 'Stores:'}</span>
+              <strong className="text-amber-600 font-bold">{totalStores}</strong>
             </span>
           </div>
         </div>
 
-        {/* Tab Pills Bar */}
+        {/* 
+          ========================================================================
+          3. REAL BENTO BOX KPI GRID (6 KEY METRICS)
+          ========================================================================
+        */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
+          
+          {/* Card 1: Platform GMV */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {language === 'ar' ? 'إجمالي المبيعات' : 'Platform GMV'}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-xl sm:text-2xl font-black text-emerald-600 font-brand truncate">
+                ${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1 truncate">
+                {language === 'ar' ? `معدل الطلب: $${averageOrderValue.toFixed(2)}` : `AOV: $${averageOrderValue.toFixed(2)}`}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Live Network Orders */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {language === 'ar' ? 'إجمالي الطلبات' : 'Total Orders'}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                <ShoppingBag className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-xl sm:text-2xl font-black text-slate-900 font-brand">
+                {totalPlatformOrders}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold">
+                <span className="text-amber-600">{orderStatusCounts.pending} {language === 'ar' ? 'انتظار' : 'pnd'}</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-emerald-600">{orderStatusCounts.delivered} {language === 'ar' ? 'تم' : 'dlv'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Hosted Stores */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {language === 'ar' ? 'المتاجر المستضافة' : 'Hosted Stores'}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+                <Store className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-xl sm:text-2xl font-black text-slate-900 font-brand">
+                {totalStores}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold">
+                <span className="text-emerald-600">{activeCount} {language === 'ar' ? 'نشط' : 'act'}</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-amber-600">{maintenanceCount} {language === 'ar' ? 'صيانة' : 'mnt'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Universal Shoppers */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {language === 'ar' ? 'عملاء الشبكة' : 'Universal Shoppers'}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-xl sm:text-2xl font-black text-slate-900 font-brand">
+                {universalCustomers.length}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1 truncate">
+                {language === 'ar' ? 'مشترين عبر المنصة' : 'Cross-store buyers'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 5: Monthly Recurring Revenue */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {language === 'ar' ? 'عوائد الاشتراكات MRR' : 'MRR Subscriptions'}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600">
+                <CreditCard className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <p className="text-xl sm:text-2xl font-black text-indigo-600 font-brand">
+                ${mrr.toLocaleString()}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1 truncate">
+                ARR: ${arr.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 6: Cloud & Realtime Status (wired with isCloudflareConfigured) */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                {language === 'ar' ? 'السحابة وقاعدة البيانات' : 'Cloud Status'}
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                <Database className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${isConvexConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                <span className="text-xs font-bold text-slate-800">
+                  {isConvexConnected ? 'Convex Live' : 'Local Fallback'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-[11px]">
+                <span className={`w-1.5 h-1.5 rounded-full ${isCloudflareConfigured ? 'bg-sky-500' : 'bg-slate-400'}`} />
+                <span className="text-slate-500 truncate">
+                  R2 CDN: {isCloudflareConfigured ? 'Connected' : 'Local Storage'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* 
+          ========================================================================
+          4. NAVIGATION TABS BAR
+          ========================================================================
+        */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {OWNER_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -890,16 +1267,16 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 onClick={() => setActiveOwnerTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold shrink-0 transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/20 font-black'
-                    : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                    ? 'bg-slate-900 text-white shadow-sm font-black'
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-xs'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
                 <span>{language === 'ar' ? tab.labelAr : tab.labelEn}</span>
                 {tab.count !== undefined && (
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                      isActive ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-400 border border-slate-700'
+                      isActive ? 'bg-slate-800 text-amber-300' : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`}
                   >
                     {tab.count}
@@ -912,22 +1289,22 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
         {/* 
           ========================================================================
-          3. CLOUD INFRASTRUCTURE DRAWER (TOGGLEABLE)
+          5. CLOUD INFRASTRUCTURE DRAWER (TOGGLEABLE)
           ========================================================================
         */}
         {showCloudSection && (
-          <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 rounded-3xl p-6 shadow-xl animate-in fade-in duration-300">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 border border-sky-200 flex items-center justify-center">
                   <Server className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white font-brand">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 font-brand">
                     {language === 'ar' ? 'حالة البنية التحتية السحابية وقاعدة البيانات' : 'Cloud Database & Media Engine'}
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    Convex Realtime DB + Cloudflare R2 Global Picture Storage
+                  <p className="text-xs text-slate-500">
+                    Convex Realtime DB + Cloudflare R2 Global Media Storage
                   </p>
                 </div>
               </div>
@@ -938,14 +1315,15 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   setIsSeeding(true);
                   try {
                     await seedConvexDatabase();
+                    addToast(language === 'ar' ? 'تمت مزامنة قاعدة البيانات بنجاح' : 'Database synced to Convex', 'success');
                   } finally {
                     setIsSeeding(false);
                   }
                 }}
                 disabled={isSeeding}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all disabled:opacity-50"
               >
-                <Database className={`w-3.5 h-3.5 ${isSeeding ? 'animate-spin' : ''}`} />
+                <Database className={`w-3.5 h-3.5 text-amber-400 ${isSeeding ? 'animate-spin' : ''}`} />
                 <span>
                   {isSeeding
                     ? (language === 'ar' ? 'جارٍ المزامنة...' : 'Syncing...')
@@ -955,31 +1333,31 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 text-xs space-y-2">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-white flex items-center gap-1.5">
-                    <Database className="w-4 h-4 text-amber-400" />
-                    Convex DB
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <Database className="w-4 h-4 text-amber-600" />
+                    Convex Realtime DB
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isConvexConnected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isConvexConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                     {isConvexConnected ? 'Connected & Live' : 'Local Fallback Ready'}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <p className="text-[11px] text-slate-600 leading-relaxed">
                   {language === 'ar'
                     ? 'قاعدة بيانات Convex اللحظية تعزل بيانات كل متجر عبر storeId وتتزامن تلقائياً.'
-                    : 'Real-time multi-tenant sync partitioned strictly by storeId.'}
+                    : 'Real-time multi-tenant database partitioned strictly by storeId with instant subscriptions.'}
                 </p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 text-xs space-y-2">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-white flex items-center gap-1.5">
-                    <Cloud className="w-4 h-4 text-sky-400" />
-                    Cloudflare R2
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <Cloud className="w-4 h-4 text-sky-600" />
+                    Cloudflare R2 CDN
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/20 text-sky-400">
-                    CDN: images.bastiyah.com
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isCloudflareConfigured ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'bg-slate-200 text-slate-700'}`}>
+                    {isCloudflareConfigured ? 'CDN: Active (R2)' : 'Local Storage Mode'}
                   </span>
                 </div>
                 <ImageUploader
@@ -997,87 +1375,130 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
         {/* 
           ========================================================================
-          TAB 1: REGISTERED STORES (المتاجر المسجلة)
+          TAB 1: REGISTERED STORES (المتاجر المستضافة)
           ========================================================================
         */}
         {activeOwnerTab === 'stores' && (
           <div className="space-y-6">
-            {/* KPI Cards Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    {language === 'ar' ? 'إجمالي المتاجر' : 'Total Stores'}
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                    <Store className="w-4 h-4" />
+
+            {/* 
+              ====================================================================
+              PRIMARY: QUICK-ADD STORE BANNER & TEMPLATE PRESETS (BENTO CARD)
+              ====================================================================
+            */}
+            <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white border border-amber-200/80 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                
+                {/* Left/Top Content */}
+                <div className="space-y-2 max-w-xl">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-900 text-xs font-black">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{language === 'ar' ? 'إطلاق متجر سحابي فوري' : 'Instant Store Provisioning'}</span>
                   </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-brand">
+                    {language === 'ar' ? 'أنشئ متجراً جديداً في ثوانٍ معدودة' : 'Provision a New Store in Seconds'}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {language === 'ar'
+                      ? 'اختر قالباً جاهزاً أو أدخل اسم المتجر وحدد نشاطه وباقته ليتم حجز الرابط وتجهيز الكتالوج فوراً.'
+                      : 'Choose a curated template preset or quickly enter a name with category and tier for automated provisioning.'}
+                  </p>
                 </div>
-                <p className="text-3xl font-black text-white mt-2 font-brand">{totalStores}</p>
-                <div className="flex items-center gap-2 mt-2 text-[11px] font-semibold text-slate-400">
-                  <span className="text-emerald-400 font-bold">{activeCount} {language === 'ar' ? 'نشط' : 'active'}</span>
-                  <span>•</span>
-                  <span className="text-amber-400 font-bold">{maintenanceCount} {language === 'ar' ? 'صيانة' : 'maint.'}</span>
-                  {suspendedCount > 0 && (
-                    <>
-                      <span>•</span>
-                      <span className="text-rose-400 font-bold">{suspendedCount} {language === 'ar' ? 'معلق' : 'suspended'}</span>
-                    </>
-                  )}
+
+                {/* Right/Bottom Fast Creation Action */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+                  <form onSubmit={handleQuickAddStore} className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                    <div className="relative w-full sm:w-52">
+                      <Store className="w-4 h-4 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={quickStoreName}
+                        onChange={(e) => setQuickStoreName(e.target.value)}
+                        placeholder={language === 'ar' ? 'اسم المتجر السريع...' : 'Quick store name...'}
+                        className="w-full ps-9 pe-3 py-2.5 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-xs"
+                      />
+                    </div>
+
+                    {/* Quick Category Selector */}
+                    <select
+                      value={quickCategoryIndex}
+                      onChange={(e) => setQuickCategoryIndex(Number(e.target.value))}
+                      className="px-2.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:border-amber-500 shadow-xs"
+                      title={language === 'ar' ? 'تصنيف المتجر' : 'Category'}
+                    >
+                      {CATEGORY_PRESETS.map((cat, i) => (
+                        <option key={cat.en} value={i}>
+                          {language === 'ar' ? cat.ar : cat.en}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Quick Plan Selector */}
+                    <select
+                      value={quickPlan}
+                      onChange={(e) => setQuickPlan(e.target.value as any)}
+                      className="px-2.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 shadow-xs"
+                      title={language === 'ar' ? 'باقة المتجر' : 'Plan'}
+                    >
+                      <option value="Starter">Starter ($0)</option>
+                      <option value="Growth">Growth ($29)</option>
+                      <option value="Enterprise">Enterprise ($99)</option>
+                    </select>
+
+                    <button
+                      type="submit"
+                      disabled={!quickStoreName.trim()}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition-all shrink-0"
+                    >
+                      <Zap className="w-4 h-4 fill-current" />
+                      <span>{language === 'ar' ? 'إطلاق سريع' : 'Quick Launch'}</span>
+                    </button>
+                  </form>
+
+                  <div className="hidden sm:block text-slate-300">|</div>
+
+                  {/* Open Comprehensive Modal Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(true)}
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-xs shrink-0"
+                  >
+                    <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+                    <span>{language === 'ar' ? 'معالج مخصص' : 'Custom Wizard'}</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    {language === 'ar' ? 'إجمالي المبيعات (GMV)' : 'Platform GMV'}
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                    <TrendingUp className="w-4 h-4" />
-                  </div>
+              {/* Template Presets Bar */}
+              <div className="mt-5 pt-4 border-t border-amber-200/60">
+                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-600">
+                  <Sparkle className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{language === 'ar' ? 'قوالب جاهزة للإطلاق بنقرة واحدة:' : 'One-Click Launch Template Presets:'}</span>
                 </div>
-                <p className="text-3xl font-black text-emerald-400 mt-2 font-brand">
-                  ${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <p className="text-xs text-slate-400 mt-2 font-normal">
-                  {language === 'ar' ? 'مبيعات جميع المتاجر المستضافة' : 'Across all hosted storefronts'}
-                </p>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    {language === 'ar' ? 'إجمالي الطلبات' : 'Total Orders'}
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                    <ShoppingBag className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {QUICK_PRESETS.map((preset) => (
+                    <button
+                      key={preset.slug}
+                      onClick={() => handleLaunchWithPreset(preset)}
+                      className="group flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white border border-slate-200/80 hover:border-amber-400 text-xs font-bold text-slate-800 shrink-0 shadow-xs hover:shadow-sm transition-all"
+                      title={language === 'ar' ? `إطلاق متجر ${preset.nameAr} فوراً` : `Launch ${preset.name} instantly`}
+                    >
+                      <span className="text-base group-hover:scale-110 transition-transform">{preset.logoEmoji}</span>
+                      <span>{language === 'ar' ? preset.nameAr : preset.name}</span>
+                      <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-black border border-amber-200">
+                        {preset.plan}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                <p className="text-3xl font-black text-white mt-2 font-brand">{totalPlatformOrders}</p>
-                <p className="text-xs text-slate-400 mt-2 font-normal">
-                  {language === 'ar' ? 'طلبات مكتملة وقيد المعالجة' : 'Orders received on network'}
-                </p>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    {language === 'ar' ? 'إجمالي المنتجات' : 'Hosted Products'}
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-3xl font-black text-white mt-2 font-brand">{totalPlatformProducts}</p>
-                <p className="text-xs text-slate-400 mt-2 font-normal">
-                  {language === 'ar' ? 'منتج معزول في كتالوج المتاجر' : 'Isolated catalog items'}
-                </p>
               </div>
             </div>
 
             {/* Filter and Control Bar */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                
+                {/* Status Filter Tabs */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   {[
                     { id: 'all', labelAr: 'جميع المتاجر', labelEn: 'All Stores', count: totalStores },
@@ -1090,45 +1511,47 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                       onClick={() => setStatusFilter(tab.id as any)}
                       className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                         statusFilter === tab.id
-                          ? 'bg-amber-500 text-slate-950 shadow-sm'
-                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          ? 'bg-slate-900 text-white shadow-xs font-black'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
                       <span>{language === 'ar' ? tab.labelAr : tab.labelEn}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${statusFilter === tab.id ? 'bg-slate-950 text-amber-400' : 'bg-slate-900 text-slate-400'}`}>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${statusFilter === tab.id ? 'bg-slate-800 text-amber-300' : 'bg-slate-200 text-slate-600'}`}>
                         {tab.count}
                       </span>
                     </button>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 self-end sm:self-auto">
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
-                      viewMode === 'table' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="Table View"
-                  >
-                    <TableIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{language === 'ar' ? 'جدول' : 'Table'}</span>
-                  </button>
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-end sm:self-auto">
                   <button
                     onClick={() => setViewMode('cards')}
-                    className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
-                      viewMode === 'cards' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
                     }`}
                     title="Card Grid View"
                   >
-                    <LayoutGrid className="w-4 h-4" />
-                    <span className="hidden sm:inline">{language === 'ar' ? 'بطاقات' : 'Cards'}</span>
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'بطاقات' : 'Cards'}</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                    title="Table View"
+                  >
+                    <TableIcon className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'جدول' : 'Table'}</span>
                   </button>
                 </div>
               </div>
 
+              {/* Search & Multi-criteria Selectors */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                 <div className="sm:col-span-6 relative">
-                  <Search className="w-4 h-4 text-slate-500 absolute start-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-slate-400 absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
@@ -1138,12 +1561,12 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                         ? 'ابحث باسم المتجر، الرابط (slug)، أو اسم المالك...'
                         : 'Search by store name, slug, owner name or email...'
                     }
-                    className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                    className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -1154,7 +1577,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   <select
                     value={planFilter}
                     onChange={(e) => setPlanFilter(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-amber-500"
                   >
                     <option value="all">{language === 'ar' ? 'جميع الباقات' : 'All Hosting Plans'}</option>
                     <option value="Starter">Starter ($0)</option>
@@ -1167,7 +1590,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-amber-500"
                   >
                     <option value="newest">{language === 'ar' ? 'الأحدث تسجيلاً' : 'Newest First'}</option>
                     <option value="oldest">{language === 'ar' ? 'الأقدم تسجيلاً' : 'Oldest First'}</option>
@@ -1180,199 +1603,270 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
             </div>
 
-            {/* Stores List: Table or Cards */}
+            {/* STORES CONTENT: Cards vs Table View */}
             {processedStores.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                  <Store className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-bold text-white font-brand">
-                  {language === 'ar' ? 'لا توجد متاجر تطابق بحثك' : 'No Stores Found Matching Your Criteria'}
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-xs">
+                <Store className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-800 font-brand">
+                  {language === 'ar' ? 'لم يتم العثور على أي متجر يطابق البحث' : 'No stores match your search criteria'}
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  {language === 'ar'
-                    ? 'جرّب تغيير كلمات البحث أو فلتر الحالة لعرض المتاجر المسجلة.'
-                    : 'Try clearing your search query or adjusting your status filters.'}
+                <p className="text-xs text-slate-500 mt-1">
+                  {language === 'ar' ? 'جرب تغيير معايير البحث أو إضافة متجر جديد' : 'Try clearing filters or provision a new store'}
                 </p>
                 <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setStatusFilter('all');
-                    setPlanFilter('all');
-                  }}
-                  className="mt-4 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors"
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-4 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm"
                 >
-                  {language === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset All Filters'}
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{language === 'ar' ? 'إضافة متجر جديد' : 'Create New Store'}</span>
                 </button>
               </div>
-            ) : viewMode === 'table' ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            ) : viewMode === 'cards' ? (
+              /* Bento Grid Cards View */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {processedStores.map((store) => {
+                  const revenue = store.orders
+                    .filter((o) => o.status !== 'cancelled')
+                    .reduce((sum, o) => sum + o.total, 0);
+                  const isCurrentActive = activeStore.id === store.id;
+
+                  return (
+                    <div
+                      key={store.id}
+                      className={`bg-white border rounded-3xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group ${
+                        isCurrentActive ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-slate-200/80'
+                      }`}
+                    >
+                      <div>
+                        {/* Top Store Header */}
+                        <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+                              {store.design.logoEmoji || '🛍️'}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="text-base font-bold text-slate-900 font-brand group-hover:text-amber-600 transition-colors">
+                                  {language === 'ar' ? (store.nameAr || store.name) : store.name}
+                                </h3>
+                                {isCurrentActive && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                                    {language === 'ar' ? 'الحالي' : 'Active'}
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleCopyStoreLink(store)}
+                                className="flex items-center gap-1 text-[11px] font-mono text-slate-500 hover:text-amber-600 transition-colors mt-0.5"
+                                title="Copy Store Link"
+                              >
+                                <span>{store.slug}.bastiyah.com</span>
+                                {copiedId === store.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 opacity-60" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1">
+                            {getPlanPill(store.plan)}
+                          </div>
+                        </div>
+
+                        {/* Direct Status Switcher Bar */}
+                        <div className="mt-3 flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                          <span className="text-[11px] font-bold text-slate-500">{language === 'ar' ? 'الحالة:' : 'Status:'}</span>
+                          <div className="flex items-center gap-1">
+                            {(['active', 'maintenance', 'suspended'] as const).map((st) => (
+                              <button
+                                key={st}
+                                onClick={() => handleToggleStoreStatus(store, st)}
+                                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                                  store.status === st
+                                    ? st === 'active'
+                                      ? 'bg-emerald-600 text-white shadow-xs'
+                                      : st === 'maintenance'
+                                      ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                                      : 'bg-rose-600 text-white shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200'
+                                }`}
+                              >
+                                {st === 'active' ? (language === 'ar' ? 'نشط' : 'Active') : st === 'maintenance' ? (language === 'ar' ? 'صيانة' : 'Maint.') : (language === 'ar' ? 'معلق' : 'Susp.')}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Metrics Bento Row */}
+                        <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                          <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">{language === 'ar' ? 'المبيعات' : 'Revenue'}</span>
+                            <span className="text-xs font-black text-emerald-600 font-mono mt-0.5 block truncate">
+                              ${revenue.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">{language === 'ar' ? 'المنتجات' : 'Products'}</span>
+                            <span className="text-xs font-black text-slate-800 font-mono mt-0.5 block">
+                              {store.products.length}
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">{language === 'ar' ? 'الطلبات' : 'Orders'}</span>
+                            <span className="text-xs font-black text-indigo-600 font-mono mt-0.5 block">
+                              {store.orders.length}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Owner & Category info */}
+                        <div className="mt-3 text-xs space-y-1 text-slate-600">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-500">{language === 'ar' ? 'النشاط:' : 'Category:'}</span>
+                            <span className="font-bold text-slate-700">{language === 'ar' ? (store.categoryAr || store.category) : store.category}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-500">{language === 'ar' ? 'المالك:' : 'Merchant:'}</span>
+                            <span className="font-medium text-slate-700">{store.ownerName} ({store.ownerPhone || 'N/A'})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons Row */}
+                      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {/* Visit Storefront */}
+                          <a
+                            href={getStoreDisplayUrl(store.slug)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200/80 shadow-xs"
+                            title={language === 'ar' ? 'فتح واجهة المتجر' : 'Visit Storefront'}
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+
+                          {/* Edit Store Info */}
+                          <button
+                            onClick={() => openEditModal(store)}
+                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200/80 shadow-xs"
+                            title={language === 'ar' ? 'تعديل بيانات المتجر' : 'Edit Store'}
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Delete Store */}
+                          <button
+                            onClick={() => setStoreToDelete(store)}
+                            className="p-2 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors border border-rose-200 shadow-xs"
+                            title={language === 'ar' ? 'حذف المتجر' : 'Delete Store'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Open Merchant Admin */}
+                        <button
+                          onClick={() => {
+                            switchStore(store.id, 'admin');
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                        >
+                          <Settings className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{language === 'ar' ? 'إدارة المتجر' : 'Store Admin'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* High-Density Data Table View */
+              <div className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-start text-xs sm:text-sm">
-                    <thead>
-                      <tr className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        <th className="py-4 px-4 text-start">{language === 'ar' ? 'المتجر والرابط' : 'Store & Subdomain'}</th>
-                        <th className="py-4 px-4 text-start">{language === 'ar' ? 'المالك والاتصال' : 'Owner & Contact'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'الباقة' : 'Plan'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'الحالة' : 'Status'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'المنتجات / الطلبات' : 'Products / Orders'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'المبيعات ($)' : 'Revenue ($)'}</th>
-                        <th className="py-4 px-4 text-end">{language === 'ar' ? 'إجراءات الإدارة' : 'Actions'}</th>
+                  <table className="w-full text-xs text-start">
+                    <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase text-[10px] font-bold tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'المتجر' : 'Store'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'الرابط الفرعي' : 'Subdomain'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'التصنيف' : 'Category'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'الباقة' : 'Plan'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'المبيعات والطلبات' : 'Revenue & Orders'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'الحالة' : 'Status'}</th>
+                        <th className="py-3 px-4 text-end">{language === 'ar' ? 'إجراءات' : 'Actions'}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {processedStores.map((store) => {
-                        const storeTheme = THEME_CONFIGS[store.design.themeColor] || THEME_CONFIGS.emerald;
-                        const storeRevenue = store.orders
+                        const revenue = store.orders
                           .filter((o) => o.status !== 'cancelled')
                           .reduce((sum, o) => sum + o.total, 0);
 
                         return (
-                          <tr key={store.id} className="hover:bg-slate-800/40 transition-colors group">
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-white/10 shadow-sm"
-                                  style={{ backgroundColor: `${storeTheme.hex}25` }}
-                                >
-                                  {store.design.logoEmoji}
-                                </div>
+                          <tr key={store.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5">
+                                <span className="text-xl">{store.design.logoEmoji}</span>
                                 <div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-brand font-black text-white text-sm">
-                                      {language === 'ar' ? store.nameAr || store.name : store.name}
-                                    </span>
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                                      {store.category}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5 mt-1" dir="ltr">
-                                    <button
-                                      onClick={() => switchStore(store.id, 'home')}
-                                      className="font-mono text-xs text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1"
-                                    >
-                                      <span>{store.slug}.bastiyah.com</span>
-                                      <ArrowUpRight className="w-3 h-3 opacity-60" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleCopyStoreLink(store)}
-                                      className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition-colors"
-                                      title="Copy link"
-                                    >
-                                      {copiedId === store.id ? (
-                                        <Check className="w-3 h-3 text-emerald-400" />
-                                      ) : (
-                                        <Copy className="w-3 h-3" />
-                                      )}
-                                    </button>
-                                  </div>
+                                  <p className="font-bold text-slate-900">{language === 'ar' ? (store.nameAr || store.name) : store.name}</p>
+                                  <p className="text-[11px] text-slate-500">{store.ownerName}</p>
                                 </div>
                               </div>
                             </td>
-
-                            <td className="py-4 px-4">
-                              <div className="text-xs">
-                                <p className="font-bold text-slate-200">{store.ownerName}</p>
-                                <p className="text-slate-400 font-mono text-[11px] truncate max-w-[180px]">
-                                  {store.ownerEmail}
-                                </p>
+                            <td className="py-3.5 px-4 font-mono text-slate-600" dir="ltr">
+                              <button
+                                onClick={() => handleCopyStoreLink(store)}
+                                className="hover:text-amber-600 flex items-center gap-1"
+                              >
+                                <span>{store.slug}.bastiyah.com</span>
+                                <Copy className="w-3 h-3 opacity-60" />
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-700">
+                              {language === 'ar' ? (store.categoryAr || store.category) : store.category}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {getPlanPill(store.plan)}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-mono">
+                                <span className="font-bold text-emerald-600">${revenue.toFixed(2)}</span>
+                                <span className="text-slate-400 text-[11px] ms-1.5">({store.orders.length} {language === 'ar' ? 'طلب' : 'orders'})</span>
                               </div>
                             </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <span
-                                className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                  store.plan === 'Enterprise'
-                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                    : store.plan === 'Growth'
-                                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                                    : 'bg-slate-800 text-slate-300 border border-slate-700'
-                                }`}
-                              >
-                                {store.plan}
-                              </span>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
+                            <td className="py-3.5 px-4">
                               <select
                                 value={store.status}
                                 onChange={(e) => handleToggleStoreStatus(store, e.target.value as any)}
-                                className={`text-xs font-bold px-2 py-1 rounded-xl border appearance-none cursor-pointer text-center focus:outline-none transition-colors ${
-                                  store.status === 'active'
-                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                                    : store.status === 'maintenance'
-                                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                                    : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
-                                }`}
+                                className="px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer"
                               >
-                                <option value="active" className="bg-slate-900 text-emerald-400">
-                                  {language === 'ar' ? '● نشط (Active)' : '● Active'}
-                                </option>
-                                <option value="maintenance" className="bg-slate-900 text-amber-400">
-                                  {language === 'ar' ? '● صيانة (Maintenance)' : '● Maintenance'}
-                                </option>
-                                <option value="suspended" className="bg-slate-900 text-rose-400">
-                                  {language === 'ar' ? '● معلق (Suspended)' : '● Suspended'}
-                                </option>
+                                <option value="active">{language === 'ar' ? 'نشط' : 'Active'}</option>
+                                <option value="maintenance">{language === 'ar' ? 'صيانة' : 'Maintenance'}</option>
+                                <option value="suspended">{language === 'ar' ? 'معلق' : 'Suspended'}</option>
                               </select>
                             </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <div className="flex items-center justify-center gap-2 text-xs">
-                                <span className="text-slate-300 font-bold">{store.products.length} {language === 'ar' ? 'منتج' : 'prod'}</span>
-                                <span className="text-slate-600">•</span>
-                                <span className="text-slate-300 font-bold">{store.orders.length} {language === 'ar' ? 'طلب' : 'ord'}</span>
-                              </div>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <span className="font-mono font-black text-emerald-400 text-sm">
-                                ${storeRevenue.toFixed(2)}
-                              </span>
-                            </td>
-
-                            <td className="py-4 px-4 text-end">
+                            <td className="py-3.5 px-4 text-end">
                               <div className="flex items-center justify-end gap-1.5">
+                                <a
+                                  href={getStoreDisplayUrl(store.slug)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                  title="View"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
                                 <button
                                   onClick={() => openEditModal(store)}
-                                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-                                  title={language === 'ar' ? 'تعديل بيانات المتجر' : 'Edit Store Details'}
+                                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                  title="Edit"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </button>
-
                                 <button
-                                  onClick={() => {
-                                    switchStore(store.id, 'admin');
-                                    setAdminTab('dashboard');
-                                  }}
-                                  className="px-2.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-all"
-                                  title={language === 'ar' ? 'الدخول كمسؤول للمتجر' : 'Manage Store Admin'}
+                                  onClick={() => switchStore(store.id, 'admin')}
+                                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px]"
                                 >
-                                  <Settings className="w-3.5 h-3.5" />
-                                  <span className="hidden md:inline">{language === 'ar' ? 'إدارة' : 'Manage'}</span>
+                                  {language === 'ar' ? 'لوحة المتجر' : 'Admin'}
                                 </button>
-
-                                <button
-                                  onClick={() => switchStore(store.id, 'home')}
-                                  className="px-2.5 py-1.5 rounded-xl text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-opacity hover:opacity-90"
-                                  style={{ backgroundColor: storeTheme.hex }}
-                                  title={language === 'ar' ? 'زيارة المتجر' : 'Visit Live Storefront'}
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                  <span className="hidden md:inline">{language === 'ar' ? 'زيارة' : 'Visit'}</span>
-                                </button>
-
-                                {stores.length > 1 && (
-                                  <button
-                                    onClick={() => setStoreToDelete(store)}
-                                    className="p-2 rounded-xl bg-slate-950 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 border border-slate-800 transition-colors"
-                                    title={t.deleteStore}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
                               </div>
                             </td>
                           </tr>
@@ -1382,318 +1876,235 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   </table>
                 </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {processedStores.map((store) => {
-                  const storeTheme = THEME_CONFIGS[store.design.themeColor] || THEME_CONFIGS.emerald;
-                  const storeRevenue = store.orders
-                    .filter((o) => o.status !== 'cancelled')
-                    .reduce((sum, o) => sum + o.total, 0);
-
-                  return (
-                    <div
-                      key={store.id}
-                      className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl p-6 flex flex-col justify-between shadow-lg transition-all hover:-translate-y-0.5"
-                    >
-                      <div>
-                        <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-800">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 border border-white/10 shadow-sm"
-                              style={{ backgroundColor: `${storeTheme.hex}25` }}
-                            >
-                              {store.design.logoEmoji}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="text-base font-black text-white font-brand">
-                                  {language === 'ar' ? store.nameAr || store.name : store.name}
-                                </h3>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                                  {store.plan}
-                                </span>
-                              </div>
-                              <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                                {language === 'ar' ? store.taglineAr || store.tagline : store.tagline}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => openEditModal(store)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                              title="Edit"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            {stores.length > 1 && (
-                              <button
-                                onClick={() => setStoreToDelete(store)}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Subdomain Pill */}
-                        <div className="mt-4 p-3 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 truncate" dir="ltr">
-                            <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            <span className="font-mono text-xs text-slate-300 truncate font-semibold">
-                              {store.slug}.bastiyah.com
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleCopyStoreLink(store)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
-                            title="Copy link"
-                          >
-                            {copiedId === store.id ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Owner & Metrics */}
-                        <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-                            <span className="text-[10px] text-slate-500 block uppercase font-bold">
-                              {language === 'ar' ? 'المالك' : 'Merchant'}
-                            </span>
-                            <span className="font-bold text-slate-200 truncate block mt-0.5">
-                              {store.ownerName}
-                            </span>
-                          </div>
-                          <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
-                            <span className="text-[10px] text-slate-500 block uppercase font-bold">
-                              {language === 'ar' ? 'المبيعات' : 'Revenue'}
-                            </span>
-                            <span className="font-mono font-black text-emerald-400 block mt-0.5">
-                              ${storeRevenue.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-slate-400 mt-4 px-1">
-                          <span>{store.products.length} {language === 'ar' ? 'منتج معروض' : 'products'}</span>
-                          <span>{store.orders.length} {language === 'ar' ? 'طلب مسجل' : 'orders'}</span>
-                          <span className="capitalize text-slate-300 font-semibold">{store.status}</span>
-                        </div>
-                      </div>
-
-                      {/* Card Action Buttons */}
-                      <div className="mt-5 pt-4 border-t border-slate-800 flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            switchStore(store.id, 'admin');
-                            setAdminTab('dashboard');
-                          }}
-                          className="flex-1 py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                        >
-                          <Settings className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? 'إدارة المتجر' : 'Store Admin'}</span>
-                        </button>
-
-                        <button
-                          onClick={() => switchStore(store.id, 'home')}
-                          className="flex-1 py-2 px-3 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-opacity hover:opacity-90"
-                          style={{ backgroundColor: storeTheme.hex }}
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? 'زيارة المتجر' : 'Visit Store'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             )}
           </div>
         )}
 
         {/* 
           ========================================================================
-          TAB 2: ANALYTICS & PLATFORM GMV (التحليلات والمبيعات)
+          TAB 2: ANALYTICS & GMV (المبيعات والتحليلات)
           ========================================================================
         */}
         {activeOwnerTab === 'analytics' && (
           <div className="space-y-6">
-            {/* High-level Intelligence Banner */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-3">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'مؤشرات أداء شبكة بسطية اللحظية' : 'Live Platform GMV & Intelligence'}</span>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-black text-white font-brand">
-                    ${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
-                    {language === 'ar'
-                      ? 'إجمالي قيمة المعاملات التجارية (GMV) المنفذة عبر كافة المتاجر المستضافة بنجاح، باستثناء الطلبات الملغاة.'
-                      : 'Gross Merchandise Value processed seamlessly across all multi-tenant stores, excluding cancellations.'}
-                  </p>
-                </div>
+            
+            {/* Top Revenue Summary Banner */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  {language === 'ar' ? 'إجمالي المبيعات المحققة عبر كافة المتاجر المستضافة' : 'Cross-Store Gross Merchandise Value (GMV)'}
+                </span>
+                <p className="text-3xl sm:text-4xl font-black text-slate-900 font-brand">
+                  ${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {language === 'ar' ? `من إجمالي ${totalPlatformOrders} طلب عبر الشبكة بمتوسط قيمة سلة $${averageOrderValue.toFixed(2)}` : `From ${totalPlatformOrders} orders across the network with an AOV of $${averageOrderValue.toFixed(2)}`}
+                </p>
+              </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-center">
-                    <span className="text-[11px] text-slate-400 font-bold block">{language === 'ar' ? 'متوسط قيمة الطلب' : 'Average Order'}</span>
-                    <span className="text-xl font-black text-amber-400 font-mono mt-1 block">
-                      ${averageOrderValue.toFixed(2)}
-                    </span>
-                  </div>
-
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-center">
-                    <span className="text-[11px] text-slate-400 font-bold block">{language === 'ar' ? 'إجمالي الطلبات' : 'Total Orders'}</span>
-                    <span className="text-xl font-black text-white font-mono mt-1 block">
-                      {totalPlatformOrders}
-                    </span>
-                  </div>
-
-                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-center col-span-2 sm:col-span-1">
-                    <span className="text-[11px] text-slate-400 font-bold block">{language === 'ar' ? 'نسبة المتاجر النشطة' : 'Active Ratio'}</span>
-                    <span className="text-xl font-black text-emerald-400 font-mono mt-1 block">
-                      {totalStores > 0 ? `${Math.round((activeCount / totalStores) * 100)}%` : '0%'}
-                    </span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleExportCSV}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-xs"
+                >
+                  <Download className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? 'تصدير تقرير المبيعات' : 'Export GMV Report'}</span>
+                </button>
               </div>
             </div>
 
-            {/* Network Order Status Pipeline */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-white font-brand mb-4 flex items-center gap-2">
-                <Truck className="w-4 h-4 text-amber-400" />
-                <span>{language === 'ar' ? 'حالة توزيع الطلبات عبر الشبكة' : 'Network Order Status Pipeline'}</span>
+            {/* Top Performing Stores Leaderboard */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-bold text-slate-900 font-brand flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-amber-500" />
+                <span>{language === 'ar' ? 'ترتيب المتاجر حسب المبيعات (GMV Leaderboard)' : 'Top Performing Stores by Revenue'}</span>
               </h3>
 
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                <div className="bg-slate-950/70 border border-amber-500/20 rounded-2xl p-4 text-center">
-                  <span className="text-xs font-bold text-amber-400 block">{language === 'ar' ? 'قيد الانتظار' : 'Pending'}</span>
-                  <span className="text-2xl font-black text-white font-mono mt-1 block">{orderStatusCounts.pending}</span>
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    {totalPlatformOrders > 0 ? `${Math.round((orderStatusCounts.pending / totalPlatformOrders) * 100)}%` : '0%'}
-                  </span>
+              <div className="space-y-3">
+                {stores
+                  .map((s) => {
+                    const rev = s.orders.filter((o) => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
+                    return { ...s, totalRev: rev };
+                  })
+                  .sort((a, b) => b.totalRev - a.totalRev)
+                  .map((st, idx) => {
+                    const percentage = totalPlatformRevenue > 0 ? (st.totalRev / totalPlatformRevenue) * 100 : 0;
+                    return (
+                      <div key={st.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px]">
+                              {idx + 1}
+                            </span>
+                            <span className="text-base">{st.design.logoEmoji}</span>
+                            <span className="font-bold text-slate-900">{language === 'ar' ? (st.nameAr || st.name) : st.name}</span>
+                            <span className="text-slate-400 font-mono text-[11px]">({st.slug}.bastiyah.com)</span>
+                          </div>
+                          <div className="text-end font-mono">
+                            <strong className="text-emerald-600 text-sm font-black">${st.totalRev.toFixed(2)}</strong>
+                            <span className="text-slate-500 text-[11px] ms-2">({st.orders.length} {language === 'ar' ? 'طلب' : 'orders'})</span>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.max(percentage, 2)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Category Distribution Grid */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-bold text-slate-900 font-brand flex items-center gap-2">
+                <Layers className="w-4 h-4 text-indigo-500" />
+                <span>{language === 'ar' ? 'توزيع المبيعات والمتاجر حسب القطاعات' : 'Category Distribution & Performance'}</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {categoryStats.map((cat) => (
+                  <div key={cat.en} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-900 text-xs">{language === 'ar' ? cat.ar : cat.en}</h4>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                        {cat.count} {language === 'ar' ? 'متاجر' : 'stores'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-mono pt-1">
+                      <span className="text-slate-500">{cat.products} {language === 'ar' ? 'منتج' : 'products'}</span>
+                      <strong className="text-emerald-600 font-bold">${cat.revenue.toFixed(2)}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 
+          ========================================================================
+          TAB 3: MERCHANTS & SHOPPERS (دليل التجار والعملاء)
+          ========================================================================
+        */}
+        {activeOwnerTab === 'merchants' && (
+          <div className="space-y-6">
+
+            {/* Merchants Header Bar */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 font-brand flex items-center gap-2">
+                    <Users className="w-5 h-5 text-indigo-600" />
+                    <span>{language === 'ar' ? 'دليل مدراء وتجار المتاجر' : 'Store Merchants Directory'}</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {language === 'ar'
+                      ? 'إدارة حسابات تسجيل دخول التجار وأرقام هواتفهم وكلمات المرور الخاصة بإدارة كل متجر.'
+                      : 'Store managers credentials, login phones, and merchant credentials management.'}
+                  </p>
                 </div>
 
-                <div className="bg-slate-950/70 border border-sky-500/20 rounded-2xl p-4 text-center">
-                  <span className="text-xs font-bold text-sky-400 block">{language === 'ar' ? 'قيد التجهيز' : 'Processing'}</span>
-                  <span className="text-2xl font-black text-white font-mono mt-1 block">{orderStatusCounts.processing}</span>
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    {totalPlatformOrders > 0 ? `${Math.round((orderStatusCounts.processing / totalPlatformOrders) * 100)}%` : '0%'}
-                  </span>
-                </div>
+                <button
+                  onClick={() => setShowAddMerchantModal(true)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors self-start sm:self-auto"
+                >
+                  <Plus className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? '+ تسجيل مدير متجر جديد' : '+ Register Merchant'}</span>
+                </button>
+              </div>
 
-                <div className="bg-slate-950/70 border border-indigo-500/20 rounded-2xl p-4 text-center">
-                  <span className="text-xs font-bold text-indigo-400 block">{language === 'ar' ? 'تم الشحن' : 'Shipped'}</span>
-                  <span className="text-2xl font-black text-white font-mono mt-1 block">{orderStatusCounts.shipped}</span>
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    {totalPlatformOrders > 0 ? `${Math.round((orderStatusCounts.shipped / totalPlatformOrders) * 100)}%` : '0%'}
-                  </span>
+              {/* Search & Filter */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
+                <div className="sm:col-span-8 relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={merchantSearch}
+                    onChange={(e) => setMerchantSearch(e.target.value)}
+                    placeholder={language === 'ar' ? 'ابحث باسم التاجر، رقم الهاتف، أو اسم المتجر...' : 'Search by merchant name, phone, or store...'}
+                    className="w-full ps-9 pe-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500"
+                  />
                 </div>
-
-                <div className="bg-slate-950/70 border border-emerald-500/20 rounded-2xl p-4 text-center">
-                  <span className="text-xs font-bold text-emerald-400 block">{language === 'ar' ? 'تم التوصيل' : 'Delivered'}</span>
-                  <span className="text-2xl font-black text-white font-mono mt-1 block">{orderStatusCounts.delivered}</span>
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    {totalPlatformOrders > 0 ? `${Math.round((orderStatusCounts.delivered / totalPlatformOrders) * 100)}%` : '0%'}
-                  </span>
-                </div>
-
-                <div className="bg-slate-950/70 border border-rose-500/20 rounded-2xl p-4 text-center col-span-2 sm:col-span-1">
-                  <span className="text-xs font-bold text-rose-400 block">{language === 'ar' ? 'ملغي' : 'Cancelled'}</span>
-                  <span className="text-2xl font-black text-white font-mono mt-1 block">{orderStatusCounts.cancelled}</span>
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    {totalPlatformOrders > 0 ? `${Math.round((orderStatusCounts.cancelled / totalPlatformOrders) * 100)}%` : '0%'}
-                  </span>
+                <div className="sm:col-span-4">
+                  <select
+                    value={merchantPlanFilter}
+                    onChange={(e) => setMerchantPlanFilter(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:bg-white focus:border-amber-500"
+                  >
+                    <option value="all">{language === 'ar' ? 'جميع الباقات' : 'All Plans'}</option>
+                    <option value="Starter">Starter</option>
+                    <option value="Growth">Growth</option>
+                    <option value="Enterprise">Enterprise</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* Top Stores Leaderboard */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-                <div>
-                  <h3 className="text-base font-bold text-white font-brand flex items-center gap-2">
-                    <Crown className="w-4 h-4 text-amber-400" />
-                    <span>{language === 'ar' ? 'ترتيب المتاجر الأعلى مبيعاً (Leaderboard)' : 'Top Performing Stores Leaderboard'}</span>
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {language === 'ar' ? 'مرتبة بحسب إجمالي المبيعات المحققة' : 'Ranked by cumulative Gross Merchandise Value'}
-                  </p>
-                </div>
-              </div>
-
+            {/* Merchants Table */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-start text-xs sm:text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="py-3 px-3 text-center w-12">#</th>
-                      <th className="py-3 px-3 text-start">{language === 'ar' ? 'المتجر' : 'Store'}</th>
-                      <th className="py-3 px-3 text-start">{language === 'ar' ? 'التصنيف والباقة' : 'Category & Plan'}</th>
-                      <th className="py-3 px-3 text-center">{language === 'ar' ? 'الطلبات' : 'Orders'}</th>
-                      <th className="py-3 px-3 text-center">{language === 'ar' ? 'متوسط الطلب' : 'AOV'}</th>
-                      <th className="py-3 px-3 text-end">{language === 'ar' ? 'إجمالي المبيعات' : 'Total Revenue'}</th>
-                      <th className="py-3 px-3 text-end">{language === 'ar' ? 'إجراء' : 'Action'}</th>
+                <table className="w-full text-xs text-start">
+                  <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase text-[10px] font-bold tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4 text-start">{language === 'ar' ? 'التاجر والمدير' : 'Merchant'}</th>
+                      <th className="py-3 px-4 text-start">{language === 'ar' ? 'المتجر المسند' : 'Assigned Store'}</th>
+                      <th className="py-3 px-4 text-start">{language === 'ar' ? 'الهاتف (لتسجيل الدخول)' : 'Login Phone'}</th>
+                      <th className="py-3 px-4 text-start">{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</th>
+                      <th className="py-3 px-4 text-start">{language === 'ar' ? 'كلمة المرور' : 'Password'}</th>
+                      <th className="py-3 px-4 text-end">{language === 'ar' ? 'إجراءات' : 'Actions'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {topStoresLeaderboard.map((item, index) => {
-                      const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-                      return (
-                        <tr key={item.store.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="py-3 px-3 text-center font-bold text-amber-400 text-sm">
-                            {medal}
-                          </td>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {processedMerchants.map((store) => {
+                      const isRevealed = revealedPasswordStoreId === store.id;
 
-                          <td className="py-3 px-3">
-                            <div className="flex items-center gap-2.5">
-                              <span className="text-xl select-none">{item.store.design.logoEmoji}</span>
-                              <div>
-                                <span className="font-bold text-white block">
-                                  {language === 'ar' ? item.store.nameAr || item.store.name : item.store.name}
-                                </span>
-                                <span className="text-[11px] text-slate-400 font-mono" dir="ltr">
-                                  {item.store.slug}.bastiyah.com
-                                </span>
-                              </div>
+                      return (
+                        <tr key={store.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">
+                            {store.ownerName}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-base">{store.design.logoEmoji}</span>
+                              <span className="font-bold text-slate-800">{language === 'ar' ? (store.nameAr || store.name) : store.name}</span>
                             </div>
                           </td>
-
-                          <td className="py-3 px-3">
-                            <span className="text-xs text-slate-300 block">{item.store.category}</span>
-                            <span className="text-[10px] font-bold text-indigo-400">{item.store.plan}</span>
-                          </td>
-
-                          <td className="py-3 px-3 text-center font-mono font-bold text-slate-200">
-                            {item.orderCount}
-                          </td>
-
-                          <td className="py-3 px-3 text-center font-mono text-slate-300">
-                            ${item.aov.toFixed(2)}
-                          </td>
-
-                          <td className="py-3 px-3 text-end font-mono font-black text-emerald-400 text-sm">
-                            ${item.revenue.toFixed(2)}
-                          </td>
-
-                          <td className="py-3 px-3 text-end">
+                          <td className="py-3.5 px-4 font-mono text-slate-700" dir="ltr">
                             <button
-                              onClick={() => {
-                                switchStore(item.store.id, 'admin');
-                                setAdminTab('dashboard');
-                              }}
-                              className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold inline-flex items-center gap-1"
+                              onClick={() => safeCopy(store.ownerPhone || '', 'Phone')}
+                              className="hover:text-amber-600 flex items-center gap-1"
+                              title="Copy Phone"
                             >
-                              <span>{language === 'ar' ? 'إدارة' : 'Manage'}</span>
-                              <ArrowUpRight className="w-3 h-3 text-amber-400" />
+                              <span>{store.ownerPhone || 'N/A'}</span>
+                              <Copy className="w-3 h-3 opacity-60" />
+                            </button>
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]" dir="ltr">
+                            {store.ownerEmail}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono">
+                            <div className="flex items-center gap-1.5">
+                              <span>{isRevealed ? (store.adminPassword || 'merchant123') : '••••••••'}</span>
+                              <button
+                                onClick={() => setRevealedPasswordStoreId(isRevealed ? null : store.id)}
+                                className="text-slate-400 hover:text-slate-700 p-1"
+                                title="Reveal"
+                              >
+                                {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-end">
+                            <button
+                              onClick={() => switchStore(store.id, 'admin')}
+                              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px]"
+                            >
+                              {language === 'ar' ? 'دخول لوحة المتجر' : 'Access Admin'}
                             </button>
                           </td>
                         </tr>
@@ -1704,329 +2115,110 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
             </div>
 
-            {/* Category Performance Matrix */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-white font-brand mb-4 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-indigo-400" />
-                <span>{language === 'ar' ? 'أداء القطاعات والأنشطة التجارية' : 'Category Performance Matrix'}</span>
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categoryStats.map((cat) => {
-                  const percentOfTotal = totalPlatformRevenue > 0 ? (cat.revenue / totalPlatformRevenue) * 100 : 0;
-                  return (
-                    <div key={cat.en} className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-white text-xs sm:text-sm">
-                          {language === 'ar' ? cat.ar : cat.en}
-                        </span>
-                        <span className="font-mono text-xs font-bold text-emerald-400">
-                          ${cat.revenue.toFixed(2)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2">
-                        <span>{cat.count} {language === 'ar' ? 'متجر' : 'stores'}</span>
-                        <span>{cat.products} {language === 'ar' ? 'منتج' : 'products'}</span>
-                      </div>
-
-                      <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden mt-3">
-                        <div
-                          className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
-                          style={{ width: `${Math.min(100, Math.max(percentOfTotal, 5))}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 
-          ========================================================================
-          TAB 3: MERCHANTS DIRECTORY (دليل التجار)
-          ========================================================================
-        */}
-        {activeOwnerTab === 'merchants' && (
-          <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Universal Customers Insights Section */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-white font-brand">
-                    {language === 'ar' ? 'سجل مدراء المتاجر والتجار' : 'Merchants & Store Owners Registry'}
+                  <h3 className="text-base font-bold text-slate-900 font-brand flex items-center gap-2">
+                    <Users className="w-4 h-4 text-purple-600" />
+                    <span>{language === 'ar' ? 'سجل العملاء الموحد عبر المنصة (Universal Customer Insights)' : 'Universal Cross-Store Shoppers'}</span>
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {language === 'ar'
-                      ? 'مدراء المتاجر يتم تسجيلهم وإضافتهم حصرياً من قِبل مالك المنصة عبر رقم الهاتف.'
-                      : 'Store admins are registered and authorized exclusively by the platform owner via phone number.'}
+                  <p className="text-xs text-slate-500">
+                    {language === 'ar' ? 'قاعدة بيانات المشترين عبر كافة المتاجر ومرات شرائهم' : 'Aggregated customer profiles across all hosted stores'}
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 font-bold">
-                    {processedMerchants.length} {language === 'ar' ? 'مدير متجر' : 'Store Admins'}
-                  </span>
-
-                  <button
-                    onClick={() => {
-                      setNewMerchantStoreId(stores[0]?.id || '');
-                      setShowAddMerchantModal(true);
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
-                  >
-                    <PlusCircle className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'إضافة مدير متجر برقم الهاتف' : 'Add Store Admin via Phone'}</span>
-                  </button>
-                </div>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                  {universalCustomers.length} {language === 'ar' ? 'عميل نشط' : 'Customers'}
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
-                <div className="sm:col-span-8 relative">
-                  <Search className="w-4 h-4 text-slate-500 absolute start-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={merchantSearch}
-                    onChange={(e) => setMerchantSearch(e.target.value)}
-                    placeholder={
-                      language === 'ar'
-                        ? 'ابحث باسم مدير المتجر، رقم الهاتف، أو رابط المتجر...'
-                        : 'Search by merchant name, phone number, or store...'
-                    }
-                    className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500"
-                  />
-                  {merchantSearch && (
-                    <button
-                      onClick={() => setMerchantSearch('')}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="sm:col-span-4">
-                  <select
-                    value={merchantPlanFilter}
-                    onChange={(e) => setMerchantPlanFilter(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="all">{language === 'ar' ? 'جميع الباقات' : 'All Tiers'}</option>
-                    <option value="Starter">Starter ($0)</option>
-                    <option value="Growth">Growth ($29)</option>
-                    <option value="Enterprise">Enterprise ($99)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Merchants Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-start text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'التاجر / مدير المتجر' : 'Store Admin'}</th>
-                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'رقم الهاتف (وسيلة التسجيل والدخول)' : 'Phone (Primary Registration)'}</th>
-                      <th className="py-4 px-4 text-start">{language === 'ar' ? 'المتجر المرتبط' : 'Linked Store'}</th>
-                      <th className="py-4 px-4 text-center">{language === 'ar' ? 'الباقة' : 'Plan'}</th>
-                      <th className="py-4 px-4 text-center">{language === 'ar' ? 'كلمة المرور' : 'Password Key'}</th>
-                      <th className="py-4 px-4 text-end">{language === 'ar' ? 'إجمالي المبيعات' : 'Revenue'}</th>
-                      <th className="py-4 px-4 text-end">{language === 'ar' ? 'إجراءات' : 'Actions'}</th>
+                <table className="w-full text-xs text-start">
+                  <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase text-[10px] font-bold tracking-wider">
+                    <tr>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'العميل' : 'Customer'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'الهاتف' : 'Phone'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'الطلبات' : 'Orders'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'إجمالي الإنفاق' : 'Total Spent'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'المتاجر التي اشترى منها' : 'Stores Visited'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {processedMerchants.map((store) => {
-                      const isPassRevealed = revealedPasswordStoreId === store.id;
-                      const merchantPassword = store.adminPassword || 'merchant123';
-                      const storeRevenue = store.orders
-                        .filter((o) => o.status !== 'cancelled')
-                        .reduce((sum, o) => sum + o.total, 0);
-
-                      return (
-                        <tr key={store.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center text-xs">
-                                {store.ownerName.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-bold text-white text-sm block">{store.ownerName}</span>
-                                  <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30 whitespace-nowrap">
-                                    {language === 'ar' ? 'مضاف من المالك' : 'Owner Added'}
-                                  </span>
-                                </div>
-                                <span className="text-[10px] text-slate-400">
-                                  ID: <code className="font-mono text-slate-300">{store.id}</code>
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="py-4 px-4">
-                            <div className="space-y-1" dir="ltr">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-800/40">
-                                  <Phone className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span>{store.ownerPhone || '+964 770 123 4567'}</span>
-                                </span>
-                                <button
-                                  onClick={() => handleCopyText(store.ownerPhone || '+964 770 123 4567', 'Merchant Phone')}
-                                  className="text-slate-500 hover:text-slate-300 p-0.5 rounded"
-                                  title="Copy Phone"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </button>
-                              </div>
-                              <span className="text-[10px] text-slate-500 font-sans block">
-                                {language === 'ar' ? 'وسيلة التسجيل والدخول المعتمدة' : 'Official registration phone'}
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {universalCustomers.slice(0, 20).map((cust) => (
+                      <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-4 font-bold text-slate-900">{cust.name}</td>
+                        <td className="py-3 px-4 font-mono text-slate-600" dir="ltr">{cust.phone || cust.email || 'N/A'}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-800">{cust.ordersCount}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-emerald-600">${cust.totalSpent.toFixed(2)}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-wrap gap-1">
+                            {cust.stores.map((sName) => (
+                              <span key={sName} className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
+                                {sName}
                               </span>
-                            </div>
-                          </td>
-
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg select-none">{store.design.logoEmoji}</span>
-                              <div>
-                                <span className="font-bold text-white text-xs block">
-                                  {language === 'ar' ? store.nameAr || store.name : store.name}
-                                </span>
-                                <span className="text-[11px] text-emerald-400 font-mono" dir="ltr">
-                                  {store.slug}.bastiyah.com
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="py-4 px-4 text-center">
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-indigo-300 border border-slate-700">
-                              {store.plan}
-                            </span>
-                          </td>
-
-                          <td className="py-4 px-4 text-center">
-                            <div className="inline-flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800" dir="ltr">
-                              <KeyRound className="w-3 h-3 text-amber-400" />
-                              <span className="font-mono text-xs text-slate-300">
-                                {isPassRevealed ? merchantPassword : '••••••••'}
-                              </span>
-                              <button
-                                onClick={() => setRevealedPasswordStoreId(isPassRevealed ? null : store.id)}
-                                className="text-slate-400 hover:text-white p-0.5"
-                                title={isPassRevealed ? 'Hide Password' : 'Show Password'}
-                              >
-                                {isPassRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                              </button>
-                              <button
-                                onClick={() => handleCopyText(merchantPassword, 'Admin Password')}
-                                className="text-slate-400 hover:text-white p-0.5"
-                                title="Copy Password"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </td>
-
-                          <td className="py-4 px-4 text-end font-mono font-bold text-emerald-400">
-                            ${storeRevenue.toFixed(2)}
-                          </td>
-
-                          <td className="py-4 px-4 text-end">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => {
-                                  switchStore(store.id, 'admin');
-                                  setAdminTab('dashboard');
-                                }}
-                                className="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold flex items-center gap-1"
-                                title="Login directly to this merchant admin portal"
-                              >
-                                <Settings className="w-3.5 h-3.5" />
-                                <span>{language === 'ar' ? 'دخول الإدارة' : 'Login Admin'}</span>
-                              </button>
-                              <button
-                                onClick={() => openEditModal(store)}
-                                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"
-                                title="Edit"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             </div>
+
           </div>
         )}
 
         {/* 
           ========================================================================
-          TAB 4: PLATFORM LIVE ORDERS FEED (خلاصة الطلبات)
+          TAB 4: LIVE CROSS-STORE ORDERS FEED (خلاصة الطلبات)
           ========================================================================
         */}
         {activeOwnerTab === 'orders' && (
           <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+
+            {/* Filter and Control Bar */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white font-brand flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-amber-400" />
-                    <span>{language === 'ar' ? 'خلاصة جميع طلبات شبكة بسطية' : 'Consolidated Platform Orders Feed'}</span>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 font-brand flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5 text-amber-500" />
+                    <span>{language === 'ar' ? 'خلاصة الطلبات اللحظية الموحدة' : 'Live Cross-Store Orders Feed'}</span>
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500">
                     {language === 'ar'
-                      ? 'بث مباشر لكافة الطلبات الواردة لجميع المتاجر المستضافة في مكان واحد.'
-                      : 'Live aggregated stream of customer orders placed across every hosted store.'}
+                      ? 'متابعة كافة طلبات المتاجر لحظة بلحظة مع إمكانية الفرز حسب المتجر وحالة الشحن.'
+                      : 'Real-time aggregated feed of all store checkouts across the entire network.'}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                    {processedOrders.length} {language === 'ar' ? 'طلب مسجل' : 'Orders'}
-                  </span>
-                </div>
+                <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto">
+                  {processedOrders.length} {language === 'ar' ? 'طلب مسجل' : 'Orders'}
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
                 <div className="sm:col-span-6 relative">
-                  <Search className="w-4 h-4 text-slate-500 absolute start-3.5 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={orderSearch}
                     onChange={(e) => setOrderSearch(e.target.value)}
-                    placeholder={
-                      language === 'ar'
-                        ? 'ابحث برقم الطلب (#ORD)، اسم العميل، الهاتف أو المدينة...'
-                        : 'Search by Order ID, customer name, phone, or city...'
-                    }
-                    className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-500"
+                    placeholder={language === 'ar' ? 'ابحث برقم الطلب، اسم العميل، أو المتجر...' : 'Search by order number, customer, or store...'}
+                    className="w-full ps-9 pe-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-amber-500"
                   />
-                  {orderSearch && (
-                    <button
-                      onClick={() => setOrderSearch('')}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
                 </div>
 
                 <div className="sm:col-span-3">
                   <select
                     value={orderStoreFilter}
                     onChange={(e) => setOrderStoreFilter(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:bg-white focus:border-amber-500"
                   >
                     <option value="all">{language === 'ar' ? 'جميع المتاجر' : 'All Stores'}</option>
                     {stores.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.design.logoEmoji} {s.name}
+                        {s.name} ({s.slug})
                       </option>
                     ))}
                   </select>
@@ -2036,9 +2228,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   <select
                     value={orderStatusFilter}
                     onChange={(e) => setOrderStatusFilter(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 focus:outline-none focus:bg-white focus:border-amber-500"
                   >
-                    <option value="all">{language === 'ar' ? 'جميع الحالات' : 'All Statuses'}</option>
+                    <option value="all">{language === 'ar' ? 'جميع الحالات' : 'All Order Statuses'}</option>
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
                     <option value="shipped">Shipped</option>
@@ -2049,360 +2241,175 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
             </div>
 
-            {/* Orders Feed Table */}
+            {/* Orders Feed List */}
             {processedOrders.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center">
-                <ShoppingBag className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-                <h4 className="text-base font-bold text-white font-brand">
-                  {language === 'ar' ? 'لا توجد طلبات تطابق الفلتر' : 'No Orders Matching Criteria'}
-                </h4>
-                <p className="text-xs text-slate-400 mt-1">
-                  {language === 'ar' ? 'جرّب تعديل كلمات البحث أو اختيار متجر آخر.' : 'Try adjusting your search query or store filter.'}
-                </p>
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-xs">
+                <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-800 font-brand">
+                  {language === 'ar' ? 'لا توجد طلبات مطابقة' : 'No orders found matching filters'}
+                </h3>
               </div>
             ) : (
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+              <div className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-start text-xs sm:text-sm">
-                    <thead>
-                      <tr className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        <th className="py-4 px-4 text-start">{language === 'ar' ? 'رقم الطلب والتاريخ' : 'Order ID & Date'}</th>
-                        <th className="py-4 px-4 text-start">{language === 'ar' ? 'المتجر المستضيف' : 'Origin Store'}</th>
-                        <th className="py-4 px-4 text-start">{language === 'ar' ? 'العميل' : 'Customer'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'المنتجات' : 'Items'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'طريقة الدفع' : 'Payment'}</th>
-                        <th className="py-4 px-4 text-center">{language === 'ar' ? 'الحالة' : 'Status'}</th>
-                        <th className="py-4 px-4 text-end">{language === 'ar' ? 'الإجمالي' : 'Total'}</th>
-                        <th className="py-4 px-4 text-end">{language === 'ar' ? 'إجراءات' : 'Actions'}</th>
+                  <table className="w-full text-xs text-start">
+                    <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase text-[10px] font-bold tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'رقم الطلب' : 'Order ID'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'المتجر' : 'Store'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'العميل' : 'Customer'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'التاريخ' : 'Date'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'الإجمالي' : 'Total'}</th>
+                        <th className="py-3 px-4 text-start">{language === 'ar' ? 'الحالة' : 'Status'}</th>
+                        <th className="py-3 px-4 text-end">{language === 'ar' ? 'إجراءات' : 'Actions'}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
-                      {processedOrders.map((ord) => {
-                        const dateFormatted = new Date(ord.date).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        });
-
-                        return (
-                          <tr key={`${ord.storeId}-${ord.id}`} className="hover:bg-slate-800/40 transition-colors">
-                            <td className="py-4 px-4">
-                              <span className="font-mono font-bold text-amber-400 text-xs block">
-                                {ord.id}
-                              </span>
-                              <span className="text-[10px] text-slate-500 block mt-0.5 font-mono">
-                                {dateFormatted}
-                              </span>
-                            </td>
-
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-2">
-                                <span className="text-base select-none">{ord.storeLogoEmoji}</span>
-                                <div>
-                                  <span className="font-bold text-white text-xs block">
-                                    {language === 'ar' ? ord.storeNameAr || ord.storeName : ord.storeName}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 font-mono" dir="ltr">
-                                    {ord.storeSlug}.bastiyah.com
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="py-4 px-4">
-                              <span className="font-bold text-slate-200 block text-xs">{ord.customer.fullName}</span>
-                              <span className="text-[11px] text-slate-400 block font-mono">{ord.customer.phone}</span>
-                              <span className="text-[10px] text-slate-500 block">{ord.customer.city}</span>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono font-bold text-xs">
-                                {ord.items.reduce((sum, item) => sum + item.quantity, 0)} {language === 'ar' ? 'قطع' : 'items'}
-                              </span>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <span className="text-xs text-slate-300 block font-medium">
-                                {ord.paymentMethod}
-                              </span>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              {getStatusBadge(ord.status)}
-                            </td>
-
-                            <td className="py-4 px-4 text-end font-mono font-black text-emerald-400 text-sm">
-                              ${ord.total.toFixed(2)}
-                            </td>
-
-                            <td className="py-4 px-4 text-end">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => setSelectedOrderDetails(ord)}
-                                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-                                  title="View order details"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    switchStore(ord.storeId, 'admin');
-                                    setAdminTab('orders');
-                                  }}
-                                  className="px-2.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-all"
-                                  title="Fulfill order inside store admin"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                  <span className="hidden md:inline">{language === 'ar' ? 'المتجر' : 'Store'}</span>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {processedOrders.map((ord) => (
+                        <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                            {ord.orderNumber || ord.id}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span>{ord.storeLogoEmoji}</span>
+                              <span className="font-bold text-slate-800">{ord.storeName}</span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <p className="font-bold text-slate-900">{ord.customer.fullName}</p>
+                            <p className="text-[11px] text-slate-500 font-mono" dir="ltr">{ord.customer.phone}</p>
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                            {new Date(ord.date).toLocaleDateString()}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-emerald-600 text-sm">
+                            ${ord.total.toFixed(2)}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {getStatusBadge(ord.status)}
+                          </td>
+                          <td className="py-3.5 px-4 text-end">
+                            <button
+                              onClick={() => setSelectedOrderDetails(ord)}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors"
+                            >
+                              {language === 'ar' ? 'عرض التفاصيل' : 'Details'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               </div>
             )}
+
           </div>
         )}
 
         {/* 
           ========================================================================
-          TAB 5: SUBSCRIPTIONS & PLANS (الاشتراكات والفوترة)
+          TAB 5: PLANS & SUBSCRIPTIONS (الباقات والاشتراكات)
           ========================================================================
         */}
         {activeOwnerTab === 'plans' && (
           <div className="space-y-6">
-            {/* SaaS Metrics Banner */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                  {language === 'ar' ? 'الإيراد الشهري المتكرر (MRR)' : 'Monthly Recurring (MRR)'}
-                </span>
-                <p className="text-3xl font-black text-emerald-400 mt-2 font-brand">${mrr.toLocaleString()}</p>
-                <p className="text-[11px] text-slate-400 mt-2 font-mono">
-                  ARR: ${(mrr * 12).toLocaleString()} / year
-                </p>
+
+            {/* Plans Bento Cards Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              
+              {/* Starter Plan */}
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">Starter</span>
+                    <span className="text-xs font-bold text-slate-500">{starterCount} {language === 'ar' ? 'متاجر نشطة' : 'Stores'}</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 mt-4 font-brand">$0 <span className="text-xs font-normal text-slate-500">/ month</span></h3>
+                  <p className="text-xs text-slate-500 mt-1">Free Tier for hobbyists & new creators</p>
+                  
+                  <ul className="mt-5 space-y-2 text-xs text-slate-600">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Up to 50 Products</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Standard Subdomain (.bastiyah.com)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Basic WhatsApp Orders</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                  {language === 'ar' ? 'المشتركون بالباقات المدفوعة' : 'Paid Subscribers'}
-                </span>
-                <p className="text-3xl font-black text-white mt-2 font-brand">{growthCount + enterpriseCount}</p>
-                <p className="text-[11px] text-slate-400 mt-2">
-                  {totalStores > 0 ? `${Math.round(((growthCount + enterpriseCount) / totalStores) * 100)}%` : '0%'} {language === 'ar' ? 'من المتاجر' : 'conversion'}
-                </p>
+              {/* Growth Plan */}
+              <div className="bg-white border-2 border-indigo-500/30 rounded-3xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute top-0 end-0 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl">
+                  Popular
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Growth</span>
+                    <span className="text-xs font-bold text-slate-500">{growthCount} {language === 'ar' ? 'متاجر نشطة' : 'Stores'}</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 mt-4 font-brand">$29 <span className="text-xs font-normal text-slate-500">/ month</span></h3>
+                  <p className="text-xs text-slate-500 mt-1">Growing brands & professional storefronts</p>
+                  
+                  <ul className="mt-5 space-y-2 text-xs text-slate-600">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Unlimited Products & Catalogs</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Custom Domain Support (CNAME)</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Advanced Analytics & Reports</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Coupons & Hero Carousel</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                  {language === 'ar' ? 'باقة نمو (Growth)' : 'Growth Tier ($29)'}
-                </span>
-                <p className="text-3xl font-black text-indigo-400 mt-2 font-brand">{growthCount}</p>
-                <p className="text-[11px] text-slate-400 mt-2 font-mono">
-                  ${(growthCount * 29).toLocaleString()} / month
-                </p>
+              {/* Enterprise Plan */}
+              <div className="bg-gradient-to-br from-amber-500/10 via-white to-white border border-amber-300 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300">Enterprise</span>
+                    <span className="text-xs font-bold text-slate-500">{enterpriseCount} {language === 'ar' ? 'متاجر نشطة' : 'Stores'}</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 mt-4 font-brand">$99 <span className="text-xs font-normal text-slate-500">/ month</span></h3>
+                  <p className="text-xs text-slate-500 mt-1">High-volume merchants & bespoke brands</p>
+                  
+                  <ul className="mt-5 space-y-2 text-xs text-slate-600">
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> 0% Platform Transaction Fee</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Dedicated R2 Asset Pipeline</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Multi-Staff Roles & OTP Login</li>
+                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> VIP 24/7 Priority Support</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                  {language === 'ar' ? 'باقة الشركات (Enterprise)' : 'Enterprise Tier ($99)'}
-                </span>
-                <p className="text-3xl font-black text-amber-400 mt-2 font-brand">{enterpriseCount}</p>
-                <p className="text-[11px] text-slate-400 mt-2 font-mono">
-                  ${(enterpriseCount * 99).toLocaleString()} / month
-                </p>
-              </div>
             </div>
 
-            {/* Plan Tier Showcase Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Starter Tier */}
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                    <div>
-                      <h4 className="text-lg font-bold text-white font-brand">Starter</h4>
-                      <p className="text-xs text-slate-400">{language === 'ar' ? 'البداية المجانية' : 'Free Forever'}</p>
-                    </div>
-                    <span className="text-2xl font-black text-slate-300 font-mono">$0</span>
-                  </div>
-
-                  <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'رابط فرعي: slug.bastiyah.com' : 'Standard subdomain'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'حتى 10 منتجات معروضة' : 'Up to 10 hosted products'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'لوحة تحكم أساسية للمتجر' : 'Standard merchant dashboard'}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{language === 'ar' ? 'المتاجر الحالية' : 'Active Stores'}</span>
-                  <span className="font-mono font-bold text-white px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800">
-                    {starterCount}
-                  </span>
-                </div>
-              </div>
-
-              {/* Growth Tier */}
-              <div className="bg-slate-900 border-2 border-indigo-500/50 rounded-3xl p-6 flex flex-col justify-between relative shadow-xl shadow-indigo-500/10">
-                <div className="absolute -top-3 start-6 px-3 py-0.5 rounded-full bg-indigo-600 text-[10px] font-black text-white uppercase tracking-wider">
-                  {language === 'ar' ? 'الأكثر طلباً' : 'Most Popular'}
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                    <div>
-                      <h4 className="text-lg font-bold text-white font-brand">Growth</h4>
-                      <p className="text-xs text-indigo-400">{language === 'ar' ? 'للتجار المتميزين' : 'Scaling Merchants'}</p>
-                    </div>
-                    <span className="text-2xl font-black text-indigo-400 font-mono">$29<span className="text-xs text-slate-400 font-normal">/mo</span></span>
-                  </div>
-
-                  <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'منتجات غير محدودة' : 'Unlimited products'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'دعم الدومين المخصص' : 'Custom domain ready'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'كوبونات خصم وتحليلات متقدمة' : 'Coupons & advanced metrics'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'عمولة منصة 0%' : '0% platform take-rate'}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{language === 'ar' ? 'المتاجر الحالية' : 'Active Stores'}</span>
-                  <span className="font-mono font-bold text-indigo-400 px-2.5 py-1 rounded-xl bg-slate-950 border border-indigo-500/30">
-                    {growthCount}
-                  </span>
-                </div>
-              </div>
-
-              {/* Enterprise Tier */}
-              <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 flex flex-col justify-between shadow-xl shadow-amber-500/5">
-                <div>
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                    <div>
-                      <h4 className="text-lg font-bold text-white font-brand">Enterprise</h4>
-                      <p className="text-xs text-amber-400">{language === 'ar' ? 'للشركات والعلامات الكبرى' : 'High Volume VIP'}</p>
-                    </div>
-                    <span className="text-2xl font-black text-amber-400 font-mono">$99<span className="text-xs text-slate-400 font-normal">/mo</span></span>
-                  </div>
-
-                  <ul className="mt-4 space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'كل مميزات باقة Growth' : 'All Growth features included'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'مدير حساب مخصص واتصال مباشر' : 'Dedicated VIP support SLA'}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{language === 'ar' ? 'تخصيص كامل للهوية وCSS' : 'Full CSS & theme customization'}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{language === 'ar' ? 'المتاجر الحالية' : 'Active Stores'}</span>
-                  <span className="font-mono font-bold text-amber-400 px-2.5 py-1 rounded-xl bg-slate-950 border border-amber-500/30">
-                    {enterpriseCount}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Store Tier Manager */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <div className="pb-4 border-b border-slate-800 mb-4">
-                <h3 className="text-base font-bold text-white font-brand flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-amber-400" />
-                  <span>{language === 'ar' ? 'إدارة ترقية باقات المتاجر الفورية' : 'Store Subscription Tier Manager'}</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {language === 'ar'
-                    ? 'يمكنك ترقية أو خفض باقة أي متجر بنقرة واحدة وتحديث حسابه فوراً.'
-                    : 'Instantly upgrade or downgrade any store hosting plan with real-time MRR adjustment.'}
-                </p>
-              </div>
+            {/* Direct Plan Switcher Table */}
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-bold text-slate-900 font-brand flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-indigo-600" />
+                <span>{language === 'ar' ? 'إدارة باقات المتاجر الحالية' : 'Store Subscriptions & Upgrades'}</span>
+              </h3>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-start text-xs sm:text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="py-3 px-3 text-start">{language === 'ar' ? 'المتجر' : 'Store'}</th>
-                      <th className="py-3 px-3 text-start">{language === 'ar' ? 'المالك' : 'Owner'}</th>
-                      <th className="py-3 px-3 text-center">{language === 'ar' ? 'المنتجات' : 'Products'}</th>
-                      <th className="py-3 px-3 text-center">{language === 'ar' ? 'الباقة الحالية' : 'Current Tier'}</th>
-                      <th className="py-3 px-3 text-end">{language === 'ar' ? 'ترقية / تغيير الباقة' : 'Change Plan'}</th>
+                <table className="w-full text-xs text-start">
+                  <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase text-[10px] font-bold tracking-wider">
+                    <tr>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'المتجر' : 'Store'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'المالك' : 'Owner'}</th>
+                      <th className="py-2.5 px-4 text-start">{language === 'ar' ? 'الباقة الحالية' : 'Current Plan'}</th>
+                      <th className="py-2.5 px-4 text-end">{language === 'ar' ? 'ترقية / تعديل الباقة' : 'Change Tier'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100 font-medium">
                     {stores.map((store) => (
-                      <tr key={store.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-base select-none">{store.design.logoEmoji}</span>
-                            <div>
-                              <span className="font-bold text-white block">
-                                {language === 'ar' ? store.nameAr || store.name : store.name}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono" dir="ltr">
-                                {store.slug}.bastiyah.com
-                              </span>
-                            </div>
-                          </div>
+                      <tr key={store.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          {store.design.logoEmoji} {store.name}
                         </td>
-
-                        <td className="py-3 px-3">
-                          <span className="text-xs text-slate-300 block">{store.ownerName}</span>
-                          <span className="text-[10px] text-slate-500 font-mono">{store.ownerEmail}</span>
-                        </td>
-
-                        <td className="py-3 px-3 text-center font-mono font-bold text-slate-300">
-                          {store.products.length}
-                        </td>
-
-                        <td className="py-3 px-3 text-center">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            store.plan === 'Enterprise'
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : store.plan === 'Growth'
-                              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                              : 'bg-slate-800 text-slate-300 border border-slate-700'
-                          }`}>
-                            {store.plan}
-                          </span>
-                        </td>
-
-                        <td className="py-3 px-3 text-end">
+                        <td className="py-3 px-4 text-slate-600">{store.ownerName}</td>
+                        <td className="py-3 px-4">{getPlanPill(store.plan)}</td>
+                        <td className="py-3 px-4 text-end">
                           <select
                             value={store.plan}
                             onChange={(e) => handleQuickPlanChange(store.id, e.target.value as any)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs font-bold text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer"
                           >
                             <option value="Starter">Starter ($0)</option>
                             <option value="Growth">Growth ($29)</option>
@@ -2415,27 +2422,29 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 </table>
               </div>
             </div>
+
           </div>
         )}
 
         {/* 
           ========================================================================
-          TAB 6: PLATFORM SETTINGS & SECURITY (إعدادات المنصة والأمان)
+          TAB 6: PLATFORM SETTINGS & BACKUP (إعدادات المنصة والأمان)
           ========================================================================
         */}
         {activeOwnerTab === 'settings' && (
           <div className="space-y-6">
+
             {/* Super Admin Credentials Section */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 pb-4 border-b border-slate-800 mb-6">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs">
+              <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-6">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white font-brand">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 font-brand">
                     {language === 'ar' ? 'بيانات أمان المشرف العام للمنصة' : 'Super Admin Credentials & Security'}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     {language === 'ar'
                       ? 'الوصول إلى لوحة تحكم المنصة عبر الرابط السري (/owner) محمي بكلمة المرور هذه.'
                       : 'Master administrative access to the platform console via /owner.'}
@@ -2444,18 +2453,18 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                       {language === 'ar' ? 'حساب المشرف العام' : 'Super Admin Account'}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Master Key
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-400 block mb-1">{language === 'ar' ? 'اسم المستخدم المعتمد للمالك:' : 'Authorized Owner Username:'}</span>
-                    <p className="font-mono text-sm font-bold text-white" dir="ltr">{platformAdminEmail}</p>
+                    <span className="text-xs text-slate-500 block mb-1">{language === 'ar' ? 'اسم المستخدم المعتمد للمالك:' : 'Authorized Owner Username:'}</span>
+                    <p className="font-mono text-sm font-bold text-slate-900" dir="ltr">{platformAdminEmail}</p>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
                     {language === 'ar'
@@ -2465,13 +2474,13 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                 </div>
 
                 {/* Change Admin Password Form */}
-                <form onSubmit={handleUpdateAdminPasswordForm} className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                <form onSubmit={handleUpdateAdminPasswordForm} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                     {language === 'ar' ? 'تغيير كلمة مرور المشرف العام' : 'Change Master Password'}
                   </span>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
                       {language === 'ar' ? 'كلمة المرور الجديدة' : 'New Master Password'}
                     </label>
                     <div className="relative">
@@ -2480,12 +2489,12 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                         value={newAdminPasswordInput}
                         onChange={(e) => setNewAdminPasswordInput(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500 pe-10"
+                        className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-mono focus:outline-none focus:border-amber-500 pe-10 shadow-xs"
                       />
                       <button
                         type="button"
                         onClick={() => setShowAdminPass(!showAdminPass)}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         {showAdminPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
@@ -2493,7 +2502,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
                       {language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}
                     </label>
                     <input
@@ -2501,15 +2510,15 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                       value={confirmAdminPasswordInput}
                       onChange={(e) => setConfirmAdminPasswordInput(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-mono focus:outline-none focus:border-amber-500 shadow-xs"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                   >
-                    <Lock className="w-3.5 h-3.5" />
+                    <Lock className="w-3.5 h-3.5 text-amber-400" />
                     <span>{language === 'ar' ? 'حفظ كلمة المرور الجديدة' : 'Update Master Password'}</span>
                   </button>
                 </form>
@@ -2517,16 +2526,16 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             </div>
 
             {/* Disaster Recovery, Backup & Restore Section */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 pb-4 border-b border-slate-800 mb-6">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs">
+              <div className="flex items-center gap-3 pb-4 border-b border-slate-100 mb-6">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center">
                   <Database className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white font-brand">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 font-brand">
                     {language === 'ar' ? 'النسخ الاحتياطي واستعادة البيانات' : 'Platform Backup & Disaster Recovery'}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     {language === 'ar'
                       ? 'تصدير نسخة كاملة بصيغة JSON لكافة المتاجر والطلبات والمنتجات، أو استعادتها بضغطة زر.'
                       : 'Export or restore full JSON snapshot containing all multi-tenant stores, products, orders, and designs.'}
@@ -2535,16 +2544,17 @@ export const BastiyahOwnerAdmin: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
                 {/* 1. Export JSON */}
-                <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between space-y-4">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 border border-emerald-200">
                       <FileJson className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-bold text-white font-brand">
+                    <h4 className="text-sm font-bold text-slate-900 font-brand">
                       {language === 'ar' ? 'تصدير نسخة كاملة (JSON)' : 'Export Full Snapshot'}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                       {language === 'ar'
                         ? 'تنزيل ملف JSON يحتوي على جميع بيانات المنصة والمتاجر والطلبات.'
                         : 'Download a complete JSON database snapshot of all stores, catalogs, and orders.'}
@@ -2552,23 +2562,23 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   </div>
                   <button
                     onClick={handleExportJSON}
-                    className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                    className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-300 shadow-xs"
                   >
-                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <Download className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{language === 'ar' ? 'تنزيل النسخة الاحتياطية' : 'Download Backup'}</span>
                   </button>
                 </div>
 
                 {/* 2. Restore JSON */}
-                <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between space-y-4">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-3">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 border border-indigo-200">
                       <Upload className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-bold text-white font-brand">
+                    <h4 className="text-sm font-bold text-slate-900 font-brand">
                       {language === 'ar' ? 'استعادة من ملف (JSON)' : 'Restore from Snapshot'}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                       {language === 'ar'
                         ? 'رفع ملف نسخة احتياطية سابق واستعادة قاعدة البيانات بالكامل.'
                         : 'Upload a previously exported JSON snapshot to replace current stores.'}
@@ -2584,24 +2594,24 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     />
                     <button
                       onClick={() => restoreFileInputRef.current?.click()}
-                      className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                      className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-slate-300 shadow-xs"
                     >
-                      <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                      <Upload className="w-3.5 h-3.5 text-indigo-600" />
                       <span>{language === 'ar' ? 'رفع واستعادة الملف' : 'Upload & Restore'}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* 3. Factory Reset */}
-                <div className="bg-slate-950/70 border border-rose-500/20 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div className="bg-slate-50 border border-rose-200 rounded-2xl p-5 flex flex-col justify-between space-y-4">
                   <div>
-                    <div className="w-9 h-9 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center mb-3">
+                    <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 border border-rose-200">
                       <RotateCcw className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-bold text-white font-brand">
+                    <h4 className="text-sm font-bold text-slate-900 font-brand">
                       {language === 'ar' ? 'إعادة ضبط المتاجر الافتراضية' : 'Reset Demo Stores'}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                       {language === 'ar'
                         ? 'استعادة المتاجر النموذجية الأولية (Panda, Royal Oud, Velvet).'
                         : 'Restore initial showcase stores with fresh catalogs and sample orders.'}
@@ -2609,66 +2619,783 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setShowResetConfirm(true)}
-                    className="w-full py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-rose-500/30"
+                    className="w-full py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-rose-200 shadow-xs"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>{language === 'ar' ? 'إعادة ضبط المتاجر' : 'Reset to Defaults'}</span>
                   </button>
                 </div>
+
               </div>
             </div>
 
             {/* Platform System Specifications */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-white font-brand mb-4 flex items-center gap-2">
-                <Server className="w-4 h-4 text-sky-400" />
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-xs">
+              <h3 className="text-base font-bold text-slate-900 font-brand mb-4 flex items-center gap-2">
+                <Server className="w-4 h-4 text-sky-600" />
                 <span>{language === 'ar' ? 'مواصفات منصة بسطية السحابية' : 'Bastiyah Cloud Platform Architecture'}</span>
               </h3>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
                   <span className="text-slate-500 font-bold block">{language === 'ar' ? 'إصدار المنصة' : 'Core Version'}</span>
-                  <span className="font-mono font-bold text-white mt-1 block">v2.4 Enterprise</span>
+                  <span className="font-mono font-bold text-slate-900 mt-1 block">v2.4 Enterprise</span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
                   <span className="text-slate-500 font-bold block">{language === 'ar' ? 'قاعدة البيانات' : 'Database Engine'}</span>
-                  <span className="font-mono font-bold text-white mt-1 block">Convex Realtime DB</span>
+                  <span className="font-mono font-bold text-slate-900 mt-1 block">Convex Realtime DB</span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
                   <span className="text-slate-500 font-bold block">{language === 'ar' ? 'شبكة الوسائط' : 'Media Storage'}</span>
-                  <span className="font-mono font-bold text-white mt-1 block">Cloudflare R2 CDN</span>
+                  <span className="font-mono font-bold text-slate-900 mt-1 block">{isCloudflareConfigured ? 'Cloudflare R2' : 'Local Storage'}</span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
                   <span className="text-slate-500 font-bold block">{language === 'ar' ? 'الشبكة السحابية' : 'Edge Network'}</span>
-                  <span className="font-mono font-bold text-white mt-1 block">Vercel Global Edge</span>
+                  <span className="font-mono font-bold text-slate-900 mt-1 block">Vercel Global Edge</span>
                 </div>
               </div>
             </div>
+
           </div>
         )}
+
       </main>
 
       {/* 
         ========================================================================
-        ORDER DETAILS MODAL
+        MODAL 1: COMPREHENSIVE CREATE NEW STORE MODAL WITH LIVE PREVIEW
+        ========================================================================
+      */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200/80 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-y-auto p-6 sm:p-8 shadow-2xl space-y-6">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center shadow-sm">
+                  <Plus className="w-5 h-5 font-black" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 font-brand">
+                    {language === 'ar' ? 'إطلاق متجر سحابي متكامل جديد' : 'Launch New Hosted Store'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {language === 'ar' ? 'إنشاء متجر برابط فرعي وهوية مستقلة وباقة مخصصة مع معاينة حية' : 'Provision multi-tenant store with real-time card preview and catalog setup'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Split Body: Form & Live Card Preview */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Left Column: Configuration Form */}
+              <form onSubmit={handleCreateStore} className="lg:col-span-7 space-y-4">
+                
+                {/* Store Names */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'اسم المتجر (English)' : 'Store Name (English)'} *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newStoreName}
+                      onChange={(e) => handleNewStoreNameChange(e.target.value)}
+                      placeholder="e.g. Amber Oud"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'اسم المتجر (بالعربية)' : 'Store Name (Arabic)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newStoreNameAr}
+                      onChange={(e) => setNewStoreNameAr(e.target.value)}
+                      placeholder="مثال: عود العنبر"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Subdomain Slug with Validation */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {language === 'ar' ? 'الرابط الفرعي المخصص (Subdomain)' : 'Custom Subdomain'} *
+                  </label>
+                  <div className="flex items-center rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2 shadow-xs" dir="ltr">
+                    <input
+                      type="text"
+                      required
+                      value={newCustomSlug}
+                      onChange={(e) => {
+                        setNewSlugManuallyEdited(true);
+                        setNewCustomSlug(e.target.value);
+                      }}
+                      placeholder="amber-oud"
+                      className="bg-transparent font-mono text-xs text-amber-700 focus:outline-none flex-1 font-bold"
+                    />
+                    <span className="text-slate-400 text-xs font-mono">.bastiyah.com</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1 text-[11px]">
+                    {isNewSlugValid ? (
+                      <span className="text-emerald-600 font-bold flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        {language === 'ar' ? 'الرابط متاح للاستخدام' : 'Subdomain slug available'}
+                      </span>
+                    ) : normalizedNewSlug.length > 0 ? (
+                      <span className="text-rose-600 font-bold flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {isNewSlugTaken
+                          ? (language === 'ar' ? 'هذا الرابط مستخدم بالفعل' : 'Slug already taken')
+                          : (language === 'ar' ? 'يجب أن يكون الرابط حرفين أو أكثر' : 'Slug must be at least 2 characters')}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">{language === 'ar' ? 'يتم توليده تلقائياً من اسم المتجر' : 'Auto-generated from store name'}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Taglines */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'الوصف الترويجي (English)' : 'Tagline (English)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newTagline}
+                      onChange={(e) => setNewTagline(e.target.value)}
+                      placeholder="e.g. Pure authentic fragrances"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'الوصف الترويجي (بالعربية)' : 'Tagline (Arabic)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newTaglineAr}
+                      onChange={(e) => setNewTaglineAr(e.target.value)}
+                      placeholder="مثال: أروع العطور الشرقية الأصيلة"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Category, Plan & Currency Selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'التصنيف والنشاط' : 'Category'}
+                    </label>
+                    <select
+                      value={newCategoryIndex}
+                      onChange={(e) => setNewCategoryIndex(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    >
+                      {CATEGORY_PRESETS.map((cat, i) => (
+                        <option key={cat.en} value={i}>
+                          {language === 'ar' ? cat.ar : cat.en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'باقة الاستضافة' : 'Hosting Plan'}
+                    </label>
+                    <select
+                      value={newPlan}
+                      onChange={(e) => setNewPlan(e.target.value as any)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    >
+                      <option value="Starter">Starter ($0 / mo)</option>
+                      <option value="Growth">Growth ($29 / mo)</option>
+                      <option value="Enterprise">Enterprise ($99 / mo)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'العملة الأساسية' : 'Currency'}
+                    </label>
+                    <select
+                      value={newCurrency}
+                      onChange={(e) => setNewCurrency(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    >
+                      {CURRENCY_OPTIONS.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {language === 'ar' ? c.labelAr : c.labelEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Layout Style Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    {language === 'ar' ? 'نمط الواجهة والتصميم' : 'Store Layout Style'}
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {LAYOUT_OPTIONS.map((lo) => (
+                      <button
+                        key={lo.id}
+                        type="button"
+                        onClick={() => setNewLayoutStyle(lo.id)}
+                        className={`p-2.5 rounded-xl border text-start transition-all ${
+                          newLayoutStyle === lo.id
+                            ? 'bg-amber-50/80 border-amber-500 text-amber-950 ring-2 ring-amber-500/20'
+                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        <p className="font-bold text-xs">{language === 'ar' ? lo.labelAr : lo.labelEn}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{language === 'ar' ? lo.descAr : lo.descEn}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Theme & Design Selection */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                  <span className="text-xs font-bold text-slate-700 block">
+                    {language === 'ar' ? 'تخصيص الهوية واللون والشعار' : 'Theme & Visual Styling'}
+                  </span>
+                  
+                  {/* Color Chips */}
+                  <div>
+                    <span className="text-[11px] text-slate-500 block mb-1.5">{language === 'ar' ? 'لون الهوية الرئيسي:' : 'Primary Accent Color:'}</span>
+                    <div className="flex items-center gap-2">
+                      {THEME_COLOR_OPTIONS.map((col) => (
+                        <button
+                          key={col.id}
+                          type="button"
+                          onClick={() => setNewThemeColor(col.id)}
+                          title={language === 'ar' ? col.labelAr : col.labelEn}
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center transition-transform ${col.bgClass} ${newThemeColor === col.id ? 'ring-2 ring-offset-2 ring-slate-900 scale-110 shadow-sm' : 'opacity-80 hover:opacity-100'}`}
+                        >
+                          {newThemeColor === col.id && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Emoji Picker */}
+                  <div>
+                    <span className="text-[11px] text-slate-500 block mb-1.5">{language === 'ar' ? 'أيقونة الشعار (Emoji):' : 'Logo Emoji:'}</span>
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {EMOJI_OPTIONS.map((em) => (
+                        <button
+                          key={em}
+                          type="button"
+                          onClick={() => setNewLogoEmoji(em)}
+                          className={`w-8 h-8 rounded-xl text-base flex items-center justify-center transition-all shrink-0 ${
+                            newLogoEmoji === em ? 'bg-amber-100 border-2 border-amber-500 shadow-xs scale-110' : 'bg-white border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {em}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Merchant Credentials */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'اسم التاجر' : 'Merchant Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newOwnerName}
+                      onChange={(e) => setNewOwnerName(e.target.value)}
+                      placeholder="Store Merchant"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'الهاتف (لتسجيل الدخول)' : 'Owner Phone'}
+                    </label>
+                    <input
+                      type="tel"
+                      value={newOwnerPhone}
+                      onChange={(e) => setNewOwnerPhone(e.target.value)}
+                      placeholder="+964 770 123 4567"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'كلمة المرور' : 'Password'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newAdminPassword}
+                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                        placeholder="merchant123"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs pe-8"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer Controls */}
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+                  >
+                    {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={!isNewSlugValid || !newStoreName.trim()}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/25 transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'إطلاق المتجر فوراً' : 'Launch Store'}</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Right Column: Live Interactive Card Preview */}
+              <div className="lg:col-span-5 flex flex-col justify-center space-y-3">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-amber-600" />
+                    {language === 'ar' ? 'معاينة حية لبطاقة المتجر:' : 'Live Store Card Preview:'}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-black">
+                    Live
+                  </span>
+                </div>
+
+                {/* Preview Box */}
+                <div className="bg-white border-2 border-slate-300 rounded-3xl p-5 shadow-lg space-y-4">
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl shrink-0">
+                        {newLogoEmoji}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-base font-brand">
+                          {language === 'ar' ? (newStoreNameAr.trim() || newStoreName.trim() || 'اسم المتجر') : (newStoreName.trim() || 'Store Name')}
+                        </h4>
+                        <p className="text-[11px] font-mono text-amber-700" dir="ltr">
+                          {normalizedNewSlug || 'subdomain'}.bastiyah.com
+                        </p>
+                      </div>
+                    </div>
+                    {getPlanPill(newPlan)}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] text-slate-400 uppercase block">{language === 'ar' ? 'المبيعات' : 'GMV'}</span>
+                      <span className="font-mono font-bold text-emerald-600">$0.00</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] text-slate-400 uppercase block">{language === 'ar' ? 'المنتجات' : 'Products'}</span>
+                      <span className="font-mono font-bold text-slate-800">6 (Starter)</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] text-slate-400 uppercase block">{language === 'ar' ? 'العملة' : 'Currency'}</span>
+                      <span className="font-bold text-slate-800">{CURRENCY_OPTIONS.find((c) => c.code === newCurrency)?.symbol || '$'}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200/80 text-[11px] text-slate-600 space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{language === 'ar' ? 'النشاط:' : 'Category:'}</span>
+                      <span className="font-bold text-slate-800">{language === 'ar' ? CATEGORY_PRESETS[newCategoryIndex].ar : CATEGORY_PRESETS[newCategoryIndex].en}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{language === 'ar' ? 'النمط:' : 'Layout:'}</span>
+                      <span className="font-bold text-slate-800">{newLayoutStyle}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{language === 'ar' ? 'المالك:' : 'Merchant:'}</span>
+                      <span className="font-bold text-slate-800">{newOwnerName || 'Store Merchant'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                  {language === 'ar'
+                    ? 'سيتم تفعيل المتجر وعزل بياناته السحابية فور الضغط على زر الإطلاق.'
+                    : 'Store will be immediately provisioned with isolated multi-tenant routing.'}
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 
+        ========================================================================
+        MODAL 2: COMPREHENSIVE EDIT STORE MODAL
+        ========================================================================
+      */}
+      {editingStore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200/80 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center text-xl">
+                  {editLogoEmoji}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 font-brand">
+                    {language === 'ar' ? `تعديل متجر (${editingStore.nameAr || editingStore.name})` : `Edit Store (${editingStore.name})`}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono" dir="ltr">
+                    {editingStore.slug}.bastiyah.com
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setEditingStore(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditStore} className="mt-6 space-y-5">
+              
+              {/* Section 1: Branding & Identity */}
+              <div className="space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                  {language === 'ar' ? '1. الهوية والاسم والرابط' : '1. Identity & Subdomain'}
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'اسم المتجر (English)' : 'Store Name (English)'} *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'اسم المتجر (بالعربية)' : 'Store Name (Arabic)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editNameAr}
+                      onChange={(e) => setEditNameAr(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'الرابط الفرعي (Subdomain Slug)' : 'Subdomain Slug'} *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editSlug}
+                      onChange={(e) => setEditSlug(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'النشاط / التصنيف' : 'Category'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      placeholder="e.g. Perfumes & Oud"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'الوصف الترويجي (English)' : 'Tagline (English)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editTagline}
+                      onChange={(e) => setEditTagline(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'الوصف الترويجي (بالعربية)' : 'Tagline (Arabic)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editTaglineAr}
+                      onChange={(e) => setEditTaglineAr(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Visual Styling & Design */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-600 block">
+                  {language === 'ar' ? '2. المظهر والتصميم وهوية المتجر' : '2. Theme & Visual Appearance'}
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1.5">{language === 'ar' ? 'لون الهوية الرئيسي:' : 'Theme Color:'}</span>
+                    <div className="flex items-center gap-2">
+                      {THEME_COLOR_OPTIONS.map((col) => (
+                        <button
+                          key={col.id}
+                          type="button"
+                          onClick={() => setEditThemeColor(col.id)}
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center transition-transform ${col.bgClass} ${editThemeColor === col.id ? 'ring-2 ring-offset-2 ring-slate-900 scale-110 shadow-sm' : 'opacity-80 hover:opacity-100'}`}
+                        >
+                          {editThemeColor === col.id && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1.5">{language === 'ar' ? 'نمط الواجهة:' : 'Layout Style:'}</span>
+                    <select
+                      value={editLayoutStyle}
+                      onChange={(e) => setEditLayoutStyle(e.target.value as StoreLayoutStyle)}
+                      className="w-full px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-medium text-slate-800"
+                    >
+                      {LAYOUT_OPTIONS.map((lo) => (
+                        <option key={lo.id} value={lo.id}>
+                          {language === 'ar' ? lo.labelAr : lo.labelEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[11px] font-bold text-slate-600 block mb-1.5">{language === 'ar' ? 'أيقونة الشعار (Emoji):' : 'Logo Emoji:'}</span>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {EMOJI_OPTIONS.map((em) => (
+                      <button
+                        key={em}
+                        type="button"
+                        onClick={() => setEditLogoEmoji(em)}
+                        className={`w-8 h-8 rounded-xl text-base flex items-center justify-center transition-all shrink-0 ${
+                          editLogoEmoji === em ? 'bg-amber-100 border-2 border-amber-500 shadow-xs scale-110' : 'bg-white border border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {em}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Plan & Status */}
+              <div className="space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                  {language === 'ar' ? '3. الباقة وحالة المتجر' : '3. Hosting Plan & Status'}
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'باقة الاستضافة' : 'Hosting Plan'}
+                    </label>
+                    <select
+                      value={editPlan}
+                      onChange={(e) => setEditPlan(e.target.value as any)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    >
+                      <option value="Starter">Starter ($0)</option>
+                      <option value="Growth">Growth ($29)</option>
+                      <option value="Enterprise">Enterprise ($99)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'حالة المتجر' : 'Store Status'}
+                    </label>
+                    <select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as any)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    >
+                      <option value="active">Active (نشط)</option>
+                      <option value="maintenance">Maintenance (تحت الصيانة)</option>
+                      <option value="suspended">Suspended (معلق)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Merchant Credentials */}
+              <div className="space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                  {language === 'ar' ? '4. بيانات المالك وحساب التاجر' : '4. Owner & Merchant Account'}
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'اسم المالك / التاجر' : 'Owner Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editOwnerName}
+                      onChange={(e) => setEditOwnerName(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'رقم الهاتف' : 'Owner Phone'}
+                    </label>
+                    <input
+                      type="tel"
+                      value={editOwnerPhone}
+                      onChange={(e) => setEditOwnerPhone(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'البريد الإلكتروني' : 'Owner Email'}
+                    </label>
+                    <input
+                      type="email"
+                      value={editOwnerEmail}
+                      onChange={(e) => setEditOwnerEmail(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {language === 'ar' ? 'كلمة مرور إدارة المتجر' : 'Store Admin Password'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showEditPassword ? 'text' : 'password'}
+                        value={editAdminPassword}
+                        onChange={(e) => setEditAdminPassword(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-amber-500 shadow-xs pe-8"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEditPassword(!showEditPassword)}
+                        className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showEditPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingStore(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                >
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 shadow-xs"
+                >
+                  <Check className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'ar' ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 
+        ========================================================================
+        MODAL 3: ORDER DETAILS MODAL
         ========================================================================
       */}
       {selectedOrderDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200/80 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white font-brand">
-                    {language === 'ar' ? `تفاصيل الطلب: ${selectedOrderDetails.id}` : `Order Details: ${selectedOrderDetails.id}`}
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 font-brand">
+                    {language === 'ar' ? `تفاصيل الطلب: ${selectedOrderDetails.orderNumber || selectedOrderDetails.id}` : `Order Details: ${selectedOrderDetails.orderNumber || selectedOrderDetails.id}`}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     {language === 'ar' ? `المتجر: ${selectedOrderDetails.storeName}` : `Store: ${selectedOrderDetails.storeName}`} ({selectedOrderDetails.storeSlug}.bastiyah.com)
                   </p>
                 </div>
@@ -2676,7 +3403,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
               <button
                 onClick={() => setSelectedOrderDetails(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2684,43 +3411,43 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
             {/* Customer & Shipping Details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-                <span className="text-slate-400 font-bold block uppercase">{language === 'ar' ? 'بيانات العميل' : 'Customer Info'}</span>
-                <p className="font-bold text-white text-sm">{selectedOrderDetails.customer.fullName}</p>
-                <p className="text-slate-300 font-mono">{selectedOrderDetails.customer.phone}</p>
-                <p className="text-slate-400 font-mono">{selectedOrderDetails.customer.email}</p>
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                <span className="text-slate-500 font-bold block uppercase">{language === 'ar' ? 'بيانات العميل' : 'Customer Info'}</span>
+                <p className="font-bold text-slate-900 text-sm">{selectedOrderDetails.customer.fullName}</p>
+                <p className="text-slate-600 font-mono" dir="ltr">{selectedOrderDetails.customer.phone}</p>
+                <p className="text-slate-500 font-mono" dir="ltr">{selectedOrderDetails.customer.email}</p>
               </div>
 
-              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-                <span className="text-slate-400 font-bold block uppercase">{language === 'ar' ? 'عنوان التوصيل' : 'Shipping Address'}</span>
-                <p className="text-slate-200">{selectedOrderDetails.customer.address}</p>
-                <p className="text-slate-300 font-bold">{selectedOrderDetails.customer.city}</p>
-                <p className="text-slate-400">{language === 'ar' ? 'طريقة الدفع:' : 'Payment:'} <span className="font-bold text-white">{selectedOrderDetails.paymentMethod}</span></p>
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                <span className="text-slate-500 font-bold block uppercase">{language === 'ar' ? 'عنوان التوصيل' : 'Shipping Address'}</span>
+                <p className="text-slate-700">{selectedOrderDetails.customer.address}</p>
+                <p className="text-slate-800 font-bold">{selectedOrderDetails.customer.city}</p>
+                <p className="text-slate-500">{language === 'ar' ? 'طريقة الدفع:' : 'Payment:'} <span className="font-bold text-slate-900">{selectedOrderDetails.paymentMethod}</span></p>
               </div>
             </div>
 
             {/* Itemized Products */}
             <div className="space-y-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 {language === 'ar' ? 'المنتجات المطلوبة' : 'Order Line Items'}
               </span>
               <div className="space-y-2">
                 {selectedOrderDetails.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+                  <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
                     <div className="flex items-center gap-3">
                       <img
                         src={item.productImage}
                         alt={item.productName}
-                        className="w-12 h-12 object-cover rounded-xl"
+                        className="w-12 h-12 object-cover rounded-xl border border-slate-200"
                       />
                       <div>
-                        <p className="font-bold text-white text-xs">{item.productName}</p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="font-bold text-slate-900 text-xs">{item.productName}</p>
+                        <p className="text-[11px] text-slate-500">
                           ${item.price} × {item.quantity}
                         </p>
                       </div>
                     </div>
-                    <span className="font-mono font-bold text-emerald-400 text-sm">
+                    <span className="font-mono font-bold text-emerald-600 text-sm">
                       ${(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -2729,14 +3456,14 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             </div>
 
             {/* Total Footer */}
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getStatusBadge(selectedOrderDetails.status)}
               </div>
 
               <div className="text-end">
-                <span className="text-xs text-slate-400 block">{language === 'ar' ? 'الإجمالي النهائي' : 'Order Total'}</span>
-                <span className="text-2xl font-black text-emerald-400 font-mono">
+                <span className="text-xs text-slate-500 block">{language === 'ar' ? 'الإجمالي النهائي' : 'Order Total'}</span>
+                <span className="text-2xl font-black text-emerald-600 font-mono">
                   ${selectedOrderDetails.total.toFixed(2)}
                 </span>
               </div>
@@ -2750,9 +3477,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   switchStore(targetStoreId, 'admin');
                   setAdminTab('orders');
                 }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-colors"
               >
-                <Settings className="w-3.5 h-3.5" />
+                <Settings className="w-3.5 h-3.5 text-amber-400" />
                 <span>{language === 'ar' ? 'معالجة في لوحة المتجر' : 'Manage in Store Admin'}</span>
               </button>
             </div>
@@ -2762,268 +3489,85 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
       {/* 
         ========================================================================
-        FACTORY RESET CONFIRMATION MODAL
+        MODAL 4: REGISTER MERCHANT MODAL
         ========================================================================
       */}
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-rose-500/30 rounded-3xl w-full max-w-md p-6 text-center shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-black text-white font-brand">
-              {language === 'ar' ? 'إعادة ضبط المتاجر النموذجية؟' : 'Reset All Stores to Defaults?'}
-            </h3>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              {language === 'ar'
-                ? 'سيتم حذف جميع المتاجر والتعديلات الحالية وإعادة تعيين متاجر العرض النموذجية (Panda, Royal Oud, Velvet) بالحالة الافتراضية.'
-                : 'This will reset all current stores and catalogs back to factory starter demo stores.'}
-            </p>
-
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors"
-              >
-                {language === 'ar' ? 'إلغاء' : 'Cancel'}
-              </button>
-              <button
-                onClick={() => {
-                  resetStoresToDefault();
-                  setShowResetConfirm(false);
-                }}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-colors"
-              >
-                {language === 'ar' ? 'نعم، إعادة الضبط' : 'Yes, Reset Defaults'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 
-        ========================================================================
-        EDIT STORE MODAL
-        ========================================================================
-      */}
-      {editingStore && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
-                  {editLogoEmoji}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white font-brand">
-                    {language === 'ar' ? `تعديل متجر (${editingStore.name})` : `Edit Store (${editingStore.name})`}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-mono" dir="ltr">
-                    {editingStore.slug}.bastiyah.com
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setEditingStore(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
+      {showAddMerchantModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200/80 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900 font-brand flex items-center gap-2">
+                <Users className="w-4 h-4 text-indigo-600" />
+                <span>{language === 'ar' ? 'تسجيل مدير متجر جديد' : 'Register Store Merchant'}</span>
+              </h3>
+              <button onClick={() => setShowAddMerchantModal(false)} className="text-slate-400 hover:text-slate-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditStore} className="mt-6 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'اسم المتجر (English)' : 'Store Name (English)'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'اسم المتجر (بالعربية)' : 'Store Name (Arabic)'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editNameAr}
-                    onChange={(e) => setEditNameAr(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+            <form onSubmit={handleAddMerchantByOwner} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{language === 'ar' ? 'المتجر المسند' : 'Store'}</label>
+                <select
+                  value={newMerchantStoreId || stores[0]?.id}
+                  onChange={(e) => setNewMerchantStoreId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 font-medium"
+                >
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name} ({s.slug})</option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  {language === 'ar' ? 'الرابط الفرعي المخصص (Subdomain Slug)' : 'Custom Subdomain Slug'}
-                </label>
-                <div className="flex items-center rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5" dir="ltr">
-                  <input
-                    type="text"
-                    required
-                    value={editSlug}
-                    onChange={(e) => setEditSlug(e.target.value)}
-                    className="bg-transparent font-mono text-xs text-amber-400 focus:outline-none flex-1"
-                  />
-                  <span className="text-slate-500 text-xs font-mono">.bastiyah.com</span>
-                </div>
+                <label className="block font-bold text-slate-700 mb-1">{language === 'ar' ? 'اسم التاجر / المدير' : 'Merchant Name'}</label>
+                <input
+                  type="text"
+                  required
+                  value={newMerchantName}
+                  onChange={(e) => setNewMerchantName(e.target.value)}
+                  placeholder="e.g. Ahmed Al-Baghdadi"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'شعار المتجر (Tagline - EN)' : 'Store Tagline (EN)'}
-                  </label>
-                  <input
-                    type="text"
-                    value={editTagline}
-                    onChange={(e) => setEditTagline(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'شعار المتجر (Tagline - AR)' : 'Store Tagline (AR)'}
-                  </label>
-                  <input
-                    type="text"
-                    value={editTaglineAr}
-                    onChange={(e) => setEditTaglineAr(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{language === 'ar' ? 'رقم الهاتف (لتسجيل الدخول عبر OTP)' : 'Phone (for OTP Login)'}</label>
+                <input
+                  type="tel"
+                  required
+                  value={newMerchantPhone}
+                  onChange={(e) => setNewMerchantPhone(e.target.value)}
+                  placeholder="+964 770 123 4567"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono"
+                  dir="ltr"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'حالة المتجر' : 'Status'}
-                  </label>
-                  <select
-                    value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="active">Active (نشط)</option>
-                    <option value="maintenance">Maintenance (صيانة)</option>
-                    <option value="suspended">Suspended (معلق)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'الباقة' : 'Plan'}
-                  </label>
-                  <select
-                    value={editPlan}
-                    onChange={(e) => setEditPlan(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="Starter">Starter ($0)</option>
-                    <option value="Growth">Growth ($29)</option>
-                    <option value="Enterprise">Enterprise ($99)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'أيقونة المتجر (Emoji)' : 'Emoji Icon'}
-                  </label>
-                  <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-                    {EMOJI_OPTIONS.slice(0, 7).map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setEditLogoEmoji(emoji)}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                          editLogoEmoji === emoji ? 'bg-amber-500 text-slate-950' : 'bg-slate-950 text-white'
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{language === 'ar' ? 'كلمة المرور' : 'Password'}</label>
+                <input
+                  type="text"
+                  value={newMerchantPassword}
+                  onChange={(e) => setNewMerchantPassword(e.target.value)}
+                  placeholder="merchant123"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'اسم المالك' : 'Owner Name'}
-                  </label>
-                  <input
-                    type="text"
-                    value={editOwnerName}
-                    onChange={(e) => setEditOwnerName(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'بريد المالك' : 'Owner Email'}
-                  </label>
-                  <input
-                    type="email"
-                    value={editOwnerEmail}
-                    onChange={(e) => setEditOwnerEmail(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
-                    <Phone className="w-3 h-3 text-emerald-400" />
-                    <span>{language === 'ar' ? 'رقم جوال المالك (لتسجيل الدخول)' : 'Owner Phone (for Login)'}</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={editOwnerPhone}
-                    onChange={(e) => setEditOwnerPhone(e.target.value)}
-                    placeholder="+964 770 123 4567"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
-                    <KeyRound className="w-3 h-3 text-amber-400" />
-                    <span>{language === 'ar' ? 'كلمة المرور' : 'Password'}</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={editAdminPassword}
-                    onChange={(e) => setEditAdminPassword(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3">
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setEditingStore(null)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold"
+                  onClick={() => setShowAddMerchantModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold"
                 >
                   {language === 'ar' ? 'إلغاء' : 'Cancel'}
                 </button>
-
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                  className="px-5 py-2 rounded-xl bg-slate-900 text-white font-bold"
                 >
-                  <Check className="w-4 h-4" />
-                  <span>{language === 'ar' ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                  {language === 'ar' ? 'تسجيل المدير' : 'Register Merchant'}
                 </button>
               </div>
             </form>
@@ -3033,230 +3577,28 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
       {/* 
         ========================================================================
-        CREATE STORE MODAL
-        ========================================================================
-      */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center">
-                  <Plus className="w-5 h-5 font-black" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white font-brand">
-                    {language === 'ar' ? 'إطلاق متجر سحابي جديد' : 'Launch New Hosted Store'}
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    {language === 'ar' ? 'إنشاء متجر برابط فرعي وهوية مستقلة فوراً' : 'Instant multi-tenant store provisioning'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateStore} className="mt-6 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'اسم المتجر (English)' : 'Store Name (English)'} *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newStoreName}
-                    onChange={(e) => handleNewStoreNameChange(e.target.value)}
-                    placeholder="e.g. Amber Oud"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'اسم المتجر (بالعربية)' : 'Store Name (Arabic)'}
-                  </label>
-                  <input
-                    type="text"
-                    value={newStoreNameAr}
-                    onChange={(e) => setNewStoreNameAr(e.target.value)}
-                    placeholder="مثال: عود العنبر"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  {language === 'ar' ? 'الرابط الفرعي المخصص (Subdomain Slug)' : 'Custom Subdomain Slug'} *
-                </label>
-                <div className="flex items-center rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5" dir="ltr">
-                  <input
-                    type="text"
-                    required
-                    value={newCustomSlug}
-                    onChange={(e) => {
-                      setNewSlugManuallyEdited(true);
-                      setNewCustomSlug(e.target.value);
-                    }}
-                    placeholder="amber-oud"
-                    className="bg-transparent font-mono text-xs text-amber-400 focus:outline-none flex-1"
-                  />
-                  <span className="text-slate-500 text-xs font-mono">.bastiyah.com</span>
-                </div>
-                {!isNewSlugValid && normalizedNewSlug.length > 0 && (
-                  <p className="text-[11px] text-rose-400 mt-1">
-                    {isNewSlugTaken
-                      ? (language === 'ar' ? 'هذا الرابط مستخدم بالفعل' : 'Slug already taken')
-                      : (language === 'ar' ? 'يجب أن يكون الرابط حرفين أو أكثر' : 'Slug must be at least 2 characters')}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'التصنيف والنشاط' : 'Category'}
-                  </label>
-                  <select
-                    value={newCategoryIndex}
-                    onChange={(e) => setNewCategoryIndex(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    {CATEGORY_PRESETS.map((cat, i) => (
-                      <option key={cat.en} value={i}>
-                        {cat.en} — {cat.ar}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {language === 'ar' ? 'باقة الاستضافة' : 'Hosting Plan'}
-                  </label>
-                  <select
-                    value={newPlan}
-                    onChange={(e) => setNewPlan(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  >
-                    <option value="Starter">Starter ($0)</option>
-                    <option value="Growth">Growth ($29)</option>
-                    <option value="Enterprise">Enterprise ($99)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {t.storeOwnerNameLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={newOwnerName}
-                    onChange={(e) => setNewOwnerName(e.target.value)}
-                    placeholder="Merchant Name"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    {t.storeOwnerEmailLabel}
-                  </label>
-                  <input
-                    type="email"
-                    value={newOwnerEmail}
-                    onChange={(e) => setNewOwnerEmail(e.target.value)}
-                    placeholder="merchant@domain.com"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
-                    <Phone className="w-3 h-3 text-emerald-400" />
-                    <span>{language === 'ar' ? 'رقم جوال المالك (لتسجيل الدخول)' : 'Owner Phone (for Login)'}</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={newOwnerPhone}
-                    onChange={(e) => setNewOwnerPhone(e.target.value)}
-                    placeholder="+964 770 123 4567"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
-                    <KeyRound className="w-3 h-3 text-amber-400" />
-                    <span>{language === 'ar' ? 'كلمة المرور' : 'Password'}</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={newAdminPassword}
-                    onChange={(e) => setNewAdminPassword(e.target.value)}
-                    placeholder="merchant123"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold"
-                >
-                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={!isNewSlugValid || !newStoreName.trim()}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{language === 'ar' ? 'إطلاق المتجر فوراً' : 'Launch Store'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 
-        ========================================================================
-        DELETE STORE CONFIRMATION DIALOG
+        MODAL 5: DELETE STORE CONFIRMATION DIALOG
         ========================================================================
       */}
       {storeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-rose-500/30 rounded-3xl w-full max-w-md p-6 text-center shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-rose-200 rounded-3xl w-full max-w-md p-6 text-center shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 border border-rose-200">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-black text-white font-brand">
-              {language === 'ar' ? `هل أنت متأكد من حذف متجر (${storeToDelete.name})؟` : `Delete Store (${storeToDelete.name})?`}
+            <h3 className="text-lg font-black text-slate-900 font-brand">
+              {language === 'ar' ? `حذف متجر (${storeToDelete.nameAr || storeToDelete.name}) نهائياً؟` : `Delete Store (${storeToDelete.name})?`}
             </h3>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
               {language === 'ar'
-                ? `سيتم إيقاف الرابط الفرعي (${storeToDelete.slug}.bastiyah.com) وحذف جميع منتجاته (${storeToDelete.products.length}) وطلباته (${storeToDelete.orders.length}) نهائياً.`
-                : `This will permanently release the subdomain (${storeToDelete.slug}.bastiyah.com) and wipe its ${storeToDelete.products.length} products and ${storeToDelete.orders.length} orders.`}
+                ? 'سيتم حذف المتجر وكافة منتجاته وطلباته نهائياً من قاعدة بيانات المنصة. لا يمكن التراجع عن هذا الإجراء.'
+                : 'This will permanently remove the store, its catalogs, orders, and subdomains.'}
             </p>
 
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 onClick={() => setStoreToDelete(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
               >
                 {language === 'ar' ? 'إلغاء' : 'Cancel'}
               </button>
@@ -3265,9 +3607,9 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   deleteHostedStore(storeToDelete.id);
                   setStoreToDelete(null);
                 }}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-colors"
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-colors"
               >
-                {language === 'ar' ? 'تأكيد الحذف النهائي' : 'Yes, Delete Store'}
+                {language === 'ar' ? 'نعم، حذف المتجر' : 'Yes, Delete'}
               </button>
             </div>
           </div>
@@ -3276,125 +3618,45 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
       {/* 
         ========================================================================
-        ADD STORE ADMIN / MERCHANT MODAL (EXCLUSIVE OWNER AUTHORITY)
+        MODAL 6: FACTORY RESET CONFIRMATION MODAL
         ========================================================================
       */}
-      {showAddMerchantModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white font-brand">
-                    {language === 'ar' ? 'إضافة مدير متجر برقم الهاتف' : 'Add Store Admin via Phone'}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    {language === 'ar'
-                      ? 'صلاحية حصرية لمالك المنصة: تسجيل وإسناد مدير المتجر عبر رقم هاتفه.'
-                      : 'Exclusive Owner action: register and assign store admin using phone number.'}
-                  </p>
-                </div>
-              </div>
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-rose-200 rounded-3xl w-full max-w-md p-6 text-center shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 border border-rose-200">
+              <RotateCcw className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 font-brand">
+              {language === 'ar' ? 'إعادة ضبط المتاجر النموذجية؟' : 'Reset All Stores to Defaults?'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+              {language === 'ar'
+                ? 'سيتم حذف كافة التعديلات واسترجاع المتاجر الافتراضية النموذجية (Panda, Royal Oud, Velvet).'
+                : 'This will reset all current stores back to factory demo starter stores.'}
+            </p>
+
+            <div className="mt-6 flex items-center justify-center gap-3">
               <button
-                onClick={() => setShowAddMerchantModal(false)}
-                className="p-1 rounded-xl text-slate-400 hover:text-white"
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
               >
-                <X className="w-5 h-5" />
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => {
+                  resetStoresToDefault();
+                  setShowResetConfirm(false);
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-colors"
+              >
+                {language === 'ar' ? 'نعم، إعادة الضبط' : 'Yes, Reset Defaults'}
               </button>
             </div>
-
-            <form onSubmit={handleAddMerchantByOwner} className="pt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  {language === 'ar' ? 'المتجر المراد تعيين المدير له' : 'Assign to Store'} *
-                </label>
-                <select
-                  required
-                  value={newMerchantStoreId}
-                  onChange={(e) => setNewMerchantStoreId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                >
-                  {stores.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.design.logoEmoji} {language === 'ar' ? st.nameAr || st.name : st.name} ({st.slug}.bastiyah.com)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  {language === 'ar' ? 'اسم مدير المتجر / التاجر' : 'Store Admin Name'} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newMerchantName}
-                  onChange={(e) => setNewMerchantName(e.target.value)}
-                  placeholder={language === 'ar' ? 'مثال: حيدر التميمي' : 'e.g. Haidar Al-Tamimi'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{language === 'ar' ? 'رقم الهاتف (وسيلة التسجيل والدخول الوحيدة)' : 'Phone Number (Exclusive Registration Method)'} *</span>
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
-                    {language === 'ar' ? 'طريقة التسجيل الحصرية' : 'Exclusive'}
-                  </span>
-                </label>
-                <input
-                  type="tel"
-                  required
-                  dir="ltr"
-                  value={newMerchantPhone}
-                  onChange={(e) => setNewMerchantPhone(e.target.value)}
-                  placeholder="+964 770 123 4567"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1">
-                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{language === 'ar' ? 'كلمة المرور للدخول المباشر' : 'Direct Login Password'}</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newMerchantPassword}
-                  onChange={(e) => setNewMerchantPassword(e.target.value)}
-                  placeholder="merchant123"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddMerchantModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold"
-                >
-                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black shadow-md flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{language === 'ar' ? 'تسجيل واعتماد المدير' : 'Register Admin'}</span>
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
+
     </div>
   );
 };
