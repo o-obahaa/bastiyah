@@ -291,6 +291,8 @@ export interface TrustBadge {
   enabled: boolean;
 }
 
+export type ProductCardSize = 'compact' | 'standard' | 'large' | 'spacious';
+
 export interface StoreDesign {
   themeColor: StoreThemeColor;
   customThemeColor?: string;
@@ -301,6 +303,9 @@ export interface StoreDesign {
   heroBannerUrl?: string;
   customLogoUrl?: string;
   logoSize?: 'sm' | 'md' | 'lg' | 'xl' | number;
+  productCardSize?: ProductCardSize;
+  desktopGridCols?: 2 | 3 | 4 | 5 | 6;
+  mobileGridCols?: 1 | 2;
   showAnnouncementBar?: boolean;
   announcementText?: string;
   announcementTextAr?: string;

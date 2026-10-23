@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from './ProductCard';
+import { getProductGridClasses } from '../../utils/gridUtils';
 import { 
   Star, 
   ShoppingBag, 
@@ -744,7 +745,7 @@ export const ProductDetailPage: React.FC = () => {
       {relatedProducts.length > 0 && (
         <div className="pt-8 border-t border-slate-200">
           <h2 className="text-2xl font-black text-slate-900 mb-6">{t.youMayAlsoLike}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className={getProductGridClasses(activeStore.design)}>
             {relatedProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

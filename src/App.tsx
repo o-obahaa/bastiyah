@@ -24,6 +24,7 @@ import { AdminLayout } from './components/admin/AdminLayout';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { getStorePathLabel } from './utils/urlUtils';
 import { filterProductsBySearch } from './utils/searchUtils';
+import { getProductGridClasses } from './utils/gridUtils';
 
 export function App() {
   const { 
@@ -180,7 +181,7 @@ export function App() {
               />
 
               {/* Products Grid */}
-              <div className="mt-8 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+              <div className={`mt-8 ${getProductGridClasses(activeStore.design)}`}>
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
@@ -247,7 +248,7 @@ export function App() {
               resultCount={filteredProducts.length}
             />
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            <div className={getProductGridClasses(activeStore.design)}>
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

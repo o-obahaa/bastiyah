@@ -52,6 +52,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const productTagline = getProductTagline(product);
   const categoryName = getCategoryName(product.category);
 
+  const cardSize = activeStore.design.productCardSize || 'standard';
+  const isCompact = cardSize === 'compact' || activeStore.design.desktopGridCols === 5 || activeStore.design.desktopGridCols === 6;
+  const isLargeOrSpacious = cardSize === 'large' || cardSize === 'spacious' || activeStore.design.desktopGridCols === 2 || activeStore.design.desktopGridCols === 3;
+
   const radiusClass =
     activeStore.design.cardRadius === 'sharp'
       ? 'rounded-none'
@@ -76,7 +80,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="absolute top-3 start-3 flex flex-col gap-1.5 z-10 pointer-events-none">
           {product.badge && (
             <span
-              className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md text-white backdrop-blur-xs"
+              className={`${isCompact ? 'text-[10px] sm:text-xs px-2.5 py-0.5' : 'text-xs px-3 py-1'} font-black uppercase tracking-wider rounded-full shadow-md text-white backdrop-blur-xs`}
               style={{
                 backgroundColor:
                   product.badge === 'Hot Sale'
@@ -90,7 +94,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
           )}
           {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-xs w-fit">
+            <span className={`${isCompact ? 'text-[10px] sm:text-xs px-2 py-0.5' : 'text-xs px-2.5 py-0.5'} font-black rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-xs w-fit`}>
               {t.save} {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
             </span>
           )}
@@ -102,10 +106,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             e.stopPropagation();
             toggleWishlist(product.id);
           }}
-          className="absolute top-3 end-3 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md shadow-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:scale-110 active:scale-90 transition-all"
+          className={`absolute top-3 end-3 z-10 ${isCompact ? 'w-8 h-8' : 'w-9 h-9'} rounded-full bg-white/90 backdrop-blur-md shadow-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:scale-110 active:scale-90 transition-all`}
           title={isFavorited ? 'Remove' : 'Save'}
         >
-          <Heart className={`w-4 h-4 ${isFavorited ? 'text-rose-500 fill-rose-500' : ''}`} />
+          <Heart className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'} ${isFavorited ? 'text-rose-500 fill-rose-500' : ''}`} />
         </button>
 
         {/* Quick View Button overlay on hover */}
@@ -124,19 +128,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Product Content Details */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3 sm:gap-4">
+      <div className={`${isCompact ? 'p-3 sm:p-3.5 gap-2.5' : isLargeOrSpacious ? 'p-5 sm:p-6 gap-4' : 'p-4 sm:p-5 gap-3 sm:gap-4'} flex flex-col flex-1 justify-between`}>
         <div>
           {/* Category & Star Rating Header Row */}
-          <div className="flex items-center justify-between mb-2 gap-2">
+          <div className="flex items-center justify-between mb-1.5 gap-2">
             <span 
-              className="font-bold uppercase tracking-wider text-xs sm:text-sm truncate" 
+              className={`font-bold uppercase tracking-wider ${isCompact ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'} truncate`} 
               style={{ color: theme.hex }}
             >
               {categoryName}
             </span>
             <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-lg text-amber-950 shrink-0">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs sm:text-sm font-black font-mono leading-none">{product.rating}</span>
+              <Star className={`${isCompact ? 'w-3 h-3' : 'w-3.5 h-3.5'} fill-amber-400 text-amber-400`} />
+              <span className={`${isCompact ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'} font-black font-mono leading-none`}>{product.rating}</span>
               <span className="text-slate-400 text-[11px] sm:text-xs leading-none">({product.reviewCount})</span>
             </div>
           </div>
@@ -144,30 +148,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Product Name (Full 2 lines visibility, prominent and bold) */}
           <h3
             onClick={handleCardClick}
-            className="font-extrabold text-sm sm:text-base md:text-lg text-slate-900 line-clamp-2 min-h-[2.8rem] sm:min-h-[3.25rem] leading-snug hover:text-emerald-700 transition-colors cursor-pointer"
+            className={`font-extrabold ${
+              isCompact 
+                ? 'text-xs sm:text-sm min-h-[2.4rem] sm:min-h-[2.6rem]' 
+                : isLargeOrSpacious 
+                ? 'text-base sm:text-lg md:text-xl min-h-[3.2rem] sm:min-h-[3.6rem]' 
+                : 'text-sm sm:text-base md:text-lg min-h-[2.8rem] sm:min-h-[3.25rem]'
+            } text-slate-900 line-clamp-2 leading-snug hover:text-emerald-700 transition-colors cursor-pointer`}
             title={productName}
           >
             {productName}
           </h3>
 
           {/* Product Tagline / Short description */}
-          <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 mt-1.5 leading-relaxed min-h-[2.4rem] sm:min-h-[2.6rem]">
+          <p className={`${isCompact ? 'text-[11px] line-clamp-1 min-h-[1.4rem]' : isLargeOrSpacious ? 'text-xs sm:text-sm line-clamp-2 min-h-[2.6rem]' : 'text-xs sm:text-sm line-clamp-2 min-h-[2.4rem] sm:min-h-[2.6rem]'} text-slate-500 mt-1 leading-relaxed`}>
             {productTagline}
           </p>
         </div>
 
         {/* Price and Cart button footer */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="text-lg sm:text-xl md:text-2xl font-black text-slate-950 font-brand tracking-tight">
+              <span className={`${isCompact ? 'text-base sm:text-lg' : isLargeOrSpacious ? 'text-xl sm:text-2xl md:text-3xl' : 'text-lg sm:text-xl md:text-2xl'} font-black text-slate-950 font-brand tracking-tight`}>
                 {product.price.toLocaleString()}
               </span>
               <span className="text-xs sm:text-sm font-bold text-slate-600">
                 {activeStore.settings.currency || 'د.ع'}
               </span>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-xs sm:text-sm text-slate-400 line-through font-medium ms-1">
+                <span className="text-[11px] sm:text-xs text-slate-400 line-through font-medium ms-1">
                   {product.originalPrice.toLocaleString()} {activeStore.settings.currency || 'د.ع'}
                 </span>
               )}
@@ -175,20 +185,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
             {/* Live Stock Indicator Dot & Label */}
             {isOutOfStock ? (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-500 shrink-0" />
                 <span className="text-xs font-bold text-rose-600 block">{t.outOfStock}</span>
               </div>
             ) : isLowStock ? (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500 shrink-0" />
                 <span className="text-xs font-bold text-amber-700 block">
                   {t.onlyLeft.replace('{count}', String(product.stock))}
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span className="text-xs font-bold text-emerald-700 block">
                   {t.inStock}
                 </span>
@@ -200,14 +210,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             onClick={() => addToCart(product)}
             disabled={isOutOfStock}
-            className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0 ${
+            className={`${isCompact ? 'px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs' : isLargeOrSpacious ? 'px-4 py-2.5 sm:px-5 sm:py-3 text-sm' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0 ${
               isOutOfStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                 : 'text-white hover:brightness-105'
             }`}
             style={!isOutOfStock ? { backgroundColor: theme.hex } : undefined}
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
             <span>{t.addToBag}</span>
           </button>
         </div>

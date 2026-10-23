@@ -23,11 +23,18 @@ import {
   X,
   Loader2,
   CheckCircle2,
-  Pipette
+  Pipette,
+  LayoutGrid,
+  Columns,
+  Maximize2,
+  Monitor,
+  Smartphone,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
-import { StoreThemeColor, StoreLayoutStyle } from '../../types';
+import { StoreThemeColor, StoreLayoutStyle, ProductCardSize } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
+import { PRODUCT_GRID_PRESETS, getProductGridClasses } from '../../utils/gridUtils';
 import { getStoreDisplayUrl, getStorePathLabel, getCustomDomainRoot, getFutureCustomDomainUrl } from '../../utils/urlUtils';
 import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
 import { uploadImageToR2, validateImageFile } from '../../utils/cloudflareR2';
@@ -84,6 +91,17 @@ export const AdminStoreDesign: React.FC = () => {
     if (s === 'xl') return 68;
     return 42;
   });
+
+  // Product Card Sizing and Grid Density state
+  const [productCardSize, setProductCardSize] = useState<ProductCardSize>(
+    activeStore.design.productCardSize || 'standard'
+  );
+  const [desktopGridCols, setDesktopGridCols] = useState<2 | 3 | 4 | 5 | 6>(
+    (activeStore.design.desktopGridCols as 2 | 3 | 4 | 5 | 6) || 4
+  );
+  const [mobileGridCols, setMobileGridCols] = useState<1 | 2>(
+    (activeStore.design.mobileGridCols as 1 | 2) || 2
+  );
 
   // Direct Logo upload state
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -159,7 +177,48 @@ export const AdminStoreDesign: React.FC = () => {
     const s = activeStore.design.logoSize;
     const initialPx = typeof s === 'number' ? s : s === 'sm' ? 32 : s === 'lg' ? 54 : s === 'xl' ? 68 : 42;
     setLogoSize(initialPx);
+
+    setProductCardSize(activeStore.design.productCardSize || 'standard');
+    setDesktopGridCols((activeStore.design.desktopGridCols as 2 | 3 | 4 | 5 | 6) || 4);
+    setMobileGridCols((activeStore.design.mobileGridCols as 1 | 2) || 2);
   }, [activeStore]);
+
+  const handleSelectGridPreset = (preset: typeof PRODUCT_GRID_PRESETS[0]) => {
+    setProductCardSize(preset.id);
+    setDesktopGridCols(preset.desktopCols);
+    setMobileGridCols(preset.mobileCols);
+    updateStoreDesign({
+      productCardSize: preset.id,
+      desktopGridCols: preset.desktopCols,
+      mobileGridCols: preset.mobileCols,
+    });
+  };
+
+  const handleCustomDesktopCols = (cols: 2 | 3 | 4 | 5 | 6) => {
+    setDesktopGridCols(cols);
+    const matchingPreset = PRODUCT_GRID_PRESETS.find((p) => p.desktopCols === cols);
+    const newSize: ProductCardSize = matchingPreset
+      ? matchingPreset.id
+      : cols >= 5
+      ? 'compact'
+      : cols <= 2
+      ? 'spacious'
+      : cols === 3
+      ? 'large'
+      : 'standard';
+    setProductCardSize(newSize);
+    updateStoreDesign({
+      productCardSize: newSize,
+      desktopGridCols: cols,
+    });
+  };
+
+  const handleCustomMobileCols = (cols: 1 | 2) => {
+    setMobileGridCols(cols);
+    updateStoreDesign({
+      mobileGridCols: cols,
+    });
+  };
 
   const handleLogoSizeChange = (newSize: number) => {
     setLogoSize(newSize);
@@ -255,6 +314,9 @@ export const AdminStoreDesign: React.FC = () => {
       whatsappNumber: whatsappNumber.trim() || undefined,
       instagramUrl: instagramUrl.trim() || undefined,
       tiktokUrl: tiktokUrl.trim() || undefined,
+      productCardSize,
+      desktopGridCols,
+      mobileGridCols,
     }, activeStore.id);
 
     addToast(
@@ -648,6 +710,261 @@ export const AdminStoreDesign: React.FC = () => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Product Card Sizing & Grid Density Selection */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <LayoutGrid className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">
+                    {language === 'ar' ? 'حجم بطاقات المنتجات وتخطيط شبكة العرض' : 'Product Card Sizing & Grid Density'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {language === 'ar'
+                      ? 'حدد حجم البطاقات وعدد المنتجات المعروضة في الصف الواحد بالمتجر'
+                      : 'Choose card density and how many product items fit per row'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Active preset badge */}
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 hidden sm:inline-flex items-center gap-1">
+                <span>{desktopGridCols} {language === 'ar' ? 'منتجات بالصف (كمبيوتر)' : 'per row (desktop)'}</span>
+                <span>•</span>
+                <span>{mobileGridCols} {language === 'ar' ? '(هاتف)' : '(mobile)'}</span>
+              </span>
+            </div>
+
+            {/* Presets Grid (4 styles) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span className="flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{language === 'ar' ? 'الأنماط الجاهزة السريعة:' : 'Quick Grid Presets:'}</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  {language === 'ar' ? 'اضغط لتطبيق التنسيق فوراً' : 'Click to apply density style'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {PRODUCT_GRID_PRESETS.map((preset) => {
+                  const isSelected = productCardSize === preset.id && desktopGridCols === preset.desktopCols;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectGridPreset(preset)}
+                      className={`p-4 rounded-2xl border text-start transition-all relative overflow-hidden group cursor-pointer ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/20'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/70'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`p-1.5 rounded-lg text-xs font-bold transition-colors ${
+                              isSelected
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                            }`}
+                          >
+                            {preset.id === 'compact' && <LayoutGrid className="w-4 h-4" />}
+                            {preset.id === 'standard' && <Columns className="w-4 h-4" />}
+                            {preset.id === 'large' && <Maximize2 className="w-4 h-4" />}
+                            {preset.id === 'spacious' && <SlidersHorizontal className="w-4 h-4" />}
+                          </span>
+                          <div>
+                            <div className="font-bold text-xs sm:text-sm text-slate-900 leading-snug">
+                              {language === 'ar' ? preset.titleAr : preset.titleEn}
+                            </div>
+                            <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md mt-0.5 inline-block">
+                              {language === 'ar' ? preset.badgeAr : preset.badgeEn}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isSelected && (
+                          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                            <Check className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-slate-500 leading-relaxed mt-2">
+                        {language === 'ar' ? preset.descAr : preset.descEn}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Column Density Stepper / Selectors */}
+            <div className="pt-4 border-t border-slate-100 space-y-4">
+              <div className="text-xs font-bold text-slate-900">
+                {language === 'ar' ? 'تخصيص يدوي دقيق لعدد الأعمدة (Custom Columns):' : 'Fine-Grained Column Control:'}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Desktop Column Count */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Monitor className="w-4 h-4 text-slate-600" />
+                      <span>{language === 'ar' ? 'الشاشات الكبيرة والكمبيوتر' : 'Desktop & Laptops'}</span>
+                    </span>
+                    <span className="text-xs font-mono font-bold text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                      {desktopGridCols} {language === 'ar' ? 'بالصف' : '/ row'}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400">
+                    {language === 'ar'
+                      ? 'اختر عدد البطاقات التي تتسع في الصف الواحد (من 2 إلى 6):'
+                      : 'Number of product cards side-by-side (2 to 6):'}
+                  </p>
+
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {([2, 3, 4, 5, 6] as const).map((col) => {
+                      const isActive = desktopGridCols === col;
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() => handleCustomDesktopCols(col)}
+                          className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
+                            isActive
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="block text-sm">{col}</span>
+                          <span className="block text-[9px] opacity-75 font-normal">
+                            {col >= 5
+                              ? (language === 'ar' ? 'مكثف' : 'Dense')
+                              : col <= 2
+                              ? (language === 'ar' ? 'عريض' : 'Wide')
+                              : (language === 'ar' ? 'متوازن' : 'Normal')}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Mobile Column Count */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Smartphone className="w-4 h-4 text-slate-600" />
+                      <span>{language === 'ar' ? 'الهواتف الذكية' : 'Mobile Phones'}</span>
+                    </span>
+                    <span className="text-xs font-mono font-bold text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                      {mobileGridCols} {language === 'ar' ? 'بالصف' : '/ row'}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400">
+                    {language === 'ar'
+                      ? 'عرض المنتجات في الهواتف: بطاقتان جنباً إلى جنب أو بطاقة واحدة كاملة العرض:'
+                      : 'Display products on mobile: 2 items side-by-side or 1 single item:'}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCustomMobileCols(2)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
+                        mobileGridCols === 2
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="block text-sm">2</span>
+                      <span className="block text-[10px] opacity-75 font-normal">
+                        {language === 'ar' ? 'منتجان جنباً إلى جنب (شائع)' : '2 Cards / Row (Standard)'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCustomMobileCols(1)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
+                        mobileGridCols === 1
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="block text-sm">1</span>
+                      <span className="block text-[10px] opacity-75 font-normal">
+                        {language === 'ar' ? 'منتج واحد كامل العرض' : '1 Card / Full Width'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Interactive Grid Row Simulation */}
+            <div className="pt-4 border-t border-slate-100 space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-700">
+                  {language === 'ar'
+                    ? `محاكاة شكل الصف المباشر على الشاشات الكبيرة (${desktopGridCols} منتجات بالصف):`
+                    : `Live Row Simulation for Desktop (${desktopGridCols} cards per row):`}
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  {productCardSize === 'compact'
+                    ? (language === 'ar' ? 'حجم مدمج وموفر للمساحة' : 'Compact & high-density')
+                    : productCardSize === 'large' || productCardSize === 'spacious'
+                    ? (language === 'ar' ? 'حجم عريض وبارز' : 'Spacious & prominent')
+                    : (language === 'ar' ? 'حجم قياسي متوازن' : 'Standard density')}
+                </span>
+              </div>
+
+              {/* Simulation Row */}
+              <div
+                className="p-3 rounded-2xl bg-slate-900 border border-slate-800 shadow-inner grid gap-2"
+                style={{
+                  gridTemplateColumns: `repeat(${desktopGridCols}, minmax(0, 1fr))`,
+                }}
+              >
+                {Array.from({ length: desktopGridCols }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-xl p-2 flex flex-col justify-between border border-slate-200 shadow-2xs space-y-1.5 animate-in fade-in"
+                  >
+                    <div
+                      className="w-full bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 overflow-hidden"
+                      style={{
+                        height: desktopGridCols >= 5 ? '52px' : desktopGridCols === 4 ? '70px' : desktopGridCols === 3 ? '95px' : '120px',
+                      }}
+                    >
+                      <div className="w-5 h-5 rounded-md bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 font-bold">
+                        {idx + 1}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="h-2 bg-slate-200 rounded w-3/4" />
+                      <div className="h-2 bg-slate-100 rounded w-1/2" />
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                      <div className="h-2.5 bg-emerald-100 rounded w-1/3" />
+                      <div
+                        className="w-3.5 h-3.5 rounded shrink-0"
+                        style={{ backgroundColor: theme.hex }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -1279,6 +1596,46 @@ export const AdminStoreDesign: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Mini Live Product Cards Preview in Mockup */}
+                <div className="p-3 border-t border-slate-200/60 bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-slate-800">
+                      {language === 'ar' ? `شبكة المنتجات (${desktopGridCols} بالصف)` : `Product Grid (${desktopGridCols}/row)`}
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-mono">
+                      {productCardSize}
+                    </span>
+                  </div>
+                  <div
+                    className="grid gap-1.5"
+                    style={{ gridTemplateColumns: `repeat(${desktopGridCols}, minmax(0, 1fr))` }}
+                  >
+                    {Array.from({ length: desktopGridCols }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`bg-slate-50 border border-slate-200/80 p-1.5 flex flex-col justify-between ${
+                          activeStore.design.cardRadius === 'pill'
+                            ? 'rounded-xl'
+                            : activeStore.design.cardRadius === 'sharp'
+                            ? 'rounded-none'
+                            : 'rounded-lg'
+                        }`}
+                      >
+                        <div
+                          className="w-full bg-slate-200/70 rounded flex items-center justify-center text-[9px] text-slate-400 font-bold"
+                          style={{ height: desktopGridCols >= 5 ? '32px' : desktopGridCols === 4 ? '40px' : '52px' }}
+                        >
+                          P{i + 1}
+                        </div>
+                        <div className="mt-1 space-y-0.5">
+                          <div className="h-1 bg-slate-300 rounded w-3/4" />
+                          <div className="h-1 bg-emerald-300 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
