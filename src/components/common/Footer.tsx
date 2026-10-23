@@ -1,6 +1,5 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
-import { getStorePathLabel } from '../../utils/urlUtils';
 import { renderBadgeIcon, getDefaultTrustBadges } from '../admin/TrustBadgesEditor';
 
 export const Footer: React.FC = () => {
@@ -133,13 +132,10 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom copyright */}
-        <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>
-            © 2026 {displayStoreName} (<span className="font-mono text-slate-300">{getStorePathLabel(activeStore.slug)}</span>) • Powered by <span className="font-brand font-bold text-white">بسطية</span> <span className="text-slate-400">(Bastiyah)</span>
+        <div className="pt-8 border-t border-slate-900 flex items-center justify-center text-xs text-slate-400">
+          <p className="tracking-wide text-center font-medium">
+            Powered by <span className="font-bold text-white">Bastiyah</span>
           </p>
-          <div className="flex items-center gap-1">
-            <span>Bastiyah Multi-Store Cloud • EN / AR</span>
-          </div>
         </div>
       </div>
     </footer>
