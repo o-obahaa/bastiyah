@@ -579,6 +579,7 @@ export const Header: React.FC = () => {
                       ? 'bg-slate-800 border-slate-700 text-white placeholder:text-slate-400 focus:border-white'
                       : 'bg-white hover:bg-slate-50 focus:bg-white text-slate-900 border-slate-200 placeholder:text-slate-400 focus:border-slate-400'
                   } ${language === 'ar' ? 'pr-11 pl-10' : 'pl-11 pr-10'}`}
+                  style={{ backgroundColor: isDarkHeader ? '#1e293b' : '#ffffff' }}
                 />
                 <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
                   language === 'ar' ? 'right-4' : 'left-4'
@@ -616,17 +617,20 @@ export const Header: React.FC = () => {
               {/* Instant Search Suggestions Dropdown */}
               {isSuggestionsOpen && (
                 <div
-                  className={`absolute top-full start-0 end-0 mt-2 z-50 rounded-2xl shadow-2xl border overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 max-h-[75vh] overflow-y-auto scrollbar-thin ${
+                  className={`absolute top-full start-0 end-0 mt-2 z-50 rounded-2xl shadow-2xl border overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[75vh] overflow-y-auto scrollbar-thin ${
                     isDarkHeader
-                      ? 'bg-slate-900/98 border-slate-700 text-white'
-                      : 'bg-white/98 border-slate-200 text-slate-800'
+                      ? 'bg-slate-900 border-slate-700 text-white ring-1 ring-white/10'
+                      : 'bg-white border-slate-200 text-slate-800 ring-1 ring-slate-900/10'
                   }`}
+                  style={{ backgroundColor: isDarkHeader ? '#0f172a' : '#ffffff' }}
                 >
                   {cleanQuery.length > 0 ? (
                     <>
                       {/* Matching Categories Shortcuts */}
                       {matchingCategories.length > 0 && (
-                        <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                        <div className={`p-3 border-b ${
+                          isDarkHeader ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-100'
+                        }`}>
                           <span className="text-[11px] font-bold text-slate-400 block mb-2">
                             {language === 'ar' ? 'الأقسام المطابقة:' : 'Matching Categories:'}
                           </span>
@@ -638,7 +642,11 @@ export const Header: React.FC = () => {
                                   key={cat}
                                   type="button"
                                   onClick={() => handleSelectCategory(cat)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 text-slate-700 dark:text-slate-200 transition-all shadow-2xs group"
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all shadow-2xs group ${
+                                    isDarkHeader
+                                      ? 'bg-slate-800 border-slate-700 text-slate-200 hover:border-emerald-500'
+                                      : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-500'
+                                  }`}
                                 >
                                   <Tag className="w-3 h-3 text-emerald-600" />
                                   <span>{getCategoryName(cat)}</span>
@@ -665,7 +673,9 @@ export const Header: React.FC = () => {
                                   key={p.id}
                                   type="button"
                                   onClick={() => handleSelectProduct(p)}
-                                  className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between gap-3 text-start group"
+                                  className={`w-full p-2.5 rounded-xl transition-colors flex items-center justify-between gap-3 text-start group ${
+                                    isDarkHeader ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
+                                  }`}
                                 >
                                   <div className="flex items-center gap-3 min-w-0">
                                     <img
@@ -699,7 +709,9 @@ export const Header: React.FC = () => {
                           </div>
 
                           {/* View All Results Button Footer */}
-                          <div className="p-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+                          <div className={`p-2.5 border-t flex items-center justify-between ${
+                            isDarkHeader ? 'bg-slate-800/90 border-slate-700' : 'bg-slate-50 border-slate-100'
+                          }`}>
                             <span className="text-xs text-slate-500">
                               {language === 'ar'
                                 ? `تم العثور على ${totalMatchingCount} نتيجة بحث`
@@ -761,7 +773,11 @@ export const Header: React.FC = () => {
                               key={cat}
                               type="button"
                               onClick={() => handleSelectCategory(cat)}
-                              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
+                                isDarkHeader
+                                  ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                                  : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                              }`}
                             >
                               {getCategoryName(cat)}
                             </button>
@@ -771,7 +787,7 @@ export const Header: React.FC = () => {
 
                       {/* Featured Products Shortcut */}
                       {products.filter((p) => p.featured).slice(0, 3).length > 0 && (
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className={`pt-2 border-t ${isDarkHeader ? 'border-slate-800' : 'border-slate-100'}`}>
                           <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
                             {language === 'ar' ? 'منتجات مميزة قد تعجبك:' : 'Featured Products:'}
                           </span>
@@ -781,7 +797,9 @@ export const Header: React.FC = () => {
                                 key={p.id}
                                 type="button"
                                 onClick={() => handleSelectProduct(p)}
-                                className="w-full p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-between gap-2 text-start"
+                                className={`w-full p-2 rounded-xl transition-colors flex items-center justify-between gap-2 text-start ${
+                                  isDarkHeader ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
+                                }`}
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <img
