@@ -20,9 +20,23 @@ import {
   Package,
   Copy,
   Star,
-  DollarSign
+  DollarSign,
+  Layers,
+  Check,
+  ExternalLink,
+  PlusCircle,
+  SlidersHorizontal
 } from 'lucide-react';
 import { ProductMediaUploader } from '../common/ProductMediaUploader';
+
+const SPEC_PRESETS = [
+  { arKey: 'الضمان', enKey: 'Warranty', arVal: 'سنة واحدة', enVal: '1 Year' },
+  { arKey: 'البطارية', enKey: 'Battery', arVal: 'تدوم حتى 40 ساعة', enVal: 'Up to 40 Hours' },
+  { arKey: 'الخامة', enKey: 'Material', arVal: 'تيتانيوم فاخر ومقاوم', enVal: 'Premium Titanium' },
+  { arKey: 'التوصيل', enKey: 'Connectivity', arVal: 'بلوتوث 5.4 فائق السرعة', enVal: 'Bluetooth 5.4' },
+  { arKey: 'بلد المنشأ', enKey: 'Origin', arVal: 'أصلي 100%', enVal: '100% Authentic' },
+  { arKey: 'الوزن', enKey: 'Weight', arVal: '240 غرام خفيف ومريح', enVal: '240g Ultra-light' },
+];
 
 export const AdminProducts: React.FC = () => {
   const { 
@@ -35,7 +49,9 @@ export const AdminProducts: React.FC = () => {
     language, 
     getProductName, 
     getCategoryName,
-    addToast
+    addToast,
+    setSelectedProductId,
+    setCurrentPage
   } = useStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,9 +59,12 @@ export const AdminProducts: React.FC = () => {
   const [stockFilter, setStockFilter] = useState<'All' | 'inStock' | 'lowStock' | 'outOfStock'>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [modalTab, setModalTab] = useState<'general' | 'pricing' | 'media' | 'specs'>('general');
+  const [inlineStockId, setInlineStockId] = useState<string | null>(null);
+  const [inlineStockVal, setInlineStockVal] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currency = activeStore.settings.currency || '$';
+  const currency = activeStore.settings?.currency || 'د.ع';
 
   const [formData, setFormData] = useState({
     sku: '',
@@ -65,6 +84,7 @@ export const AdminProducts: React.FC = () => {
     sizes: 'S, M, L, XL',
     colors: 'Black, Silver, Gold',
     featured: true,
+    specs: [] as Array<{ key: string; value: string }>,
   });
 
   const categories: ProductCategory[] = [
@@ -126,20 +146,32 @@ export const AdminProducts: React.FC = () => {
       sizes: 'S, M, L, XL',
       colors: 'Black, Silver',
       featured: true,
+      specs: [
+        { key: language === 'ar' ? 'الضمان' : 'Warranty', value: language === 'ar' ? 'سنة واحدة' : '1 Year' },
+        { key: language === 'ar' ? 'الجودة' : 'Quality', value: language === 'ar' ? 'أصلي 100%' : '100% Authentic' },
+      ],
     });
     setEditingProduct(null);
+    setModalTab('general');
     setIsAddModalOpen(true);
   };
 
   const handleOpenEdit = (p: Product) => {
     setEditingProduct(p);
+    const specsArray = p.specs && typeof p.specs === 'object' && Object.keys(p.specs).length > 0
+      ? Object.entries(p.specs).map(([key, value]) => ({ key, value }))
+      : [
+          { key: language === 'ar' ? 'الضمان' : 'Warranty', value: language === 'ar' ? 'سنة واحدة' : '1 Year' },
+          { key: language === 'ar' ? 'الجودة' : 'Quality', value: language === 'ar' ? 'أصلي 100%' : '100% Authentic' },
+        ];
+
     setFormData({
       sku: p.sku || p.id,
-      name: p.name,
+      name: p.name || '',
       nameAr: p.nameAr || '',
-      tagline: p.tagline,
+      tagline: p.tagline || '',
       taglineAr: p.taglineAr || '',
-      description: p.description,
+      description: p.description || '',
       descriptionAr: p.descriptionAr || '',
       category: p.category,
       price: p.price,
@@ -151,13 +183,40 @@ export const AdminProducts: React.FC = () => {
       sizes: p.variants?.sizes?.join(', ') || '',
       colors: p.variants?.colors?.join(', ') || '',
       featured: p.featured ?? true,
+      specs: specsArray,
     });
+    setModalTab('general');
     setIsAddModalOpen(true);
+  };
+
+  const handleAddSpecRow = (key: string = '', value: string = '') => {
+    setFormData((prev) => ({
+      ...prev,
+      specs: [...prev.specs, { key, value }],
+    }));
+  };
+
+  const handleUpdateSpecRow = (index: number, field: 'key' | 'value', text: string) => {
+    setFormData((prev) => {
+      const next = [...prev.specs];
+      next[index] = { ...next[index], [field]: text };
+      return { ...prev, specs: next };
+    });
+  };
+
+  const handleRemoveSpecRow = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      specs: prev.specs.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
+    const resolvedName = formData.name.trim() || formData.nameAr.trim();
+    const resolvedNameAr = formData.nameAr.trim() || formData.name.trim();
+
+    if (!resolvedName) {
       addToast(language === 'ar' ? 'يرجى إدخال اسم المنتج' : 'Please provide product name', 'error');
       return;
     }
@@ -172,18 +231,25 @@ export const AdminProducts: React.FC = () => {
     const origPriceNum = formData.originalPrice !== '' && formData.originalPrice !== undefined ? Number(formData.originalPrice) : undefined;
     const hasDiscount = origPriceNum !== undefined && !isNaN(origPriceNum) && origPriceNum > Number(formData.price);
 
+    const specsRecord: Record<string, string> = {};
+    formData.specs.forEach((item) => {
+      if (item.key.trim() && item.value.trim()) {
+        specsRecord[item.key.trim()] = item.value.trim();
+      }
+    });
+
     const payload = {
       sku: formData.sku.trim() || undefined,
-      name: formData.name.trim(),
-      nameAr: formData.nameAr.trim() || formData.name.trim(),
-      tagline: formData.tagline.trim() || formData.name.trim(),
-      taglineAr: formData.taglineAr.trim() || formData.nameAr.trim() || formData.name.trim(),
-      description: formData.description.trim(),
-      descriptionAr: formData.descriptionAr.trim() || formData.description.trim(),
+      name: resolvedName,
+      nameAr: resolvedNameAr,
+      tagline: formData.tagline.trim() || resolvedName,
+      taglineAr: formData.taglineAr.trim() || resolvedNameAr,
+      description: formData.description.trim() || `${resolvedName} — Premium quality product.`,
+      descriptionAr: formData.descriptionAr.trim() || `${resolvedNameAr} — منتج فاخر عالي الجودة بتصميم استثنائي ومواصفات موثوقة.`,
       category: formData.category,
-      price: Number(formData.price),
+      price: Math.max(0, Number(formData.price)),
       originalPrice: hasDiscount ? origPriceNum : undefined,
-      stock: Number(formData.stock),
+      stock: Math.max(0, Number(formData.stock)),
       badge: (formData.badge && formData.badge.trim() ? formData.badge.trim() : undefined) as any,
       rating: editingProduct ? editingProduct.rating : 5.0,
       reviewCount: editingProduct ? editingProduct.reviewCount : 1,
@@ -194,15 +260,13 @@ export const AdminProducts: React.FC = () => {
         colors: colorList.length > 0 ? colorList : undefined,
       },
       featured: formData.featured,
-      specs: editingProduct ? editingProduct.specs : { Warranty: '1 Year', Quality: 'Authentic' },
+      specs: Object.keys(specsRecord).length > 0 ? specsRecord : (editingProduct?.specs || { 'الضمان': 'سنة واحدة', 'الجودة': 'أصلي 100%' }),
     };
 
     if (editingProduct) {
       updateProduct(editingProduct.id, payload);
-      addToast(language === 'ar' ? 'تم تحديث بيانات المنتج بنجاح!' : 'Product updated successfully!', 'success');
     } else {
       addProduct(payload);
-      addToast(language === 'ar' ? 'تمت إضافة المنتج الجديد للكتالوج!' : 'New product created successfully!', 'success');
     }
 
     setIsAddModalOpen(false);
@@ -213,10 +277,15 @@ export const AdminProducts: React.FC = () => {
     updateProduct(productId, { stock: newStock });
   };
 
+  const handleSaveInlineStock = (productId: string) => {
+    const newStock = Math.max(0, Math.floor(Number(inlineStockVal) || 0));
+    updateProduct(productId, { stock: newStock });
+    setInlineStockId(null);
+  };
+
   const handleDelete = (id: string, name: string) => {
     if (window.confirm(language === 'ar' ? `هل أنت متأكد من حذف المنتج (${name})؟` : `Are you sure you want to delete ${name}?`)) {
       deleteProduct(id);
-      addToast(language === 'ar' ? 'تم حذف المنتج من المتجر' : 'Product deleted', 'info');
     }
   };
 
@@ -241,18 +310,16 @@ export const AdminProducts: React.FC = () => {
       specs: p.specs ? { ...p.specs } : { Warranty: '1 Year', Quality: 'Authentic' },
     };
     addProduct(duplicated);
-    addToast(language === 'ar' ? 'تم نسخ المنتج بنجاح!' : 'Product duplicated successfully!', 'success');
   };
 
   const handleToggleFeatured = (p: Product) => {
     const newFeatured = !p.featured;
     updateProduct(p.id, { featured: newFeatured });
-    addToast(
-      language === 'ar'
-        ? (newFeatured ? 'تم تمييز المنتج في واجهة المتجر' : 'تم إلغاء تمييز المنتج')
-        : (newFeatured ? 'Marked as featured' : 'Unmarked from featured'),
-      'success'
-    );
+  };
+
+  const handlePreviewProduct = (productId: string) => {
+    setSelectedProductId(productId);
+    setCurrentPage('product-detail');
   };
 
   const totalUnitsInStock = products.reduce((sum, p) => sum + p.stock, 0);
@@ -265,9 +332,10 @@ export const AdminProducts: React.FC = () => {
       return;
     }
 
-    const headers = ['ID', 'Name (EN)', 'Name (AR)', 'Category', 'Price', 'Original Price', 'Stock', 'Badge', 'Rating'];
+    const headers = ['ID', 'SKU', 'Name (EN)', 'Name (AR)', 'Category', 'Price', 'Original Price', 'Stock', 'Badge', 'Rating'];
     const rows = products.map((p) => [
       p.id,
+      `"${p.sku || p.id}"`,
       `"${p.name}"`,
       `"${p.nameAr || ''}"`,
       `"${p.category}"`,
@@ -344,6 +412,7 @@ export const AdminProducts: React.FC = () => {
 
           const name = getVal(['name (en)', 'name', 'اسم']) || `Product ${products.length + importedCount + 1}`;
           const nameAr = getVal(['name (ar)', 'arabic', 'عربي']) || name;
+          const sku = getVal(['sku', 'كود', 'code']) || `${(activeStore.slug || 'SKU').toUpperCase().slice(0, 3)}-${Math.floor(100 + Math.random() * 900)}`;
           const categoryRaw = getVal(['category', 'تصنيف']) || 'Audio & Sound';
           const price = parseFloat(getVal(['price', 'سعر'])) || 99;
           const origPriceRaw = parseFloat(getVal(['original', 'before', 'خصم']));
@@ -359,6 +428,7 @@ export const AdminProducts: React.FC = () => {
           const validCat = categories.find((c) => c.toLowerCase() === categoryRaw.toLowerCase()) || 'Audio & Sound';
 
           addProduct({
+            sku,
             name,
             nameAr,
             tagline: name,
@@ -413,10 +483,10 @@ export const AdminProducts: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            {language === 'ar' ? 'كتالوج المنتجات والمخزون' : t.products} ({products.length})
+            {language === 'ar' ? 'كتالوج المنتجات وإدارة المخزون' : t.products} ({products.length})
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            {language === 'ar' ? 'إضافة وتعديل المنتجات، نسخ العناصر، استيراد/تصدير CSV وضبط المخزون' : 'Add, duplicate, and manage catalog items, inventory and pricing'}
+            {language === 'ar' ? 'تعديل كامل لبيانات المنتجات، المواصفات الفنية، الأسعار، الصور والمخزون' : 'Edit products, technical specs, pricing, photos and inventory'}
           </p>
         </div>
 
@@ -444,7 +514,7 @@ export const AdminProducts: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>{t.addProduct}</span>
+            <span>{language === 'ar' ? 'إضافة منتج جديد' : t.addProduct}</span>
           </button>
         </div>
       </div>
@@ -461,7 +531,7 @@ export const AdminProducts: React.FC = () => {
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
           <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'القيمة التقديرية للمخزون' : 'Total Inventory Value'}</span>
-          <span className="text-lg font-black text-slate-900 mt-0.5 block">{currency}{totalCatalogValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span className="text-lg font-black text-slate-900 mt-0.5 block">{totalCatalogValue.toLocaleString()} {currency}</span>
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
           <span className="text-[11px] font-semibold text-slate-400 block">{language === 'ar' ? 'تنبيهات انخفاض المخزون' : 'Low Stock Items'}</span>
@@ -525,7 +595,7 @@ export const AdminProducts: React.FC = () => {
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder={language === 'ar' ? 'البحث بالاسم العربي، الإنجليزي، الوسوم، أو القسم...' : 'Search products by name, tag, category...'}
+            placeholder={language === 'ar' ? 'البحث بالاسم العربي، الإنجليزي، كود الصنف SKU، أو التصنيف...' : 'Search products by name, SKU, tag, category...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={`w-full py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs ${
@@ -580,26 +650,40 @@ export const AdminProducts: React.FC = () => {
                     : 0;
 
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80'}
-                            alt=""
-                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0"
-                          />
+                        <div 
+                          onClick={() => handleOpenEdit(p)}
+                          className="flex items-center gap-3 cursor-pointer"
+                          title={language === 'ar' ? 'انقر لتعديل بيانات هذا المنتج' : 'Click to edit this product'}
+                        >
+                          <div className="relative shrink-0">
+                            <img
+                              src={p.images?.[0] || imagePresets[0].url}
+                              alt=""
+                              className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:ring-2 group-hover:ring-emerald-500 transition-all"
+                            />
+                            <div className="absolute inset-0 rounded-xl bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </div>
+                          </div>
+
                           <div className="min-w-0">
-                            <span className="font-bold text-slate-900 block text-xs sm:text-sm truncate">
+                            <span className="font-bold text-slate-900 block text-xs sm:text-sm truncate group-hover:text-emerald-700 transition-colors">
                               {pName}
                             </span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded-md font-bold">
-                                {language === 'ar' ? 'كود الإدارة:' : 'SKU:'} {p.sku || p.id}
+                                SKU: {p.sku || p.id}
                               </span>
-                              <span className="text-[10px] text-slate-400">({language === 'ar' ? 'خاص بالإدارة' : 'Internal'})</span>
+                              {p.nameAr && p.name && p.nameAr !== p.name && (
+                                <span className="text-[10px] text-slate-400 truncate max-w-[150px]">
+                                  {language === 'ar' ? p.name : p.nameAr}
+                                </span>
+                              )}
                             </div>
-                            <span className="text-[11px] text-slate-400 block truncate mt-0.5">
-                              {p.tagline}
+                            <span className="text-[11px] text-slate-400 block truncate mt-0.5 max-w-xs">
+                              {language === 'ar' ? (p.taglineAr || p.tagline) : (p.tagline || p.taglineAr)}
                             </span>
                           </div>
                         </div>
@@ -614,11 +698,11 @@ export const AdminProducts: React.FC = () => {
                       <td className="py-3.5 px-4">
                         <div className="flex items-baseline gap-1.5">
                           <span className="font-black text-slate-900 text-xs sm:text-sm">
-                            {currency}{p.price.toFixed(2)}
+                            {p.price.toLocaleString()} {currency}
                           </span>
                           {p.originalPrice && p.originalPrice > p.price && (
                             <span className="text-[11px] text-slate-400 line-through">
-                              {currency}{p.originalPrice.toFixed(2)}
+                              {p.originalPrice.toLocaleString()} {currency}
                             </span>
                           )}
                           {discountPercent > 0 && (
@@ -630,7 +714,7 @@ export const AdminProducts: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        {/* Interactive Stock Stepper */}
+                        {/* Interactive Quick Stock Stepper & Direct Editable Number */}
                         <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg p-1">
                           <button
                             onClick={() => handleStockStepper(p.id, p.stock, -1)}
@@ -640,11 +724,34 @@ export const AdminProducts: React.FC = () => {
                             -
                           </button>
 
-                          <span className={`px-2 font-mono font-bold text-xs min-w-[28px] text-center ${
-                            p.stock === 0 ? 'text-rose-600' : isLow ? 'text-amber-600' : 'text-slate-800'
-                          }`}>
-                            {p.stock}
-                          </span>
+                          {inlineStockId === p.id ? (
+                            <input
+                              type="number"
+                              min="0"
+                              autoFocus
+                              value={inlineStockVal}
+                              onChange={(e) => setInlineStockVal(Number(e.target.value))}
+                              onBlur={() => handleSaveInlineStock(p.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveInlineStock(p.id);
+                                if (e.key === 'Escape') setInlineStockId(null);
+                              }}
+                              className="w-14 px-1 py-0.5 rounded bg-white border border-emerald-500 font-mono text-center font-bold text-xs focus:outline-none"
+                            />
+                          ) : (
+                            <span 
+                              onClick={() => {
+                                setInlineStockId(p.id);
+                                setInlineStockVal(p.stock);
+                              }}
+                              className={`px-2 font-mono font-bold text-xs min-w-[28px] text-center cursor-pointer hover:underline hover:text-emerald-700 transition-colors ${
+                                p.stock === 0 ? 'text-rose-600' : isLow ? 'text-amber-600' : 'text-slate-800'
+                              }`}
+                              title={language === 'ar' ? 'انقر لتعديل المخزون مباشرة' : 'Click to edit stock number'}
+                            >
+                              {p.stock}
+                            </span>
+                          )}
 
                           <button
                             onClick={() => handleStockStepper(p.id, p.stock, 1)}
@@ -667,7 +774,27 @@ export const AdminProducts: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4 text-end">
-                        <div className="inline-flex items-center gap-1 justify-end">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
+                          {/* Prominent Edit Button */}
+                          <button
+                            onClick={() => handleOpenEdit(p)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs transition-all shadow-2xs border border-emerald-200/60"
+                            title={language === 'ar' ? 'تعديل بيانات المنتج' : 'Edit Product'}
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>{language === 'ar' ? 'تعديل' : 'Edit'}</span>
+                          </button>
+
+                          {/* Customer Store Preview */}
+                          <button
+                            onClick={() => handlePreviewProduct(p.id)}
+                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title={language === 'ar' ? 'معاينة المنتج في صفحة المتجر' : 'Preview Product on Storefront'}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          {/* Toggle Featured Star */}
                           <button
                             onClick={() => handleToggleFeatured(p)}
                             className={`p-1.5 rounded-lg transition-colors ${
@@ -680,22 +807,16 @@ export const AdminProducts: React.FC = () => {
                             <Star className={`w-4 h-4 ${p.featured ? 'fill-amber-400' : ''}`} />
                           </button>
 
+                          {/* Duplicate */}
                           <button
                             onClick={() => handleDuplicateProduct(p)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                             title={language === 'ar' ? 'استنساخ المنتج' : 'Duplicate product'}
                           >
                             <Copy className="w-4 h-4" />
                           </button>
-
-                          <button
-                            onClick={() => handleOpenEdit(p)}
-                            className="p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title={t.editProduct}
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
                           
+                          {/* Delete */}
                           <button
                             onClick={() => handleDelete(p.id, pName)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -714,306 +835,541 @@ export const AdminProducts: React.FC = () => {
         </div>
       </div>
 
-      {/* Add / Edit Product Modal */}
+      {/* 
+        ========================================================================
+        COMPREHENSIVE PRODUCT EDIT & CREATION MODAL
+        ========================================================================
+      */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
           <div 
-            className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+            {/* Modal Top Header */}
             <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <h3 className="font-bold text-base text-slate-900">
-                {editingProduct ? (language === 'ar' ? 'تعديل بيانات المنتج' : 'Edit Product') : (language === 'ar' ? 'إضافة منتج جديد للكتالوج' : 'Add New Product')}
-              </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  {editingProduct ? <Edit3 className="w-4 h-4 text-emerald-700" /> : <Plus className="w-5 h-5 text-emerald-700" />}
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 font-brand">
+                    {editingProduct 
+                      ? (language === 'ar' ? `تعديل المنتج: ${editingProduct.nameAr || editingProduct.name}` : `Edit Product: ${editingProduct.name}`) 
+                      : (language === 'ar' ? 'إضافة منتج جديد للكتالوج' : 'Add New Product')}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {language === 'ar' ? 'تعديل البيانات الأساسية، الأسعار، الصور، والمواصفات الفنية' : 'Update catalog details, pricing, media, and hardware specs'}
+                  </p>
+                </div>
+              </div>
+
               <button
+                type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {/* Modal Navigation Tabs Bar */}
+            <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 border-b border-slate-200 px-5 overflow-x-auto scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setModalTab('general')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                  modalTab === 'general'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'البيانات الأساسية' : 'Basic Info'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTab('pricing')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                  modalTab === 'pricing'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'السعر والمخزون' : 'Pricing & Stock'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTab('media')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                  modalTab === 'media'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'الصور والوسائط' : 'Media'} ({formData.images.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTab('specs')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                  modalTab === 'specs'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'المواصفات والتفاصيل' : 'Specs & Details'} ({formData.specs.length})</span>
+              </button>
+            </div>
+
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
-              {/* Product SKU Management Code (Hidden from Customers) */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-800 block text-xs">
-                    {language === 'ar' ? 'كود إدارة المنتج الداخلي (رمز الصنف SKU) *' : 'Internal Management SKU Code *'}
-                  </label>
-                  <span className="text-[10px] text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200 font-bold shadow-2xs">
-                    {language === 'ar' ? 'خاص بالإدارة فقط — لا يظهر للزبائن' : 'Management only — hidden from customers'}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    dir="ltr"
-                    placeholder="e.g. PND-AUD-01"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
-                    className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono font-bold text-slate-900"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, sku: `${(activeStore.slug || 'SKU').toUpperCase().slice(0, 3)}-${Math.floor(100 + Math.random() * 900)}` })}
-                    className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0 shadow-2xs"
-                  >
-                    {language === 'ar' ? 'توليد كود تلقائي' : 'Generate Code'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Product Names (AR & EN) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'اسم المنتج بالعربية *' : 'Product Name (Arabic) *'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    dir="rtl"
-                    placeholder="مثال: سماعة رأس لاسلكية احترافية"
-                    value={formData.nameAr}
-                    onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'اسم المنتج بالإنجليزية *' : 'Product Name (English) *'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    dir="ltr"
-                    placeholder="e.g. Studio Pro Wireless Headphones"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
-                  />
-                </div>
-              </div>
-
-              {/* Taglines */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'وصف تسويقي قصير (عربي)' : 'Short Tagline (Arabic)'}
-                  </label>
-                  <input
-                    type="text"
-                    dir="rtl"
-                    placeholder="عزل ضوضاء فائق وبطارية تدوم 40 ساعة"
-                    value={formData.taglineAr}
-                    onChange={(e) => setFormData({ ...formData, taglineAr: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'وصف تسويقي قصير (إنجليزي)' : 'Short Tagline (English)'}
-                  </label>
-                  <input
-                    type="text"
-                    dir="ltr"
-                    placeholder="Active noise cancelling with 40h battery"
-                    value={formData.tagline}
-                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* Category & Badge */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {t.category}
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>{getCategoryName(c)}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-bold text-slate-700 block">
-                      {language === 'ar' ? 'شارة المنتج' : 'Badge'}
-                    </label>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      ({language === 'ar' ? 'اختياري' : 'Optional'})
-                    </span>
+              
+              {/* TAB 1: GENERAL / BASIC INFO */}
+              {modalTab === 'general' && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+                  {/* SKU Management Code */}
+                  <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-slate-800 block text-xs">
+                        {language === 'ar' ? 'كود الصنف وإدارة المنتج (SKU) *' : 'Management SKU Code *'}
+                      </label>
+                      <span className="text-[10px] text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200 font-bold shadow-2xs">
+                        {language === 'ar' ? 'كود إداري داخلي للتتبع' : 'Internal inventory tracking code'}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        dir="ltr"
+                        placeholder="e.g. PND-AUD-01"
+                        value={formData.sku}
+                        onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                        className="flex-1 p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono font-bold text-slate-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, sku: `${(activeStore.slug || 'SKU').toUpperCase().slice(0, 3)}-${Math.floor(100 + Math.random() * 900)}` })}
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shrink-0 shadow-2xs"
+                      >
+                        {language === 'ar' ? 'توليد تلقائي' : 'Generate'}
+                      </button>
+                    </div>
                   </div>
-                  <select
-                    value={formData.badge}
-                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
-                  >
-                    <option value="">{language === 'ar' ? 'بدون شارة (افتراضي)' : 'No Badge (None)'}</option>
-                    <option value="New Arrival">{language === 'ar' ? 'جديد (New Arrival)' : 'New Arrival'}</option>
-                    <option value="Best Seller">{language === 'ar' ? 'الأكثر مبيعاً (Best Seller)' : 'Best Seller'}</option>
-                    <option value="Hot Sale">{language === 'ar' ? 'عرض خاص (Hot Sale)' : 'Hot Sale'}</option>
-                    <option value="Limited Stock">{language === 'ar' ? 'كمية محدودة (Limited Stock)' : 'Limited Stock'}</option>
-                  </select>
-                </div>
-              </div>
 
-              {/* Price, Original Price, Stock */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? `سعر البيع (${currency}) *` : `Price (${currency}) *`}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold"
-                  />
-                </div>
+                  {/* Product Names (AR & EN) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'اسم المنتج بالعربية *' : 'Product Name (Arabic) *'}
+                      </label>
+                      <input
+                        type="text"
+                        dir="rtl"
+                        placeholder="مثال: سماعة رأس لاسلكية احترافية"
+                        value={formData.nameAr}
+                        onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
+                      />
+                    </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-bold text-slate-700 block">
-                      {language === 'ar' ? `السعر قبل الخصم (${currency})` : `Original Price (${currency})`}
-                    </label>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      ({language === 'ar' ? 'اختياري' : 'Optional'})
-                    </span>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'اسم المنتج بالإنجليزية' : 'Product Name (English)'}
+                      </label>
+                      <input
+                        type="text"
+                        dir="ltr"
+                        placeholder="e.g. Studio Pro Wireless Headphones"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder={language === 'ar' ? 'فارغ إذا لم يوجد خصم' : 'Leave empty if no discount'}
-                    value={formData.originalPrice}
-                    onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-600"
-                  />
-                  {formData.originalPrice !== '' && Number(formData.originalPrice) > Number(formData.price) && (
-                    <p className="text-[11px] text-emerald-600 font-bold mt-1">
-                      {language === 'ar'
-                        ? `خصم بنسبة ${Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}%`
-                        : `${Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}% Discount`}
-                    </p>
-                  )}
+
+                  {/* Taglines (AR & EN) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'شعار تسويقي قصير (عربي)' : 'Short Tagline (Arabic)'}
+                      </label>
+                      <input
+                        type="text"
+                        dir="rtl"
+                        placeholder="عزل ضوضاء فائق وبطارية تدوم 40 ساعة"
+                        value={formData.taglineAr}
+                        onChange={(e) => setFormData({ ...formData, taglineAr: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'شعار تسويقي قصير (إنجليزي)' : 'Short Tagline (English)'}
+                      </label>
+                      <input
+                        type="text"
+                        dir="ltr"
+                        placeholder="Active noise cancelling with 40h battery"
+                        value={formData.tagline}
+                        onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Category, Badge, Featured */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {t.category}
+                      </label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
+                      >
+                        {categories.map((c) => (
+                          <option key={c} value={c}>{getCategoryName(c)}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'شارة المنتج (Badge)' : 'Product Badge'}
+                      </label>
+                      <select
+                        value={formData.badge}
+                        onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold"
+                      >
+                        <option value="">{language === 'ar' ? 'بدون شارة (افتراضي)' : 'No Badge (None)'}</option>
+                        <option value="New Arrival">{language === 'ar' ? 'جديد (New Arrival)' : 'New Arrival'}</option>
+                        <option value="Best Seller">{language === 'ar' ? 'الأكثر مبيعاً (Best Seller)' : 'Best Seller'}</option>
+                        <option value="Hot Sale">{language === 'ar' ? 'عرض خاص (Hot Sale)' : 'Hot Sale'}</option>
+                        <option value="Limited Stock">{language === 'ar' ? 'كمية محدودة (Limited Stock)' : 'Limited Stock'}</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col justify-end">
+                      <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.featured}
+                          onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        />
+                        <div className="flex items-center gap-1.5">
+                          <Star className={`w-3.5 h-3.5 ${formData.featured ? 'text-amber-500 fill-amber-400' : 'text-slate-400'}`} />
+                          <span className="font-bold text-slate-800 text-xs">
+                            {language === 'ar' ? 'تمييز في الواجهة' : 'Featured Item'}
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'كمية المخزون' : t.stock} *
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700"
+              {/* TAB 2: PRICING & STOCK */}
+              {modalTab === 'pricing' && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? `سعر البيع المعتمد (${currency}) *` : `Selling Price (${currency}) *`}
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 block">
+                          {language === 'ar' ? `السعر السابق قبل الخصم (${currency})` : `Compare-at Price (${currency})`}
+                        </label>
+                      </div>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder={language === 'ar' ? 'فارغ إذا لم يوجد خصم' : 'Leave empty if no discount'}
+                        value={formData.originalPrice}
+                        onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value === '' ? '' : Number(e.target.value) })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-600"
+                      />
+                      {formData.originalPrice !== '' && Number(formData.originalPrice) > Number(formData.price) && (
+                        <p className="text-[11px] text-emerald-600 font-bold mt-1.5 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>
+                            {language === 'ar'
+                              ? `خصم فعال بنسبة ${Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}%`
+                              : `${Math.round(((Number(formData.originalPrice) - Number(formData.price)) / Number(formData.originalPrice)) * 100)}% Discount active`}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'الكمية المتوفرة بالمخزون *' : `${t.stock} *`}
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        required
+                        value={formData.stock}
+                        onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stock Quick Presets */}
+                  <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-slate-500 font-bold text-xs">{language === 'ar' ? 'تعديل سريع لكمية المخزون:' : 'Quick stock adjustments:'}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {[0, 5, 10, 25, 50, 100, 250].map((qty) => (
+                        <button
+                          key={qty}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, stock: qty })}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
+                            formData.stock === qty
+                              ? 'bg-slate-900 text-white border-slate-900'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {qty} {language === 'ar' ? 'قطعة' : 'units'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: MEDIA & PHOTOS */}
+              {modalTab === 'media' && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div>
+                      <span className="font-bold text-slate-900 text-xs block">
+                        {language === 'ar' ? 'معرض صور المنتج السحابي' : 'Cloud Product Image Gallery'}
+                      </span>
+                      <span className="text-slate-500 text-[11px]">
+                        {language === 'ar' ? 'الصورة الأولى ستكون الغلاف الرئيسي للمنتج' : 'First image serves as the main hero cover'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ProductMediaUploader
+                    images={formData.images}
+                    onChange={(newImages) => setFormData({ ...formData, images: newImages })}
                   />
                 </div>
-              </div>
+              )}
 
-              {/* Direct Cloud Hosting Product Photos Uploader */}
-              <ProductMediaUploader
-                images={formData.images}
-                onChange={(newImages) => setFormData({ ...formData, images: newImages })}
-              />
+              {/* TAB 4: SPECS, DETAILS & VARIANTS */}
+              {modalTab === 'specs' && (
+                <div className="space-y-5 animate-in fade-in duration-150">
+                  
+                  {/* Full Descriptions (AR & EN) */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'الوصف التفصيلي الكامل للمنتج (عربي) *' : 'Full Detailed Description (Arabic) *'}
+                      </label>
+                      <textarea
+                        rows={3}
+                        dir="rtl"
+                        placeholder="اكتب تفاصيل وميزات المنتج المعروض للعملاء في صفحة الشراء..."
+                        value={formData.descriptionAr}
+                        onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                      />
+                    </div>
 
-              {/* Product Variants (Sizes & Colors) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'المقاسات المتاحة (مفصولة بفواصل)' : 'Available Sizes (comma separated)'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="S, M, L, XL, XXL"
-                    value={formData.sizes}
-                    onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    {language === 'ar' ? 'اتركها فارغة إذا لم تكن هناك مقاسات' : 'Leave empty if no sizes apply'}
-                  </span>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'الوصف التفصيلي الكامل (إنجليزي)' : 'Full Detailed Description (English)'}
+                      </label>
+                      <textarea
+                        rows={2}
+                        dir="ltr"
+                        placeholder="Detailed specifications, features, and user highlights..."
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Technical Specifications Key-Value Manager */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-emerald-600" />
+                          <span>{language === 'ar' ? 'المواصفات الفنية والخصائص (جدول المواصفات)' : 'Technical Specifications Table'}</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {language === 'ar' ? 'تظهر في تبويب المواصفات الفنية لصفحة المنتج للعملاء' : 'Appears under Technical Specs tab on product page'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddSpecRow()}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{language === 'ar' ? 'إضافة مواصفة' : 'Add Spec'}</span>
+                      </button>
+                    </div>
+
+                    {/* Quick Preset Buttons */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                      <span className="text-[10px] text-slate-400 font-bold">{language === 'ar' ? 'إضافة سريعة:' : 'Quick Presets:'}</span>
+                      {SPEC_PRESETS.map((sp, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleAddSpecRow(language === 'ar' ? sp.arKey : sp.enKey, language === 'ar' ? sp.arVal : sp.enVal)}
+                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-500 text-slate-700 text-[10px] font-semibold transition-colors shadow-2xs"
+                        >
+                          + {language === 'ar' ? sp.arKey : sp.enKey}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Specs Key-Value Rows */}
+                    {formData.specs.length === 0 ? (
+                      <p className="text-center py-4 text-slate-400 text-xs italic">
+                        {language === 'ar' ? 'لا توجد مواصفات مدخلة بعد. انقر على "إضافة مواصفة" لإدراج خصائص المنتج.' : 'No specifications added yet. Click "+ Add Spec" to insert hardware specs.'}
+                      </p>
+                    ) : (
+                      <div className="space-y-2 pt-2">
+                        {formData.specs.map((item, index) => (
+                          <div key={index} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                            <input
+                              type="text"
+                              placeholder={language === 'ar' ? 'الخاصية (مثلاً: البطارية)' : 'Property (e.g. Battery)'}
+                              value={item.key}
+                              onChange={(e) => handleUpdateSpecRow(index, 'key', e.target.value)}
+                              className="w-1/3 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                            />
+                            <input
+                              type="text"
+                              placeholder={language === 'ar' ? 'القيمة (مثلاً: 40 ساعة)' : 'Value (e.g. 40 Hours)'}
+                              value={item.value}
+                              onChange={(e) => handleUpdateSpecRow(index, 'value', e.target.value)}
+                              className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSpecRow(index)}
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
+                              title={language === 'ar' ? 'حذف هذه الخاصية' : 'Remove spec'}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Variants (Sizes & Colors) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'المقاسات المتاحة (مفصولة بفواصل)' : 'Available Sizes (comma separated)'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="S, M, L, XL, XXL"
+                        value={formData.sizes}
+                        onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        {language === 'ar' ? 'مثال: S, M, L أو 40, 42, 44' : 'e.g. S, M, L or 40, 42, 44'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        {language === 'ar' ? 'الألوان المتاحة (مفصولة بفواصل)' : 'Available Colors (comma separated)'}
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Black, Silver, Gold, Navy"
+                        value={formData.colors}
+                        onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
+                      />
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        {language === 'ar' ? 'مثال: أسود، فضي، ذهبي' : 'e.g. Black, Silver, Gold'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Search Tags */}
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      {language === 'ar' ? 'وسوم ومفاتيح البحث في المتجر (مفصولة بفواصل)' : 'Search Tags & Keywords (comma separated)'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="wireless, premium, bluetooth, gaming"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
                 </div>
+              )}
 
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    {language === 'ar' ? 'الألوان المتاحة (مفصولة بفواصل)' : 'Available Colors (comma separated)'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Black, Silver, Gold, Navy"
-                    value={formData.colors}
-                    onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    {language === 'ar' ? 'اتركها فارغة إذا لم تكن هناك ألوان' : 'Leave empty if no colors apply'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  {language === 'ar' ? 'وسوم البحث (مفصولة بفواصل)' : 'Tags (comma separated)'}
-                </label>
-                <input
-                  type="text"
-                  placeholder="wireless, premium, bluetooth"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              {/* Descriptions */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  {language === 'ar' ? 'الوصف الكامل للمنتج (عربي)' : 'Full Description (Arabic)'}
-                </label>
-                <textarea
-                  rows={3}
-                  dir="rtl"
-                  placeholder="اكتب مواصفات وتفاصيل المنتج للعملاء..."
-                  value={formData.descriptionAr}
-                  onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="p-4 border-t border-slate-200 flex justify-end gap-2 -mx-6 -mb-6 bg-slate-50 rounded-b-3xl">
+              {/* Modal Bottom Buttons */}
+              <div className="p-4 border-t border-slate-200 flex items-center justify-between -mx-6 -mb-6 bg-slate-50 rounded-b-3xl">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors"
+                  className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors shadow-2xs"
                 >
                   {language === 'ar' ? 'إلغاء' : 'Cancel'}
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
-                >
-                  {editingProduct ? (language === 'ar' ? 'حفظ التعديلات' : 'Save Changes') : (language === 'ar' ? 'إضافة المنتج' : 'Create Product')}
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-1.5"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>
+                      {editingProduct 
+                        ? (language === 'ar' ? 'حفظ تعديلات المنتج' : 'Save Changes') 
+                        : (language === 'ar' ? 'إضافة المنتج للكتالوج' : 'Create Product')}
+                    </span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

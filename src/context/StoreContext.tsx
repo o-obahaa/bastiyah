@@ -1055,6 +1055,50 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 })
               );
             }
+          } else if (data.type === 'PRODUCT_UPDATED') {
+            if (data.storeId && data.productId && data.updates) {
+              setStores((prevStores) =>
+                prevStores.map((st) => {
+                  if (st.id === data.storeId || st.slug === data.storeId) {
+                    return {
+                      ...st,
+                      products: (st.products || []).map((p) => p.id === data.productId ? { ...p, ...data.updates } : p),
+                    };
+                  }
+                  return st;
+                })
+              );
+            }
+          } else if (data.type === 'PRODUCT_ADDED') {
+            if (data.storeId && data.product) {
+              setStores((prevStores) =>
+                prevStores.map((st) => {
+                  if (st.id === data.storeId || st.slug === data.storeId) {
+                    const exists = (st.products || []).some((p) => p.id === data.product.id);
+                    if (exists) return st;
+                    return {
+                      ...st,
+                      products: [data.product, ...(st.products || [])],
+                    };
+                  }
+                  return st;
+                })
+              );
+            }
+          } else if (data.type === 'PRODUCT_DELETED') {
+            if (data.storeId && data.productId) {
+              setStores((prevStores) =>
+                prevStores.map((st) => {
+                  if (st.id === data.storeId || st.slug === data.storeId) {
+                    return {
+                      ...st,
+                      products: (st.products || []).filter((p) => p.id !== data.productId),
+                    };
+                  }
+                  return st;
+                })
+              );
+            }
           }
         };
       } catch {}
@@ -2850,7 +2894,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...store,
       products: [newProduct, ...store.products],
     }));
-    addToast(language === 'ar' ? `تمت إضافة المنتج "${newProduct.name}"!` : `Product "${newProduct.name}" created!`, 'success');
+    broadcastPlatformSync({
+      type: 'PRODUCT_ADDED',
+      storeId: activeStore.id,
+      product: newProduct,
+    });
+    addToast(language === 'ar' ? `تمت إضافة المنتج "${newProduct.nameAr || newProduct.name}"!` : `Product "${newProduct.name}" created!`, 'success');
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
@@ -2858,7 +2907,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...store,
       products: store.products.map((p) => (p.id === id ? { ...p, ...updates } : p)),
     }));
-    addToast(language === 'ar' ? 'تم تحديث المنتج بنجاح' : 'Product updated successfully', 'success');
+    broadcastPlatformSync({
+      type: 'PRODUCT_UPDATED',
+      storeId: activeStore.id,
+      productId: id,
+      updates,
+    });
+    addToast(language === 'ar' ? 'تم تحديث بيانات المنتج بنجاح' : 'Product updated successfully', 'success');
   };
 
   const deleteProduct = (id: string) => {
@@ -2867,7 +2922,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...store,
       products: store.products.filter((item) => item.id !== id),
     }));
-    addToast(language === 'ar' ? `تم حذف المنتج "${p?.name || id}"` : `Product "${p?.name || id}" removed`, 'info');
+    broadcastPlatformSync({
+      type: 'PRODUCT_DELETED',
+      storeId: activeStore.id,
+      productId: id,
+    });
+    addToast(language === 'ar' ? `تم حذف المنتج "${p?.nameAr || p?.name || id}"` : `Product "${p?.name || id}" removed`, 'info');
   };
 
   const updateSettings = (newSettings: Partial<StoreSettings>) => {
