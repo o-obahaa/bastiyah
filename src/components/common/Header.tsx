@@ -76,6 +76,19 @@ export const Header: React.FC = () => {
   const displayStoreName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
   const isDarkHeader = activeStore.design.headerStyle === 'dark';
 
+  // Dynamic logo size resolution (Customizable by store manager)
+  const getLogoSizePx = (size?: string | number): number => {
+    if (typeof size === 'number' && size >= 24 && size <= 100) return size;
+    switch (size) {
+      case 'sm': return 32;
+      case 'md': return 42;
+      case 'lg': return 54;
+      case 'xl': return 68;
+      default: return 42;
+    }
+  };
+  const logoSizePx = getLogoSizePx(activeStore.design.logoSize);
+
   return (
     <header
       className={`sticky top-0 z-40 backdrop-blur-md border-b transition-all shadow-sm ${
@@ -109,30 +122,39 @@ export const Header: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4">
-          {/* Store Logo & Custom Domain Subtitle */}
+          {/* Store Logo & Title (Borderless with customizable size) */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
                 setCurrentPage('home');
                 setSelectedCategory('All');
               }}
-              className="flex items-center gap-2.5 group text-start"
+              className="flex items-center gap-2.5 group text-start shrink-0"
             >
               <div
-                className="w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform p-1 border overflow-hidden"
+                className="flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
                 style={{
-                  backgroundColor: `${theme.hex}20`,
-                  borderColor: `${theme.hex}50`,
+                  height: `${logoSizePx}px`,
+                  minWidth: `${logoSizePx}px`,
                 }}
               >
                 {activeStore.design.customLogoUrl ? (
                   <img
                     src={activeStore.design.customLogoUrl}
                     alt={displayStoreName}
-                    className="w-full h-full object-cover rounded-xl"
+                    className="max-h-full w-auto object-contain select-none"
+                    style={{
+                      maxHeight: `${logoSizePx}px`,
+                      maxWidth: `${logoSizePx * 2.5}px`,
+                    }}
                   />
                 ) : (
-                  <span className="text-2xl select-none" role="img" aria-label={displayStoreName}>
+                  <span
+                    className="select-none leading-none"
+                    role="img"
+                    aria-label={displayStoreName}
+                    style={{ fontSize: `${Math.round(logoSizePx * 0.75)}px` }}
+                  >
                     {activeStore.design.logoEmoji}
                   </span>
                 )}
@@ -149,19 +171,35 @@ export const Header: React.FC = () => {
             </button>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-5 sm:gap-6">
+          {/* Desktop Navigation Links (Conveniently ordered: Home -> Shop All -> Categories -> My Orders) */}
+          <nav className="hidden md:flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+            <button
+              onClick={() => {
+                setCurrentPage('home');
+                setSelectedCategory('All');
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
+                currentPage === 'home'
+                  ? `${theme.text} bg-slate-100/90 font-bold shadow-2xs`
+                  : isDarkHeader
+                  ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+              }`}
+            >
+              {language === 'ar' ? 'الرئيسية' : 'Home'}
+            </button>
+
             <button
               onClick={() => {
                 setCurrentPage('shop');
                 setSelectedCategory('All');
               }}
-              className={`text-sm font-semibold transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
                 currentPage === 'shop' && selectedCategory === 'All'
-                  ? theme.text
+                  ? `${theme.text} bg-slate-100/90 font-bold shadow-2xs`
                   : isDarkHeader
-                  ? 'text-slate-300 hover:text-white'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
               }`}
             >
               {t.navShopAll}
@@ -174,12 +212,12 @@ export const Header: React.FC = () => {
                   setCurrentPage('shop');
                   setSelectedCategory(cat);
                 }}
-                className={`text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${
                   currentPage === 'shop' && selectedCategory === cat
-                    ? `${theme.text} font-bold`
+                    ? `${theme.text} bg-slate-100/90 font-bold shadow-2xs`
                     : isDarkHeader
-                    ? 'text-slate-300 hover:text-white'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
                 }`}
               >
                 {getCategoryName(cat)}
@@ -188,24 +226,25 @@ export const Header: React.FC = () => {
 
             <button
               onClick={() => setCurrentPage('orders')}
-              className={`text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 currentPage === 'orders'
-                  ? `${theme.text} font-bold`
+                  ? `${theme.text} bg-slate-100/90 font-bold shadow-2xs`
                   : isDarkHeader
-                  ? 'text-slate-300 hover:text-white'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
               }`}
             >
-              {t.navMyOrders}
+              <Package className="w-3.5 h-3.5 opacity-70" />
+              <span>{t.navMyOrders}</span>
             </button>
           </nav>
 
-          {/* Actions: Store Design, Store Admin, Wishlist, Cart */}
+          {/* Actions: Search, Wishlist, Language, User Account, Cart */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Search Icon Button */}
+            {/* 1. Search Icon Button */}
             <button
               onClick={() => setIsSearchOpen((prev) => !prev)}
-              className={`p-2 rounded-xl border transition-all ${
+              className={`p-2 rounded-full border transition-all ${
                 isSearchOpen
                   ? (isDarkHeader ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900')
                   : (isDarkHeader ? 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs')
@@ -216,13 +255,31 @@ export const Header: React.FC = () => {
               {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
 
-            {/* Language Switcher - on desktop/tablet */}
+            {/* 2. Wishlist Button */}
+            <button
+              onClick={() => setCurrentPage('wishlist')}
+              className={`hidden md:flex relative p-2 rounded-full border transition-all ${
+                currentPage === 'wishlist'
+                  ? (isDarkHeader ? 'bg-slate-800 border-slate-700 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-600')
+                  : (isDarkHeader ? 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:text-rose-400 hover:bg-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-rose-600 hover:bg-slate-100 shadow-2xs')
+              }`}
+              title={t.navWishlist}
+            >
+              <Heart className={`w-4 h-4 ${wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : ''}`} />
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1 -end-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+
+            {/* 3. Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
                 isDarkHeader
                   ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 shadow-2xs'
               }`}
               title={language === 'en' ? 'التحويل للغة العربية' : 'Switch to English'}
             >
@@ -236,21 +293,21 @@ export const Header: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className={`flex items-center gap-1.5 sm:gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                    className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-bold transition-all border ${
                       isDarkHeader
                         ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-750'
                         : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-2xs'
                     }`}
                     title={currentCustomer.name}
                   >
-                    <div className="relative">
+                    <div className="relative shrink-0">
                       <img
                         src={currentCustomer.avatar || ANONYMOUS_USER_AVATAR}
                         alt={currentCustomer.name}
                         onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
-                        className="w-7 h-7 rounded-xl object-cover bg-slate-100"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover bg-slate-100 ring-1 ring-slate-200"
                       />
-                      <span className="absolute -bottom-1 -end-1 w-3.5 h-3.5 bg-[#25D366] text-white rounded-full flex items-center justify-center text-[8px] font-black shadow-xs ring-1 ring-white">
+                      <span className="absolute -bottom-0.5 -end-0.5 w-3.5 h-3.5 bg-[#25D366] text-white rounded-full flex items-center justify-center text-[7.5px] font-black shadow-xs ring-1.5 ring-white">
                         ✓
                       </span>
                     </div>
@@ -278,7 +335,7 @@ export const Header: React.FC = () => {
                               src={currentCustomer.avatar || ANONYMOUS_USER_AVATAR}
                               alt=""
                               onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
-                              className="w-9 h-9 rounded-xl object-cover bg-slate-100 shrink-0 border border-slate-200"
+                              className="w-10 h-10 rounded-full object-cover bg-slate-100 shrink-0 border border-slate-200 ring-1 ring-slate-100"
                             />
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-bold text-slate-900 truncate">{currentCustomer.name}</p>
@@ -365,7 +422,7 @@ export const Header: React.FC = () => {
                 /* User Account trigger when not logged in */
                 <button
                   onClick={() => setIsCustomerAuthModalOpen(true)}
-                  className={`flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all border shadow-2xs ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-bold transition-all border shadow-2xs ${
                     isDarkHeader
                       ? 'bg-slate-800/90 hover:bg-slate-750 text-white border-slate-700'
                       : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
@@ -373,7 +430,7 @@ export const Header: React.FC = () => {
                   title={language === 'ar' ? 'تسجيل الدخول / إنشاء حساب بالهاتف' : 'Sign In / Register'}
                 >
                   <div 
-                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
                     style={{ backgroundColor: `${theme.hex}18`, color: theme.hex }}
                   >
                     <User className="w-3.5 h-3.5" />
@@ -385,28 +442,10 @@ export const Header: React.FC = () => {
               )}
             </div>
 
-            {/* Wishlist Button - on desktop/tablet */}
-            <button
-              onClick={() => setCurrentPage('wishlist')}
-              className={`hidden md:flex relative p-2.5 rounded-full transition-colors ${
-                isDarkHeader
-                  ? 'text-slate-300 hover:text-rose-400 hover:bg-slate-800'
-                  : 'text-slate-600 hover:text-rose-600 hover:bg-slate-100'
-              }`}
-              title={t.navWishlist}
-            >
-              <Heart className={`w-5 h-5 ${wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : ''}`} />
-              {wishlist.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
-                  {wishlist.length}
-                </span>
-              )}
-            </button>
-
-            {/* Cart Button */}
+            {/* 5. Cart Button */}
             <button
               onClick={() => setIsCartDrawerOpen(true)}
-              className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-white rounded-xl shadow-md transition-all active:scale-95 shrink-0"
+              className="relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-white rounded-full shadow-md transition-all active:scale-95 shrink-0"
               style={{ backgroundColor: theme.hex }}
               title={t.navBag}
             >
@@ -421,10 +460,10 @@ export const Header: React.FC = () => {
               )}
             </button>
 
-            {/* Mobile menu hamburger */}
+            {/* 6. Mobile menu hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`md:hidden p-2 rounded-xl border transition-colors shrink-0 ${
+              className={`md:hidden p-2 rounded-full border transition-colors shrink-0 ${
                 isDarkHeader 
                   ? 'bg-slate-800/80 border-slate-700/80 text-white hover:bg-slate-700' 
                   : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'

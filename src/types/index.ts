@@ -296,6 +296,7 @@ export interface StoreDesign {
   cardRadius: 'rounded' | 'pill' | 'sharp';
   heroBannerUrl?: string;
   customLogoUrl?: string;
+  logoSize?: 'sm' | 'md' | 'lg' | 'xl' | number;
   showAnnouncementBar?: boolean;
   announcementText?: string;
   announcementTextAr?: string;

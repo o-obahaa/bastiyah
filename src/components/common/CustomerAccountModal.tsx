@@ -127,7 +127,7 @@ export const CustomerAccountModal: React.FC = () => {
                 src={currentCustomer?.avatar || ANONYMOUS_USER_AVATAR}
                 alt={name}
                 onError={(e) => { (e.target as HTMLImageElement).src = ANONYMOUS_USER_AVATAR; }}
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-white/60 shadow-md bg-white/20"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white/80 shadow-md bg-white/20"
               />
             </div>
 

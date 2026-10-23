@@ -37,6 +37,11 @@ export default defineSchema({
       headerStyle: v.union(v.literal("light"), v.literal("dark")),
       cardRadius: v.union(v.literal("rounded"), v.literal("pill"), v.literal("sharp")),
       heroBannerUrl: v.optional(v.string()),
+      customLogoUrl: v.optional(v.string()),
+      logoSize: v.optional(v.union(v.string(), v.number())),
+      showAnnouncementBar: v.optional(v.boolean()),
+      announcementText: v.optional(v.string()),
+      announcementTextAr: v.optional(v.string()),
     }),
     settings: v.object({
       storeName: v.string(),

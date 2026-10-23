@@ -63,6 +63,14 @@ export const AdminStoreDesign: React.FC = () => {
   const [instagramUrl, setInstagramUrl] = useState(activeStore.design.instagramUrl || '');
   const [tiktokUrl, setTiktokUrl] = useState(activeStore.design.tiktokUrl || '');
   const [customLogoUrl, setCustomLogoUrl] = useState(activeStore.design.customLogoUrl || '');
+  const [logoSize, setLogoSize] = useState<number>(() => {
+    const s = activeStore.design.logoSize;
+    if (typeof s === 'number') return s;
+    if (s === 'sm') return 32;
+    if (s === 'lg') return 54;
+    if (s === 'xl') return 68;
+    return 42;
+  });
 
   // Direct Logo upload state
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -85,7 +93,16 @@ export const AdminStoreDesign: React.FC = () => {
     setInstagramUrl(activeStore.design.instagramUrl || '');
     setTiktokUrl(activeStore.design.tiktokUrl || '');
     setCustomLogoUrl(activeStore.design.customLogoUrl || '');
+
+    const s = activeStore.design.logoSize;
+    const initialPx = typeof s === 'number' ? s : s === 'sm' ? 32 : s === 'lg' ? 54 : s === 'xl' ? 68 : 42;
+    setLogoSize(initialPx);
   }, [activeStore]);
+
+  const handleLogoSizeChange = (newSize: number) => {
+    setLogoSize(newSize);
+    updateStoreDesign({ logoSize: newSize });
+  };
 
   const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -167,6 +184,7 @@ export const AdminStoreDesign: React.FC = () => {
     // Save design enhancements
     updateStoreDesign({
       customLogoUrl: customLogoUrl.trim() || undefined,
+      logoSize,
       showAnnouncementBar,
       announcementText: showAnnouncementBar ? announcementText.trim() || undefined : undefined,
       announcementTextAr: showAnnouncementBar ? announcementTextAr.trim() || undefined : undefined,
@@ -673,31 +691,33 @@ export const AdminStoreDesign: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Dual Background Preview: Light & Dark Header Contrast */}
+                {/* Dual Background Preview: Light & Dark Header Contrast (Borderless) */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div className="p-3.5 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center gap-1.5 text-center shadow-xs">
-                    <div className="w-16 h-16 flex items-center justify-center p-1 bg-slate-50 rounded-lg border border-slate-100">
+                    <div className="h-14 flex items-center justify-center">
                       <img
                         src={customLogoUrl}
                         alt="Store Logo Light"
-                        className="max-h-full max-w-full object-contain"
+                        className="max-h-full w-auto object-contain"
+                        style={{ maxHeight: `${Math.min(logoSize, 56)}px` }}
                       />
                     </div>
                     <span className="text-[10px] text-slate-400 font-medium">
-                      {language === 'ar' ? 'على شريط فاتح' : 'On light header'}
+                      {language === 'ar' ? 'على شريط فاتح (بدون إطار)' : 'On light header (Borderless)'}
                     </span>
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-900 flex flex-col items-center justify-center gap-1.5 text-center shadow-xs">
-                    <div className="w-16 h-16 flex items-center justify-center p-1 bg-slate-900 rounded-lg border border-slate-800">
+                    <div className="h-14 flex items-center justify-center">
                       <img
                         src={customLogoUrl}
                         alt="Store Logo Dark"
-                        className="max-h-full max-w-full object-contain"
+                        className="max-h-full w-auto object-contain"
+                        style={{ maxHeight: `${Math.min(logoSize, 56)}px` }}
                       />
                     </div>
                     <span className="text-[10px] text-slate-400 font-medium">
-                      {language === 'ar' ? 'على شريط داكن' : 'On dark header'}
+                      {language === 'ar' ? 'على شريط داكن (بدون إطار)' : 'On dark header (Borderless)'}
                     </span>
                   </div>
                 </div>
@@ -783,6 +803,91 @@ export const AdminStoreDesign: React.FC = () => {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Logo Size Customization */}
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">
+                    {language === 'ar' ? 'حجم الشعار في شريط التنقل (بدون إطار):' : 'Logo Size in Navigation Bar (Borderless):'}
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    {language === 'ar' ? 'تحكم بحجم ظهور الشعار ليناسب هوية علامتك التجارية بدقة' : 'Fine-tune your logo dimensions to match your brand identity'}
+                  </p>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 text-xs font-mono font-bold">
+                  {logoSize}px
+                </span>
+              </div>
+
+              {/* Presets */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: language === 'ar' ? 'صغير' : 'Small', px: 32 },
+                  { label: language === 'ar' ? 'متوسط' : 'Medium', px: 42 },
+                  { label: language === 'ar' ? 'كبير' : 'Large', px: 54 },
+                  { label: language === 'ar' ? 'كبير جداً' : 'X-Large', px: 68 },
+                ].map((preset) => (
+                  <button
+                    key={preset.px}
+                    type="button"
+                    onClick={() => handleLogoSizeChange(preset.px)}
+                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all ${
+                      logoSize === preset.px
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{preset.label}</span>
+                    <span className="block text-[10px] opacity-70 font-mono mt-0.5">{preset.px}px</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Precision Slider */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>24px ({language === 'ar' ? 'ناعم' : 'Compact'})</span>
+                  <span>80px ({language === 'ar' ? 'عريض' : 'Prominent'})</span>
+                </div>
+                <input
+                  type="range"
+                  min="24"
+                  max="80"
+                  step="2"
+                  value={logoSize}
+                  onChange={(e) => handleLogoSizeChange(Number(e.target.value))}
+                  className="w-full accent-purple-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Live Borderless Preview at exact configured size */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between p-3 rounded-2xl bg-slate-50/70 border border-slate-200/60">
+                <span className="text-[11px] text-slate-600 font-semibold">
+                  {language === 'ar' ? 'المظهر الفعلي للشعار بدون أي إطار:' : 'Actual appearance without borders:'}
+                </span>
+                <div
+                  className="flex items-center justify-center shrink-0"
+                  style={{ height: `${logoSize}px`, minWidth: `${logoSize}px` }}
+                >
+                  {customLogoUrl ? (
+                    <img
+                      src={customLogoUrl}
+                      alt="Logo Preview"
+                      className="max-h-full w-auto object-contain select-none"
+                      style={{ maxHeight: `${logoSize}px`, maxWidth: `${logoSize * 2.5}px` }}
+                    />
+                  ) : (
+                    <span
+                      className="select-none leading-none"
+                      style={{ fontSize: `${Math.round(logoSize * 0.75)}px` }}
+                    >
+                      {activeStore.design.logoEmoji}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -922,13 +1027,13 @@ export const AdminStoreDesign: React.FC = () => {
                 }`}>
                   <div className="flex items-center gap-2">
                     <div 
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shadow-2xs overflow-hidden"
-                      style={{ backgroundColor: `${theme.hex}20` }}
+                      className="flex items-center justify-center shrink-0"
+                      style={{ height: `${Math.min(Math.max(logoSize * 0.55, 18), 30)}px` }}
                     >
                       {customLogoUrl ? (
-                        <img src={customLogoUrl} alt="" className="w-full h-full object-contain p-0.5" />
+                        <img src={customLogoUrl} alt="" className="max-h-full w-auto object-contain select-none" />
                       ) : (
-                        <span>{activeStore.design.logoEmoji}</span>
+                        <span style={{ fontSize: `${Math.min(Math.max(logoSize * 0.45, 14), 22)}px` }}>{activeStore.design.logoEmoji}</span>
                       )}
                     </div>
                     <span className="font-black text-xs truncate max-w-[120px]">
