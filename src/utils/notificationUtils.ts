@@ -1,4 +1,5 @@
 import { Order, HostedStore } from '../types';
+import { logWhatsAppActivity } from './whatsappPlatformUtils';
 
 /**
  * Utility functions for Order Notifications, Audio Chimes, and Browser Web Notifications.
@@ -313,6 +314,25 @@ export const dispatchOrderWhatsAppToManager = async (
   if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
 
   const message = formatOrderWhatsAppMessage(order, storeName, currency);
+
+  // Automatically log this outbound WhatsApp order notification in platform activity feed
+  try {
+    logWhatsAppActivity({
+      direction: 'outbound',
+      storeId: store.id,
+      storeName,
+      storeSlug: store.slug,
+      recipientName: store.ownerName || 'مدير المتجر',
+      recipientPhone: `+${cleanPhone}`,
+      categoryLabelAr: 'تنبيه طلب جديد',
+      categoryLabelEn: 'New Order Alert',
+      content: message,
+      status: 'sent',
+      orderNumber: order.orderNumber,
+    });
+  } catch (e) {
+    // silently continue
+  }
 
   // 0. Auto-register order in Convex database so WhatsApp Bot commands (confirm, ship, info) always succeed
   const convexSiteUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_CONVEX_SITE_URL) || 'https://fine-lemming-449.convex.site').trim();

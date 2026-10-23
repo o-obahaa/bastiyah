@@ -65,6 +65,7 @@ import {
   Send
 } from 'lucide-react';
 import { ImageUploader } from '../common/ImageUploader';
+import { OwnerWhatsAppManager } from './OwnerWhatsAppManager';
 import { useStore } from '../../context/StoreContext';
 import { StoreThemeColor, StoreLayoutStyle, HostedStore, Order, OrderStatus } from '../../types';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
@@ -197,7 +198,7 @@ const QUICK_PRESETS = [
   },
 ];
 
-export type OwnerAdminTab = 'stores' | 'analytics' | 'merchants' | 'orders' | 'plans' | 'settings';
+export type OwnerAdminTab = 'stores' | 'analytics' | 'merchants' | 'orders' | 'whatsapp' | 'plans' | 'settings';
 
 export const BastiyahOwnerAdmin: React.FC = () => {
   const {
@@ -1080,6 +1081,13 @@ export const BastiyahOwnerAdmin: React.FC = () => {
       labelEn: 'Live Orders Feed',
       icon: ShoppingBag,
       count: totalPlatformOrders,
+    },
+    {
+      id: 'whatsapp' as OwnerAdminTab,
+      labelAr: 'رسائل وقوالب واتساب',
+      labelEn: 'WhatsApp & Messages',
+      icon: MessageCircle,
+      count: 6,
     },
     {
       id: 'plans' as OwnerAdminTab,
@@ -2589,6 +2597,13 @@ export const BastiyahOwnerAdmin: React.FC = () => {
 
           </div>
         )}
+
+        {/* 
+          ========================================================================
+          TAB: WHATSAPP ENGINE & INBOX (رسائل وقوالب واتساب الافتراضية والأنشطة)
+          ========================================================================
+        */}
+        {activeOwnerTab === 'whatsapp' && <OwnerWhatsAppManager />}
 
         {/* 
           ========================================================================
