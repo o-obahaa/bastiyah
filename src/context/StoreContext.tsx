@@ -415,7 +415,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               ownerPhone: resolvedOwnerPhone,
               design: {
                 ...s.design,
-                heroConfig: s.design?.heroConfig || initMatch?.design?.heroConfig,
+                heroConfig: s.design?.heroConfig ? {
+                  ...s.design.heroConfig,
+                  fullWidth: false,
+                  roundedCorners: true,
+                  height: s.design.heroConfig.height === 'fullscreen' ? 'fullscreen' : 'aspect-banner',
+                } : initMatch?.design?.heroConfig,
               },
               settings: {
                 ...s.settings,

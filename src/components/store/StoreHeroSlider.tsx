@@ -156,11 +156,7 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
   };
 
   return (
-    <div
-      className={`relative w-full ${config.fullWidth ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'} ${
-        config.spacingTop ? 'pt-6 sm:pt-8' : ''
-      } ${config.spacingBottom ? 'pb-6 sm:pb-8' : ''}`}
-    >
+    <div className="relative w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2">
       <section
         role="region"
         aria-roledescription="carousel"
@@ -172,9 +168,9 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={`relative w-full overflow-hidden select-none outline-none ${
-          config.roundedCorners ? 'rounded-3xl shadow-xl' : ''
-        } ${heightClasses[config.height]} bg-slate-950`}
+        className={`relative w-full overflow-hidden select-none outline-none rounded-2xl sm:rounded-3xl shadow-md sm:shadow-lg border border-slate-200/80 dark:border-slate-800 ${
+          heightClasses[config.height] || 'aspect-[16/7] sm:aspect-[16/5] w-full'
+        } bg-slate-950`}
         style={customHeightStyle}
       >
         {/* Slides Track */}
