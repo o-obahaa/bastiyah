@@ -32,6 +32,48 @@ let connectedPhone = null;
 // Map sent notification messageId -> orderNumber for 100% accurate reply tracking
 const sentOrderMessages = new Map();
 
+// In-memory + persisted message cache to resolve "Waiting for this message" decryption retries
+const recentMessages = new Map();
+const recentMessageTexts = new Map();
+const CACHE_FILE = path.join(AUTH_DIR, 'messages_cache.json');
+
+function loadMessageCache() {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const data = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const [id, text] of data) {
+          recentMessageTexts.set(id, text);
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function saveMessage(id, message, text) {
+  if (!id) return;
+  if (message) recentMessages.set(id, message);
+  if (text) recentMessageTexts.set(id, text);
+
+  // Maintain sliding window of 500 messages
+  if (recentMessages.size > 500) {
+    const firstKey = recentMessages.keys().next().value;
+    recentMessages.delete(firstKey);
+  }
+  if (recentMessageTexts.size > 500) {
+    const firstKey = recentMessageTexts.keys().next().value;
+    recentMessageTexts.delete(firstKey);
+  }
+
+  // Debounced persistence to AUTH_DIR
+  try {
+    const entries = Array.from(recentMessageTexts.entries()).slice(-200);
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(entries), 'utf8');
+  } catch (e) {}
+}
+
+loadMessageCache();
+
 // Ensure auth directory exists
 if (!fs.existsSync(AUTH_DIR)) {
   fs.mkdirSync(AUTH_DIR, { recursive: true });
@@ -119,6 +161,20 @@ async function connectToWhatsApp() {
     connectTimeoutMs: 60000,
     defaultQueryTimeoutMs: 60000,
     keepAliveIntervalMs: 25000,
+    syncFullHistory: false,
+    markOnlineOnConnect: true,
+    retryRequestDelayMs: 250,
+    maxMsgRetryCount: 5,
+    getMessage: async (key) => {
+      if (!key?.id) return undefined;
+      const cachedMsg = recentMessages.get(key.id);
+      if (cachedMsg) return cachedMsg;
+      const cachedText = recentMessageTexts.get(key.id);
+      if (cachedText) {
+        return { conversation: cachedText };
+      }
+      return undefined;
+    },
   });
 
   sock.ev.on('creds.update', async () => {
@@ -178,6 +234,15 @@ async function connectToWhatsApp() {
   sock.ev.on('messages.upsert', async ({ messages }) => {
     try {
       if (!messages || messages.length === 0) return;
+
+      // Cache all messages for retry receipts
+      for (const msg of messages) {
+        if (msg.key?.id) {
+          const txt = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+          saveMessage(msg.key.id, msg.message, txt);
+        }
+      }
+
       const m = messages[0];
 
       if (!m.message || m.key.fromMe || m.key.remoteJid === 'status@broadcast') return;
@@ -210,7 +275,10 @@ async function connectToWhatsApp() {
       if (res.ok) {
         const { reply } = await res.json().catch(() => ({}));
         if (reply && typeof reply === 'string') {
-          await sock.sendMessage(senderJid, { text: reply }, { quoted: m });
+          const sentReply = await sock.sendMessage(senderJid, { text: reply }, { quoted: m });
+          if (sentReply?.key?.id) {
+            saveMessage(sentReply.key.id, sentReply.message, reply);
+          }
           console.log(`[Bastiyah Gateway] 🤖 Replied to ${senderJid} with command response.`);
         }
       }
@@ -353,6 +421,9 @@ app.post('/send-otp', async (req, res) => {
     const messageText = `مرحباً بك في *${store}* 🛍️\n\nرمز تسجيل دخولك إلى حسابك هو:\n*${code}*\n\n(الرمز صالح لمدة 10 دقائق. لا تشارك الرمز مع أي شخص).`;
 
     const sent = await sock.sendMessage(jid, { text: messageText });
+    if (sent?.key?.id) {
+      saveMessage(sent.key.id, sent.message, messageText);
+    }
 
     console.log(`[Bastiyah Gateway] ✅ OTP [${code}] dispatched to ${cleanPhone} via WhatsApp! MsgId: ${sent?.key?.id}`);
 
@@ -395,6 +466,10 @@ app.post('/send-message', async (req, res) => {
     const jid = `${cleanPhone}@s.whatsapp.net`;
 
     const sent = await sock.sendMessage(jid, { text: message });
+
+    if (sent?.key?.id) {
+      saveMessage(sent.key.id, sent.message, message);
+    }
 
     // Map WhatsApp message ID to orderNumber for 100% exact reply matching
     const orderMatch = message.match(/#([A-Za-z0-9]+-[0-9]+|[0-9]{4,6})/);
