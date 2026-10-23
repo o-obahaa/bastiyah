@@ -4,11 +4,16 @@ import { v } from "convex/values";
 export const listByStore = query({
   args: { storeId: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("orders")
-      .withIndex("by_store", (q) => q.eq("storeId", args.storeId))
-      .order("desc")
-      .collect();
+    const slug = args.storeId.toLowerCase().trim();
+    const orders = await ctx.db.query("orders").order("desc").collect();
+    return orders.filter((o) => {
+      const orderStore = (o.storeId || "").toLowerCase().trim();
+      return (
+        orderStore === slug ||
+        orderStore === args.storeId ||
+        (slug.length >= 3 && o.orderNumber.toLowerCase().startsWith(slug + "-"))
+      );
+    });
   },
 });
 

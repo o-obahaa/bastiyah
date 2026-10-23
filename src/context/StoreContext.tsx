@@ -1380,6 +1380,149 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setToasts((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Real-time synchronization of orders from Convex (WhatsApp bot commands & remote status updates)
+  useEffect(() => {
+    if (!convexClient || !activeStore?.slug) return;
+
+    let isMounted = true;
+    const currentSlug = activeStore.slug;
+    const currentStoreId = activeStore.id;
+
+    const handleRemoteOrders = (remoteOrders: any[]) => {
+      if (!isMounted || !Array.isArray(remoteOrders)) return;
+
+      mutateActiveStore((currentStore) => {
+        let changed = false;
+        const currentOrders = currentStore.orders || [];
+
+        const updatedOrders = currentOrders.map((localOrder) => {
+          const cleanLocal = localOrder.orderNumber.toUpperCase().replace('#', '');
+          const remoteMatch = remoteOrders.find((ro) => {
+            const cleanRemote = (ro.orderNumber || '').toUpperCase().replace('#', '');
+            return cleanRemote === cleanLocal || (cleanLocal.length >= 4 && cleanRemote.endsWith('-' + cleanLocal));
+          });
+
+          if (remoteMatch) {
+            const remoteStatus = remoteMatch.status as OrderStatus;
+            const remoteTracking = remoteMatch.trackingNumber;
+
+            const isStatusDiff = remoteStatus && remoteStatus !== localOrder.status;
+            const isTrackingDiff = remoteTracking !== undefined && remoteTracking !== localOrder.trackingNumber;
+
+            if (isStatusDiff || isTrackingDiff) {
+              changed = true;
+              if (isStatusDiff) {
+                const statusNameAr: Record<string, string> = {
+                  pending: 'قيد المراجعة',
+                  processing: 'قيد التجهيز والتأكيد',
+                  shipped: 'تم الشحن',
+                  delivered: 'تم التوصيل بنجاح',
+                  cancelled: 'ملغي',
+                };
+                const arLabel = statusNameAr[remoteStatus] || remoteStatus;
+                addToast(
+                  language === 'ar'
+                    ? `🤖 تحديث فوري (واتساب): تم تعديل حالة الطلب #${localOrder.orderNumber} إلى "${arLabel}"`
+                    : `🤖 WhatsApp Live: Order #${localOrder.orderNumber} updated to "${remoteStatus}"`,
+                  'success'
+                );
+              }
+              return {
+                ...localOrder,
+                status: isStatusDiff ? remoteStatus : localOrder.status,
+                trackingNumber: isTrackingDiff ? remoteTracking : localOrder.trackingNumber,
+              };
+            }
+          }
+          return localOrder;
+        });
+
+        // Also incorporate any orders that were registered remotely
+        const localNums = new Set(currentOrders.map((o) => o.orderNumber.toUpperCase().replace('#', '')));
+        const newOrdersFromRemote: Order[] = [];
+
+        for (const ro of remoteOrders) {
+          const cleanRemote = (ro.orderNumber || '').toUpperCase().replace('#', '');
+          if (cleanRemote && !localNums.has(cleanRemote)) {
+            changed = true;
+            newOrdersFromRemote.push({
+              id: ro._id || `order-${cleanRemote}`,
+              orderNumber: ro.orderNumber,
+              date: ro.date || new Date(ro._creationTime || Date.now()).toISOString(),
+              customer: {
+                fullName: ro.customer?.fullName || 'عميل المتجر',
+                email: ro.customer?.email || '',
+                phone: ro.customer?.phone || '',
+                address: ro.customer?.address || 'العراق',
+                city: ro.customer?.city || 'العراق',
+                state: ro.customer?.state || 'العراق',
+                zipCode: ro.customer?.zipCode || '10001',
+                country: ro.customer?.country || 'Iraq',
+              },
+              items: (ro.items || []).map((item: any) => ({
+                productId: item.productId || 'p1',
+                productName: item.productName || 'منتج',
+                productImage: item.productImage || '',
+                price: item.price || 0,
+                quantity: item.quantity || 1,
+              })),
+              subtotal: ro.subtotal || 0,
+              discount: ro.discount || 0,
+              shipping: ro.shipping || 0,
+              tax: ro.tax || 0,
+              total: ro.total || 0,
+              status: (ro.status as OrderStatus) || 'pending',
+              paymentMethod: (ro.paymentMethod as any) || 'Cash on Delivery',
+              trackingNumber: ro.trackingNumber,
+            });
+          }
+        }
+
+        if (!changed) return currentStore;
+
+        return {
+          ...currentStore,
+          orders: [...newOrdersFromRemote, ...updatedOrders],
+        };
+      }, currentStoreId);
+    };
+
+    // 1. Reactive subscription via Convex watchQuery
+    let unsubHandle: (() => void) | null = null;
+    try {
+      const clientAny = convexClient as any;
+      if (typeof clientAny?.watchQuery === 'function') {
+        const watch = clientAny.watchQuery(api.orders.listByStore, { storeId: currentSlug });
+        const unsub = watch.onUpdate(() => {
+          const res = watch.localQueryResult();
+          if (res) handleRemoteOrders(res);
+        });
+        unsubHandle = unsub;
+      }
+    } catch (e) {
+      console.warn('Convex subscription note:', e);
+    }
+
+    // 2. High-reliability polling fallback every 3 seconds
+    const intervalId = setInterval(() => {
+      if (!isMounted || !convexClient) return;
+      convexClient
+        .query(api.orders.listByStore, { storeId: currentSlug })
+        .then((remoteOrders: any) => {
+          handleRemoteOrders(remoteOrders);
+        })
+        .catch(() => {});
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+      if (typeof unsubHandle === 'function') {
+        try { unsubHandle(); } catch {}
+      }
+    };
+  }, [activeStore?.id, activeStore?.slug, language]);
+
   // Multi-Store Platform Actions
   const switchStore = (storeIdOrSlug: string, targetPage: ActivePage = 'home') => {
     const found = stores.find(
@@ -2025,6 +2168,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    const targetOrder = activeStore.orders.find((o) => o.id === orderId);
+
     mutateActiveStore((store) => ({
       ...store,
       orders: store.orders.map((order) => (order.id === orderId ? { ...order, status } : order)),
@@ -2033,9 +2178,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       language === 'ar' ? `تم تحديث حالة الطلب إلى "${status}"` : `Order status updated to "${status.toUpperCase()}"`, 
       'success'
     );
+
+    // Sync status change to Convex for WhatsApp bot integration
+    if (convexClient && targetOrder?.orderNumber) {
+      convexClient
+        .mutation(api.orders.updateStatusByOrderNumber, {
+          orderNumber: targetOrder.orderNumber,
+          status,
+          trackingNumber: targetOrder.trackingNumber,
+        })
+        .catch((err) => console.warn('Could not sync status update to Convex:', err));
+    }
   };
 
   const updateOrder = (orderId: string, updates: Partial<Order>) => {
+    const targetOrder = activeStore.orders.find((o) => o.id === orderId);
+
     mutateActiveStore((store) => ({
       ...store,
       orders: store.orders.map((order) => (order.id === orderId ? { ...order, ...updates } : order)),
@@ -2044,6 +2202,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       language === 'ar' ? 'تم تحديث بيانات الطلب بنجاح' : 'Order details updated successfully',
       'success'
     );
+
+    // Sync updates to Convex if status or trackingNumber changed
+    if (convexClient && targetOrder?.orderNumber && (updates.status || updates.trackingNumber !== undefined)) {
+      convexClient
+        .mutation(api.orders.updateStatusByOrderNumber, {
+          orderNumber: targetOrder.orderNumber,
+          status: (updates.status || targetOrder.status) as string,
+          trackingNumber: updates.trackingNumber !== undefined ? updates.trackingNumber : targetOrder.trackingNumber,
+        })
+        .catch((err) => console.warn('Could not sync order updates to Convex:', err));
+    }
   };
 
   // Products CRUD (Admin)

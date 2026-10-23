@@ -40,7 +40,8 @@ export const AdminOrders: React.FC = () => {
     activeStore, 
     t, 
     language, 
-    addToast 
+    addToast,
+    isConvexConnected
   } = useStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -236,7 +237,17 @@ export const AdminOrders: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {isConvexConnected && (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-bold shadow-2xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>{language === 'ar' ? 'مزامنة حية مع بوت واتساب' : 'Live WhatsApp Bot Sync'}</span>
+            </div>
+          )}
+
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-2xs transition-all"
