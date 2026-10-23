@@ -29,6 +29,7 @@ import {
   getIraqiTrackingUrl, 
   findIraqiCourier 
 } from '../../utils/iraqShipping';
+import { dispatchOrderWhatsAppToManager, formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
 
 export const AdminOrders: React.FC = () => {
   const { 
@@ -149,6 +150,25 @@ export const AdminOrders: React.FC = () => {
       : `Hello ${order.customer.fullName}, your order #${order.orderNumber} from ${storeName} has been shipped!\n\nCourier in Iraq: ${courier}\nTracking Number: ${tracking}${trackUrl ? `\nTracking Link: ${trackUrl}` : ''}\n\nThank you for shopping with us!`;
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const [isDispatchingManagerAlert, setIsDispatchingManagerAlert] = useState(false);
+
+  const handleDispatchManagerWhatsApp = async (order: Order) => {
+    setIsDispatchingManagerAlert(true);
+    try {
+      const res = await dispatchOrderWhatsAppToManager(order, activeStore);
+      addToast(
+        language === 'ar'
+          ? `📲 تم إرسال تفاصيل الطلب #${order.orderNumber} بنجاح إلى واتساب المدير (+${res.phone})!`
+          : `Order #${order.orderNumber} dispatched to manager WhatsApp (+${res.phone})!`,
+        'success'
+      );
+    } catch (e) {
+      addToast(language === 'ar' ? 'فشل إرسال إشعار الواتساب' : 'Failed to dispatch WhatsApp alert', 'error');
+    } finally {
+      setIsDispatchingManagerAlert(false);
+    }
   };
 
   const totalRevenueAll = orders.reduce((sum, o) => sum + o.total, 0);
@@ -624,15 +644,40 @@ export const AdminOrders: React.FC = () => {
                       <p className="text-slate-500 font-mono mt-0.5">{inspectingOrder.customer.phone}</p>
                       <p className="text-slate-500">{inspectingOrder.customer.email}</p>
 
-                      {inspectingOrder.customer.phone && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {inspectingOrder.customer.phone && (
+                          <button
+                            type="button"
+                            onClick={() => openWhatsApp(inspectingOrder)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors shadow-xs"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>{language === 'ar' ? 'تواصل مع العميل' : 'WhatsApp Customer'}</span>
+                          </button>
+                        )}
                         <button
-                          onClick={() => openWhatsApp(inspectingOrder)}
-                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors shadow-xs"
+                          type="button"
+                          disabled={isDispatchingManagerAlert}
+                          onClick={() => handleDispatchManagerWhatsApp(inspectingOrder)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 disabled:opacity-60 transition-colors shadow-xs"
                         >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          <span>{language === 'ar' ? 'تواصل مع العميل عبر واتساب' : 'WhatsApp Customer'}</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{isDispatchingManagerAlert ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...') : (language === 'ar' ? 'إرسال لواتساب المدير 📲' : 'Send to Manager WhatsApp')}</span>
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const text = formatOrderWhatsAppMessage(inspectingOrder, activeStore.nameAr || activeStore.name, currency);
+                            navigator.clipboard.writeText(text);
+                            addToast(language === 'ar' ? 'تم نسخ نموذج رسالة الطلب للواتساب!' : 'Order message copied!', 'success');
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors shadow-2xs"
+                          title={language === 'ar' ? 'نسخ نص إشعار الطلب كاملاً' : 'Copy order message text'}
+                        >
+                          <Copy className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{language === 'ar' ? 'نسخ الرسالة' : 'Copy'}</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div>

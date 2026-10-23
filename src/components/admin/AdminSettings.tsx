@@ -32,8 +32,13 @@ import {
   RefreshCw,
   QrCode,
   Radio,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Copy,
+  Eye
 } from 'lucide-react';
+import { formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
+import { Order } from '../../types';
 
 export const AdminSettings: React.FC = () => {
   const { 
@@ -83,6 +88,8 @@ export const AdminSettings: React.FC = () => {
   // WhatsApp Gateway states
   const [isSendingWhatsAppTest, setIsSendingWhatsAppTest] = useState(false);
   const [isCheckingGateway, setIsCheckingGateway] = useState(false);
+  const [isMessagePreviewOpen, setIsMessagePreviewOpen] = useState(false);
+  const [hasCopiedMessage, setHasCopiedMessage] = useState(false);
   const [gatewayStatus, setGatewayStatus] = useState<{
     connected: boolean;
     status: string;
@@ -91,6 +98,65 @@ export const AdminSettings: React.FC = () => {
   } | null>(null);
 
   const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+
+  // Sample realistic order used for WhatsApp notification preview & test dispatch
+  const storeTitle = activeStore.nameAr || activeStore.name;
+  const storeCurrency = activeStore.settings.currency || 'د.ع';
+
+  const previewSampleOrder: Order = {
+    id: 'ord-preview-sample',
+    orderNumber: `${activeStore.slug.toUpperCase().slice(0, 5)}-88240`,
+    date: new Date().toISOString(),
+    customer: {
+      fullName: 'أحمد علي العبيدي',
+      phone: '+964 771 000 0000',
+      email: 'customer@example.iq',
+      address: 'شارع 14 رمضان - مقابل مجمع النور التجاري',
+      city: 'المنصور',
+      state: 'بغداد',
+      zipCode: '10001',
+      country: 'Iraq'
+    },
+    items: [
+      {
+        productId: 'sample-p1',
+        productName: activeStore.products[0]?.nameAr || activeStore.products[0]?.name || 'تيشيرت كاجوال قطني فاخر',
+        productImage: activeStore.products[0]?.images?.[0] || '',
+        price: activeStore.products[0]?.price || 25000,
+        quantity: 2,
+        selectedColor: 'أسود ملكي',
+        selectedSize: 'L'
+      },
+      {
+        productId: 'sample-p2',
+        productName: activeStore.products[1]?.nameAr || activeStore.products[1]?.name || 'حذاء رياضي أنيق وخفيف',
+        productImage: activeStore.products[1]?.images?.[0] || '',
+        price: activeStore.products[1]?.price || 45000,
+        quantity: 1,
+        selectedColor: 'أبيض / رمادي',
+        selectedSize: '42'
+      }
+    ],
+    subtotal: ((activeStore.products[0]?.price || 25000) * 2) + (activeStore.products[1]?.price || 45000),
+    discount: 5000,
+    shipping: activeStore.settings.standardShippingFee || 5000,
+    tax: 0,
+    total: (((activeStore.products[0]?.price || 25000) * 2) + (activeStore.products[1]?.price || 45000) - 5000) + (activeStore.settings.standardShippingFee || 5000),
+    status: 'processing',
+    paymentMethod: 'Cash on Delivery',
+    courier: 'واصل إكسبريس (Wasel Express)',
+    trackingNumber: 'WAS-BG-88412',
+    notes: 'يرجى الاتصال بالزبون قبل التوصيل'
+  };
+
+  const sampleOrderMessage = formatOrderWhatsAppMessage(previewSampleOrder, storeTitle, storeCurrency);
+
+  const handleCopyMessageForm = () => {
+    navigator.clipboard.writeText(sampleOrderMessage);
+    setHasCopiedMessage(true);
+    addToast(language === 'ar' ? 'تم نسخ نموذج رسالة الطلب بنجاح!' : 'Order message form copied!', 'success');
+    setTimeout(() => setHasCopiedMessage(false), 2500);
+  };
 
   const checkGatewayStatus = async () => {
     setIsCheckingGateway(true);
@@ -125,17 +191,16 @@ export const AdminSettings: React.FC = () => {
 
     setIsSendingWhatsAppTest(true);
     try {
-      const storeTitle = activeStore.nameAr || activeStore.name;
       let sentSuccess = false;
 
-      // 1. Try sending full message via /send-message
+      // 1. Try sending full realistic order form via /send-message
       try {
         const res = await fetch(`${gatewayUrl}/send-message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             phone: cleanPhone,
-            message: `🛍️ *فحص تلقائي لإشعارات متجر ${storeTitle}*\n\n✅ يعمل نظام الإشعارات التلقائية بنجاح عبر خادم Render المستضاف!\nسيصلك تنبيه فوري هنا إلى هذا الرقم (+${cleanPhone}) عند قيام أي زبون بإنشاء طلب شراء جديد، تلقائياً بالكامل ودون الحاجة لفتح المتصفح أو أي موقع.`
+            message: sampleOrderMessage
           })
         });
 
@@ -147,7 +212,7 @@ export const AdminSettings: React.FC = () => {
         // Fallback below
       }
 
-      // 2. Fallback to /send-otp if /send-message route is 404 on current Render deployment
+      // 2. Fallback to /send-otp if /send-message route returns 404
       if (!sentSuccess) {
         try {
           const resOtp = await fetch(`${gatewayUrl}/send-otp`, {
@@ -155,7 +220,7 @@ export const AdminSettings: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               phone: cleanPhone,
-              code: '✅ تم فحص وتأكيد الربط التلقائي بنجاح! الإشعارات جاهزة 🚀',
+              code: `طلب جديد #${previewSampleOrder.orderNumber} بمبلغ ${storeCurrency}${previewSampleOrder.total.toLocaleString()} - العميل ${previewSampleOrder.customer.fullName} (${previewSampleOrder.customer.phone})`,
               storeName: storeTitle
             })
           });
@@ -172,13 +237,13 @@ export const AdminSettings: React.FC = () => {
       if (sentSuccess) {
         addToast(
           language === 'ar' 
-            ? `✅ تم إرسال إشعار الفحص التلقائي بنجاح إلى واتساب (+${cleanPhone}) عبر خادم Render!` 
-            : `Automated test notification sent to (+${cleanPhone}) via Render!`, 
+            ? `✅ تم إرسال نموذج إشعار الطلب بنجاح إلى واتساب المدير (+${cleanPhone})!` 
+            : `Order notification form sent to (+${cleanPhone}) via WhatsApp!`, 
           'success'
         );
       } else {
         addToast(
-          language === 'ar' ? '⚠️ تعذر إرسال الإشعار، يرجى التأكد من حالة خادم Render' : 'Failed to dispatch test notification',
+          language === 'ar' ? '⚠️ خادم واتساب في Render بانتظار مسح رمز QR' : 'WhatsApp gateway is waiting for QR scan',
           'error'
         );
       }
@@ -737,6 +802,48 @@ export const AdminSettings: React.FC = () => {
                       <RefreshCw className={`w-3 h-3 ${isCheckingGateway ? 'animate-spin text-indigo-600' : ''}`} />
                     </button>
                   </div>
+                </div>
+
+                {/* Visual Preview & Inspector of WhatsApp Order Form */}
+                <div className="pt-2.5 border-t border-slate-200/70">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setIsMessagePreviewOpen(!isMessagePreviewOpen)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{language === 'ar' ? 'معاينة نموذج رسالة الطلب الجديد (التي يستلمها المدير) 📋' : 'Preview Manager Order WhatsApp Message Form 📋'}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">
+                        ({isMessagePreviewOpen ? (language === 'ar' ? 'إخفاء' : 'Hide') : (language === 'ar' ? 'عرض' : 'Show')})
+                      </span>
+                    </button>
+                    {isMessagePreviewOpen && (
+                      <button
+                        type="button"
+                        onClick={handleCopyMessageForm}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs"
+                      >
+                        {hasCopiedMessage ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-700">{language === 'ar' ? 'تم النسخ!' : 'Copied!'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>{language === 'ar' ? 'نسخ النص' : 'Copy'}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {isMessagePreviewOpen && (
+                    <div className="mt-3 p-3.5 bg-slate-900 text-emerald-300 rounded-2xl border border-slate-800 text-[11px] font-mono leading-relaxed space-y-1 select-all shadow-inner whitespace-pre-line text-right" dir="rtl">
+                      {sampleOrderMessage}
+                    </div>
+                  )}
                 </div>
               </div>
 
