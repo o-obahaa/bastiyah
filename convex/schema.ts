@@ -15,6 +15,7 @@ export default defineSchema({
     ownerName: v.string(),
     ownerEmail: v.string(),
     ownerPhone: v.optional(v.string()),
+    logo: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("maintenance"), v.literal("suspended")),
     plan: v.union(v.literal("Starter"), v.literal("Growth"), v.literal("Enterprise")),
     createdAt: v.string(),
@@ -27,6 +28,7 @@ export default defineSchema({
         v.literal("cyan"),
         v.literal("violet")
       ),
+      customThemeColor: v.optional(v.string()),
       layoutStyle: v.union(
         v.literal("modern-split"),
         v.literal("luxury-centered"),
@@ -42,6 +44,7 @@ export default defineSchema({
       showAnnouncementBar: v.optional(v.boolean()),
       announcementText: v.optional(v.string()),
       announcementTextAr: v.optional(v.string()),
+      heroConfig: v.optional(v.any()),
     }),
     settings: v.object({
       storeName: v.string(),

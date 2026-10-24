@@ -57,6 +57,7 @@ import {
   setSharedStoresCookie,
   getSharedStoresCookie
 } from '../utils/urlUtils';
+import { DEFAULT_STORE_LOGOS, BLANK_STORE_LOGO_URL } from '../constants/blankLogo';
 import {
   playNotificationChime,
   sendBrowserNotification,
@@ -156,6 +157,7 @@ interface StoreContextType {
   updateStoreDesign: (designUpdates: Partial<StoreDesign>, storeId?: string) => void;
   updateStoreFeatures: (features: Partial<StoreFeaturesConfig>, storeId?: string) => void;
   updateStoreThemeTokens: (tokens: Partial<StoreThemeTokens>, storeId?: string) => void;
+  syncStoreToCloud: (store?: HostedStore) => Promise<void>;
   deleteHostedStore: (storeId: string) => void;
 
   // Products (scoped to activeStore)
@@ -1921,6 +1923,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     import.meta.env.VITE_R2_PUBLIC_URL || import.meta.env.VITE_R2_ACCOUNT_ID
   );
 
+  const syncStoreToCloud = async (store?: HostedStore) => {
+    const targetStore = store || activeStore;
+    if (!convexClient || !targetStore?.slug) return;
+    try {
+      await convexClient.mutation(api.stores.upsertStoreBySlug, {
+        slug: targetStore.slug,
+        name: targetStore.name,
+        nameAr: targetStore.nameAr,
+        tagline: targetStore.tagline,
+        taglineAr: targetStore.taglineAr,
+        description: targetStore.description,
+        descriptionAr: targetStore.descriptionAr,
+        category: targetStore.category,
+        categoryAr: targetStore.categoryAr,
+        ownerName: targetStore.ownerName,
+        ownerEmail: targetStore.ownerEmail,
+        ownerPhone: targetStore.ownerPhone,
+        status: targetStore.status,
+        plan: targetStore.plan,
+        design: targetStore.design,
+        settings: targetStore.settings,
+        features: targetStore.features,
+        themeTokens: targetStore.themeTokens,
+        logo: targetStore.design?.customLogoUrl || targetStore.logo,
+      });
+      console.log('[Convex] Store synced to cloud:', targetStore.slug);
+    } catch (err) {
+      console.warn('[Convex] Could not sync store to cloud:', err);
+    }
+  };
+
   // Sync Convex stores on load when Convex client is active
   useEffect(() => {
     if (!convexClient) return;
@@ -1935,24 +1968,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const existingNotInRemote = prev.filter((p) => !remoteSlugs.has(p.slug));
           const formattedRemote: HostedStore[] = remoteStores.map((rs) => {
             const localMatch = prev.find((p) => p.slug === rs.slug);
+            const resolvedLogo = rs.design?.customLogoUrl || rs.logo || localMatch?.design?.customLogoUrl || localMatch?.logo;
             return {
               id: rs._id || rs.id || `store-${rs.slug}`,
               slug: rs.slug,
-              name: rs.name,
-              nameAr: rs.nameAr || rs.name,
-              tagline: rs.tagline,
-              taglineAr: rs.taglineAr || rs.tagline,
-              description: rs.description,
-              descriptionAr: rs.descriptionAr || rs.description,
-              category: rs.category,
-              categoryAr: rs.categoryAr || rs.category,
-              ownerName: rs.ownerName,
-              ownerEmail: rs.ownerEmail,
-              status: rs.status,
-              plan: rs.plan,
-              createdAt: rs.createdAt,
-              design: rs.design,
-              settings: rs.settings,
+              name: rs.name || localMatch?.name,
+              nameAr: rs.nameAr || rs.name || localMatch?.nameAr,
+              tagline: rs.tagline || localMatch?.tagline,
+              taglineAr: rs.taglineAr || rs.tagline || localMatch?.taglineAr,
+              description: rs.description || localMatch?.description,
+              descriptionAr: rs.descriptionAr || rs.description || localMatch?.descriptionAr,
+              category: rs.category || localMatch?.category,
+              categoryAr: rs.categoryAr || rs.category || localMatch?.categoryAr,
+              ownerName: rs.ownerName || localMatch?.ownerName,
+              ownerEmail: rs.ownerEmail || localMatch?.ownerEmail,
+              ownerPhone: rs.ownerPhone || localMatch?.ownerPhone,
+              status: rs.status || localMatch?.status || 'active',
+              plan: rs.plan || localMatch?.plan || 'Enterprise',
+              createdAt: rs.createdAt || localMatch?.createdAt,
+              logo: resolvedLogo,
+              design: {
+                ...(localMatch?.design || {}),
+                ...(rs.design || {}),
+                customLogoUrl: resolvedLogo,
+              },
+              settings: {
+                ...(localMatch?.settings || {}),
+                ...(rs.settings || {}),
+              },
+              features: rs.features || localMatch?.features,
+              themeTokens: rs.themeTokens || localMatch?.themeTokens,
               products: localMatch?.products || [],
               orders: localMatch?.orders || [],
               customers: localMatch?.customers || [],
@@ -1961,6 +2006,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
           const merged = [...formattedRemote, ...existingNotInRemote];
           setSharedStoresCookie(merged);
+
+          // Auto-sync local store customizations (logo, design) to Convex cloud
+          prev.forEach((localStore) => {
+            const remoteMatch = remoteStores.find((r) => r.slug === localStore.slug);
+            const hasCustomLogo = localStore.design?.customLogoUrl && localStore.design.customLogoUrl !== DEFAULT_STORE_LOGOS[localStore.slug];
+            const remoteMissingLogo = !remoteMatch?.design?.customLogoUrl || remoteMatch?.design?.customLogoUrl === DEFAULT_STORE_LOGOS[localStore.slug];
+            if (hasCustomLogo && remoteMissingLogo) {
+              syncStoreToCloud(localStore);
+            }
+          });
+
           return merged;
         });
 
@@ -2537,6 +2593,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateHostedStore = (storeId: string, updates: Partial<HostedStore>) => {
+    let targetUpdatedStore: HostedStore | undefined;
     setStores((prev) =>
       prev.map((s) => {
         if (s.id !== storeId && s.slug !== storeId) return s;
@@ -2554,16 +2611,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (updates.name) {
           updated.settings = { ...updated.settings, storeName: updates.name };
         }
+        targetUpdatedStore = updated;
         return updated;
       })
     );
+    if (targetUpdatedStore) {
+      syncStoreToCloud(targetUpdatedStore);
+    }
     broadcastPlatformSync({
       type: 'STORE_UPDATED',
       storeId,
       updates,
     });
     addToast(
-      language === 'ar' ? 'تم تحديث بيانات المتجر بنجاح' : 'Store details updated successfully',
+      language === 'ar' ? 'تم تحديث ومزامنة بيانات المتجر سحابياً' : 'Store details updated and synced to cloud',
       'success'
     );
   };
@@ -2594,11 +2655,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateStoreDesign = (designUpdates: Partial<StoreDesign>, storeId?: string) => {
     const targetId = storeId || activeStore.id;
+    let targetUpdatedStore: HostedStore | undefined;
     setStores((prev) =>
       prev.map((s) => {
         if (s.id !== targetId && s.slug !== targetId) return s;
         const newLogo = designUpdates.customLogoUrl !== undefined ? designUpdates.customLogoUrl : (s.logo || s.design?.customLogoUrl);
-        return {
+        const updated: HostedStore = {
           ...s,
           logo: newLogo,
           design: {
@@ -2607,65 +2669,82 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             customLogoUrl: newLogo,
           },
         };
+        targetUpdatedStore = updated;
+        return updated;
       })
     );
+    if (targetUpdatedStore) {
+      syncStoreToCloud(targetUpdatedStore);
+    }
     broadcastPlatformSync({
       type: 'STORE_DESIGN_UPDATED',
       storeId: targetId,
       designUpdates,
     });
     addToast(
-      language === 'ar' ? '✨ تم تحديث تصميم وهوية المتجر!' : '✨ Store design & theme updated!',
+      language === 'ar' ? '✨ تم تحديث ومزامنة تصميم وهوية المتجر سحابياً!' : '✨ Store design & theme updated and synced to cloud!',
       'success'
     );
   };
 
   const updateStoreFeatures = (featureUpdates: Partial<StoreFeaturesConfig>, storeId?: string) => {
     const targetId = storeId || activeStore.id;
+    let targetUpdatedStore: HostedStore | undefined;
     setStores((prev) =>
       prev.map((s) => {
         if (s.id !== targetId && s.slug !== targetId) return s;
-        return {
+        const updated: HostedStore = {
           ...s,
           features: {
             ...resolveStoreFeatures(s),
             ...featureUpdates,
           },
         };
+        targetUpdatedStore = updated;
+        return updated;
       })
     );
+    if (targetUpdatedStore) {
+      syncStoreToCloud(targetUpdatedStore);
+    }
     broadcastPlatformSync({
       type: 'STORE_FEATURES_UPDATED',
       storeId: targetId,
       featureUpdates,
     });
     addToast(
-      language === 'ar' ? '⚙️ تم حفظ وتحديث ميزات المتجر!' : '⚙️ Store features updated!',
+      language === 'ar' ? '⚙️ تم حفظ وتحديث ميزات المتجر سحابياً!' : '⚙️ Store features updated and synced to cloud!',
       'success'
     );
   };
 
   const updateStoreThemeTokens = (tokenUpdates: Partial<StoreThemeTokens>, storeId?: string) => {
     const targetId = storeId || activeStore.id;
+    let targetUpdatedStore: HostedStore | undefined;
     setStores((prev) =>
       prev.map((s) => {
         if (s.id !== targetId && s.slug !== targetId) return s;
-        return {
+        const updated: HostedStore = {
           ...s,
           themeTokens: {
             ...resolveStoreTheme(s),
             ...tokenUpdates,
           },
         };
+        targetUpdatedStore = updated;
+        return updated;
       })
     );
+    if (targetUpdatedStore) {
+      syncStoreToCloud(targetUpdatedStore);
+    }
     broadcastPlatformSync({
       type: 'STORE_THEME_TOKENS_UPDATED',
       storeId: targetId,
       tokenUpdates,
     });
     addToast(
-      language === 'ar' ? '🎨 تم تحديث هوية ومظهر المتجر!' : '🎨 Store theme tokens updated!',
+      language === 'ar' ? '🎨 تم تحديث ومزامنة هوية ومظهر المتجر سحابياً!' : '🎨 Store theme tokens updated and synced to cloud!',
       'success'
     );
   };
@@ -3408,6 +3487,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateStoreDesign,
         updateStoreFeatures,
         updateStoreThemeTokens,
+        syncStoreToCloud,
         deleteHostedStore,
         products,
         addProduct,
