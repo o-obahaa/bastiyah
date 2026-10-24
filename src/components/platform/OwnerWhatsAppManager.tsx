@@ -47,7 +47,6 @@ import {
   logWhatsAppActivity,
   deleteStoredWhatsAppActivity,
   clearStoredWhatsAppActivities,
-  syncStoreOrdersToWhatsAppActivities,
 } from '../../utils/whatsappPlatformUtils';
 
 export const OwnerWhatsAppManager: React.FC = () => {
@@ -62,14 +61,8 @@ export const OwnerWhatsAppManager: React.FC = () => {
   const [activeContent, setActiveContent] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
-  // Activities State
-  const [activities, setActivities] = useState<WhatsAppActivity[]>(() => {
-    const loaded = getStoredWhatsAppActivities();
-    if (loaded.length === 0 && stores && stores.length > 0) {
-      return syncStoreOrdersToWhatsAppActivities(stores);
-    }
-    return loaded;
-  });
+  // Activities State: 100% clean, never auto-populates mock/synced items
+  const [activities, setActivities] = useState<WhatsAppActivity[]>(() => getStoredWhatsAppActivities());
   const [activitySearchQuery, setActivitySearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'outbound' | 'inbound'>('all');
   const [storeFilter, setStoreFilter] = useState<string>('all');
@@ -88,12 +81,6 @@ export const OwnerWhatsAppManager: React.FC = () => {
     window.addEventListener('bastiyah_whatsapp_templates_updated', handleTemplatesUpdate);
     window.addEventListener('storage', handleUpdate);
 
-    // Auto-sync existing store orders if inbox has less than store orders
-    if (stores && stores.length > 0) {
-      syncStoreOrdersToWhatsAppActivities(stores);
-      setActivities(getStoredWhatsAppActivities());
-    }
-
     // Polling every 2.5 seconds ensures instantaneous reactivity across tabs
     const pollId = setInterval(handleUpdate, 2500);
 
@@ -103,19 +90,7 @@ export const OwnerWhatsAppManager: React.FC = () => {
       window.removeEventListener('storage', handleUpdate);
       clearInterval(pollId);
     };
-  }, [stores]);
-
-  // Sync Store Orders to WhatsApp Inbox
-  const handleSyncOrders = () => {
-    const updated = syncStoreOrdersToWhatsAppActivities(stores);
-    setActivities(updated);
-    addToast(
-      language === 'ar'
-        ? `✅ تمت مزامنة إشعارات طلبات المتاجر بنجاح (${updated.length} رسالة)`
-        : `✅ Store orders synchronized to WhatsApp inbox (${updated.length} messages)`,
-      'success'
-    );
-  };
+  }, []);
 
   // New Message / Simulation Modal
   const [showSimulateModal, setShowSimulateModal] = useState(false);
@@ -829,15 +804,6 @@ export const OwnerWhatsAppManager: React.FC = () => {
                 </h3>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleSyncOrders}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-200 text-emerald-800 bg-emerald-50/70 hover:bg-emerald-100/80 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                  title={language === 'ar' ? 'مزامنة طلبات المتاجر الحالية إلى السجل' : 'Sync store orders'}
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{language === 'ar' ? 'مزامنة طلبات المتاجر' : 'Sync Store Orders'}</span>
-                </button>
                 {activities.length > 0 && (
                   <button
                     type="button"
@@ -862,18 +828,10 @@ export const OwnerWhatsAppManager: React.FC = () => {
                 </h4>
                 <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                   {language === 'ar'
-                    ? 'تم تنظيف كافة الرسائل العشوائية والافتراضية. ستظهر هنا الرسائل والإشعارات الحقيقية تلقائياً فور قيام الزبائن بإتمام طلبات جديدة في المتاجر.'
-                    : 'All random/placeholder messages have been cleared. Real customer and order WhatsApp notifications will appear here automatically.'}
+                    ? 'تم تنظيف كافة الرسائل العشوائية والافتراضية. ستظهر هنا الرسائل والإشعارات الحقيقية تلقائياً فور قيام الزبائن بإتمام طلبات جديدة في المتاجر أو عند إرسال تجربة.'
+                    : 'All random/placeholder messages have been permanently cleared. Real customer and order WhatsApp notifications will appear here automatically.'}
                 </p>
-                <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSyncOrders}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-xs hover:bg-emerald-700 transition-all cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'مزامنة طلبات المتاجر الحالية' : 'Sync Store Orders Now'}</span>
-                  </button>
+                <div className="pt-2 flex items-center justify-center gap-2">
                   <button
                     type="button"
                     onClick={() => setShowSimulateModal(true)}

@@ -10,9 +10,11 @@ import {
   Truck,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  MessageCircle
 } from 'lucide-react';
 import { getIraqiTrackingUrl } from '../../utils/iraqShipping';
+import { renderWhatsAppTemplate, logWhatsAppActivity } from '../../utils/whatsappPlatformUtils';
 
 export const OrderSuccessPage: React.FC = () => {
   const { lastPlacedOrder, setCurrentPage, t, language, activeStore } = useStore();
@@ -23,6 +25,44 @@ export const OrderSuccessPage: React.FC = () => {
     navigator.clipboard.writeText(code);
     setCopiedTracking(true);
     setTimeout(() => setCopiedTracking(false), 2000);
+  };
+
+  const handleSendWhatsAppConfirmation = () => {
+    if (!lastPlacedOrder) return;
+    const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+    const rendered = renderWhatsAppTemplate('customer_order_confirmation', {
+      customerName: lastPlacedOrder.customer.fullName,
+      storeName,
+      orderNumber: lastPlacedOrder.orderNumber,
+      total: `${lastPlacedOrder.total.toLocaleString()}`,
+      currency,
+      customerAddress: `${lastPlacedOrder.customer.city} - ${lastPlacedOrder.customer.address}`,
+      orderUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/orders`,
+    });
+
+    const rawPhone = activeStore.settings?.notificationSettings?.whatsappAlertPhone || activeStore.design?.whatsappNumber || activeStore.ownerPhone || '9647714834776';
+    let cleanPhone = rawPhone.replace(/\D/g, '');
+    if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone.replace(/^0+/, '')}`;
+
+    try {
+      logWhatsAppActivity({
+        direction: 'outbound',
+        storeId: activeStore.id,
+        storeName,
+        storeSlug: activeStore.slug,
+        recipientName: lastPlacedOrder.customer.fullName,
+        recipientPhone: `+${cleanPhone}`,
+        categoryLabelAr: 'تأكيد الطلب للزبون',
+        categoryLabelEn: 'Customer Confirmation',
+        content: rendered.content,
+        status: 'sent',
+        orderNumber: lastPlacedOrder.orderNumber,
+      });
+    } catch (e) {
+      // ignore
+    }
+
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(rendered.content)}`, '_blank');
   };
 
   useEffect(() => {
@@ -199,6 +239,18 @@ export const OrderSuccessPage: React.FC = () => {
             <span className="font-bold text-slate-900 block mb-1">{t.estimatedArrival}</span>
             <p className="text-emerald-700 font-semibold">{t.carrierUsps}</p>
           </div>
+        </div>
+
+        {/* WhatsApp Direct Confirmation Button */}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={handleSendWhatsAppConfirmation}
+            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs hover:shadow transition-all cursor-pointer"
+          >
+            <MessageCircle className="w-4 h-4 text-white" />
+            <span>{language === 'ar' ? 'تأكيد وإرسال تفاصيل الطلب عبر واتساب المتجر 📲' : 'Confirm Order via Store WhatsApp 📲'}</span>
+          </button>
         </div>
 
         {/* Action buttons */}

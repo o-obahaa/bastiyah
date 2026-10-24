@@ -377,8 +377,14 @@ export const getStoredWhatsAppActivities = (): WhatsAppActivity[] => {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     
-    // Cleanse out any mock placeholder entries
-    const cleaned = parsed.filter((a: any) => !MOCK_ACTIVITY_IDS.has(a?.id));
+    // Strictly cleanse out any mock placeholder entries OR auto-synced dummy items
+    const cleaned = parsed.filter(
+      (a: any) =>
+        !MOCK_ACTIVITY_IDS.has(a?.id) &&
+        !String(a?.id || '').startsWith('act-sync-') &&
+        !String(a?.id || '').startsWith('act-10') &&
+        !String(a?.id || '').startsWith('act-sample')
+    );
     if (cleaned.length !== parsed.length) {
       localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(cleaned));
     }
@@ -445,79 +451,4 @@ export const logWhatsAppActivity = (activity: Omit<WhatsAppActivity, 'id' | 'tim
   }
 
   return newEntry;
-};
-
-/**
- * Automatically synchronizes store orders into the WhatsApp activity stream
- * using the platform owner's configured templates.
- */
-export const syncStoreOrdersToWhatsAppActivities = (stores: any[]): WhatsAppActivity[] => {
-  const current = getStoredWhatsAppActivities();
-  const existingOrderNumbers = new Set(current.map((a) => a.orderNumber).filter(Boolean));
-  let addedAny = false;
-
-  stores.forEach((store) => {
-    const orders = store.orders || [];
-    orders.forEach((order: any) => {
-      if (order.orderNumber && !existingOrderNumbers.has(order.orderNumber)) {
-        existingOrderNumbers.add(order.orderNumber);
-        const storeName = store.nameAr || store.name || 'متجر';
-        const currency = store.settings?.currency || 'د.ع';
-        
-        // Outbound alert to merchant using active template
-        const renderedAlert = renderWhatsAppTemplate('merchant_order_alert', {
-          storeName,
-          orderNumber: order.orderNumber,
-          date: new Date(order.date || Date.now()).toLocaleString('ar-IQ'),
-          customerName: order.customer?.fullName || 'عميل المتجر',
-          customerPhone: order.customer?.phone || '07700000000',
-          customerAddress: [order.customer?.state, order.customer?.city, order.customer?.address].filter(Boolean).join(' - ') || 'بغداد',
-          itemsList: (order.items || []).map((i: any, idx: number) => `${idx + 1}. ${i.productName} (الكمية: ${i.quantity})`).join('\n') || 'منتجات المتجر',
-          subtotal: `${(order.subtotal || order.total || 0).toLocaleString()}`,
-          shipping: order.shipping > 0 ? `${order.shipping.toLocaleString()}` : 'مجاني',
-          total: `${(order.total || 0).toLocaleString()}`,
-          currency,
-          paymentMethod: order.paymentMethod === 'Cash on Delivery' ? 'الدفع نقداً عند الاستلام' : (order.paymentMethod || 'نقداً'),
-        });
-
-        if (renderedAlert.enabled) {
-          const rawPhone = store.settings?.notificationSettings?.whatsappAlertPhone || store.ownerPhone || '9647714834776';
-          let cleanPhone = rawPhone.replace(/\D/g, '');
-          if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone.replace(/^0+/, '')}`;
-
-          const newEntry: WhatsAppActivity = {
-            id: `act-sync-${order.orderNumber}-${Math.random().toString(36).substring(2, 6)}`,
-            direction: 'outbound',
-            storeId: store.id,
-            storeName,
-            storeSlug: store.slug,
-            recipientName: `${store.ownerName || 'مدير المتجر'}`,
-            recipientPhone: `+${cleanPhone}`,
-            categoryLabelAr: 'تنبيه طلب جديد',
-            categoryLabelEn: 'New Order Alert',
-            content: renderedAlert.content,
-            status: 'sent',
-            orderNumber: order.orderNumber,
-            timestamp: order.date || new Date().toISOString(),
-          };
-
-          current.unshift(newEntry);
-          addedAny = true;
-        }
-      }
-    });
-  });
-
-  if (addedAny) {
-    try {
-      localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(current.slice(0, 200)));
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_activity_updated', { detail: current }));
-      }
-    } catch (e) {
-      console.warn('Failed to sync store orders to whatsapp activities:', e);
-    }
-  }
-
-  return getStoredWhatsAppActivities();
 };

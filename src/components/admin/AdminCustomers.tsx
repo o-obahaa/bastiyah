@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore, phonesMatch } from '../../context/StoreContext';
 import { Customer, ANONYMOUS_USER_AVATAR } from '../../types';
+import { renderWhatsAppTemplate, logWhatsAppActivity } from '../../utils/whatsappPlatformUtils';
 import { 
   Search, 
   Mail, 
@@ -63,9 +64,30 @@ export const AdminCustomers: React.FC = () => {
     }
 
     const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
-    const msg = language === 'ar'
-      ? `مرحباً ${customer.name}، يسعدنا تواصلك مع متجر ${storeName}. نتشرف دائماً بتسوقك معنا ونود إهدائك كود خصم خاص لتجربتك القادمة!`
-      : `Hello ${customer.name}, thank you for being a valued customer at ${storeName}!`;
+    const rendered = renderWhatsAppTemplate('abandoned_cart_reminder', {
+      customerName: customer.name,
+      storeName,
+      couponCode: 'SAVE10',
+      cartUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
+    });
+    const msg = rendered.content;
+
+    try {
+      logWhatsAppActivity({
+        direction: 'outbound',
+        storeId: activeStore.id,
+        storeName,
+        storeSlug: activeStore.slug,
+        recipientName: customer.name,
+        recipientPhone: `+${cleanPhone}`,
+        categoryLabelAr: 'تواصل مع العميل',
+        categoryLabelEn: 'Customer Outreach',
+        content: msg,
+        status: 'sent',
+      });
+    } catch (e) {
+      // ignore
+    }
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };

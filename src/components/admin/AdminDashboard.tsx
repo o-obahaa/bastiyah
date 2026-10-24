@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { OrderStatus } from '../../types';
 import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
+import { renderWhatsAppTemplate, logWhatsAppActivity } from '../../utils/whatsappPlatformUtils';
 import { StoreQrCodeModal } from '../common/StoreQrCodeModal';
 
 export const AdminDashboard: React.FC = () => {
@@ -126,9 +127,35 @@ export const AdminDashboard: React.FC = () => {
   const openWhatsApp = (customerPhone: string, customerName: string, orderNumber: string, orderTotal: number) => {
     const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
     const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
-    const msg = language === 'ar'
-      ? `مرحباً ${customerName}، شكراً لتسوقك من متجر ${storeName}. بخصوص طلبك رقم #${orderNumber} بمبلغ ${orderTotal} ${currency}...`
-      : `Hello ${customerName}, thank you for shopping at ${storeName}. Regarding your order #${orderNumber} (${currency}${orderTotal})...`;
+    const rendered = renderWhatsAppTemplate('customer_order_confirmation', {
+      customerName,
+      storeName,
+      orderNumber,
+      total: `${orderTotal.toLocaleString()}`,
+      currency,
+      customerAddress: 'لم يُحدد',
+      orderUrl: `${window.location.origin}/orders`,
+    });
+    const msg = rendered.content;
+
+    try {
+      logWhatsAppActivity({
+        direction: 'outbound',
+        storeId: activeStore.id,
+        storeName,
+        storeSlug: activeStore.slug,
+        recipientName: customerName,
+        recipientPhone: `+${cleanPhone}`,
+        categoryLabelAr: 'تأكيد الطلب للزبون',
+        categoryLabelEn: 'Customer Confirmation',
+        content: msg,
+        status: 'sent',
+        orderNumber,
+      });
+    } catch (e) {
+      // ignore
+    }
+
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

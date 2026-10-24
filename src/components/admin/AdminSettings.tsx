@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { 
   Plus, 
@@ -39,6 +39,11 @@ import {
   Bot
 } from 'lucide-react';
 import { formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
+import { 
+  WhatsAppTemplate, 
+  getStoredWhatsAppTemplates, 
+  renderWhatsAppTemplate 
+} from '../../utils/whatsappPlatformUtils';
 import { Order } from '../../types';
 
 export const AdminSettings: React.FC = () => {
@@ -150,10 +155,57 @@ export const AdminSettings: React.FC = () => {
     notes: 'يرجى الاتصال بالزبون قبل التوصيل'
   };
 
+  // Live Platform WhatsApp Templates synchronized to this store
+  const [storeWhatsAppTemplates, setStoreWhatsAppTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
+  const [selectedStoreTemplateId, setSelectedStoreTemplateId] = useState<string>('merchant_order_alert');
+
+  useEffect(() => {
+    const refresh = () => setStoreWhatsAppTemplates(getStoredWhatsAppTemplates());
+    window.addEventListener('bastiyah_whatsapp_templates_updated', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('bastiyah_whatsapp_templates_updated', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
+  const activeStoreTemplate = useMemo(() => {
+    return storeWhatsAppTemplates.find((t) => t.id === selectedStoreTemplateId) || storeWhatsAppTemplates[0];
+  }, [storeWhatsAppTemplates, selectedStoreTemplateId]);
+
+  const activeStoreTemplatePreview = useMemo(() => {
+    if (!activeStoreTemplate) return '';
+    const rendered = renderWhatsAppTemplate(activeStoreTemplate.id, {
+      storeName: storeTitle,
+      orderNumber: previewSampleOrder.orderNumber,
+      date: new Date().toLocaleString('ar-IQ'),
+      customerName: previewSampleOrder.customer.fullName,
+      customerPhone: previewSampleOrder.customer.phone,
+      customerAddress: `${previewSampleOrder.customer.city} - ${previewSampleOrder.customer.address}`,
+      itemsList: `1. ${activeStore.products[0]?.nameAr || activeStore.products[0]?.name || 'منتج بالمتجر'} (الكمية: 2)\n2. ${activeStore.products[1]?.nameAr || activeStore.products[1]?.name || 'منتج إضافي'} (الكمية: 1)`,
+      subtotal: `${previewSampleOrder.subtotal.toLocaleString()}`,
+      shipping: `${previewSampleOrder.shipping.toLocaleString()}`,
+      total: `${previewSampleOrder.total.toLocaleString()}`,
+      currency: storeCurrency,
+      paymentMethod: 'الدفع نقداً عند الاستلام',
+      courier: 'واصل إكسبريس (Wasel Express)',
+      trackingNumber: 'WAS-BG-88412',
+      orderUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/orders`,
+      reviewUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
+      ownerName: activeStore.ownerName || 'مدير المتجر',
+      storeUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
+      adminUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}/admin`,
+      supportPhone: '+964 771 483 4776',
+      couponCode: 'SAVE10',
+      cartUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}/cart`,
+    });
+    return rendered.content;
+  }, [activeStoreTemplate, storeTitle, storeCurrency, previewSampleOrder, activeStore]);
+
   const sampleOrderMessage = formatOrderWhatsAppMessage(previewSampleOrder, storeTitle, storeCurrency);
 
   const handleCopyMessageForm = () => {
-    navigator.clipboard.writeText(sampleOrderMessage);
+    navigator.clipboard.writeText(activeStoreTemplatePreview || sampleOrderMessage);
     setHasCopiedMessage(true);
     addToast(language === 'ar' ? 'تم نسخ نموذج رسالة الطلب بنجاح!' : 'Order message form copied!', 'success');
     setTimeout(() => setHasCopiedMessage(false), 2500);
@@ -805,25 +857,25 @@ export const AdminSettings: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Visual Preview & Inspector of WhatsApp Order Form */}
-                <div className="pt-2.5 border-t border-slate-200/70">
+                {/* Visual Preview & Inspector of Store WhatsApp Forms */}
+                <div className="pt-2.5 border-t border-slate-200/70 space-y-3">
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => setIsMessagePreviewOpen(!isMessagePreviewOpen)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-emerald-700 transition-colors cursor-pointer"
                     >
-                      <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{language === 'ar' ? 'معاينة نموذج رسالة الطلب الجديد (التي يستلمها المدير) 📋' : 'Preview Manager Order WhatsApp Message Form 📋'}</span>
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <span>{language === 'ar' ? 'معاينة نماذج رسائل واتساب المطبقة على متجرك 📋' : 'Preview Applied WhatsApp Forms 📋'}</span>
                       <span className="text-[10px] text-slate-400 font-normal">
-                        ({isMessagePreviewOpen ? (language === 'ar' ? 'إخفاء' : 'Hide') : (language === 'ar' ? 'عرض' : 'Show')})
+                        ({isMessagePreviewOpen ? (language === 'ar' ? 'إخفاء' : 'Hide') : (language === 'ar' ? 'عرض النماذج' : 'Show Forms')})
                       </span>
                     </button>
                     {isMessagePreviewOpen && (
                       <button
                         type="button"
                         onClick={handleCopyMessageForm}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
                       >
                         {hasCopiedMessage ? (
                           <>
@@ -833,7 +885,7 @@ export const AdminSettings: React.FC = () => {
                         ) : (
                           <>
                             <Copy className="w-3 h-3" />
-                            <span>{language === 'ar' ? 'نسخ النص' : 'Copy'}</span>
+                            <span>{language === 'ar' ? 'نسخ هذا النموذج' : 'Copy Form'}</span>
                           </>
                         )}
                       </button>
@@ -841,8 +893,61 @@ export const AdminSettings: React.FC = () => {
                   </div>
 
                   {isMessagePreviewOpen && (
-                    <div className="mt-3 p-3.5 bg-slate-900 text-emerald-300 rounded-2xl border border-slate-800 text-[11px] font-mono leading-relaxed space-y-1 select-all shadow-inner whitespace-pre-line text-right" dir="rtl">
-                      {sampleOrderMessage}
+                    <div className="space-y-2.5 animate-fadeIn">
+                      {/* Templates Tabs for Store View */}
+                      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+                        {storeWhatsAppTemplates.map((t) => {
+                          const isSelected = t.id === selectedStoreTemplateId;
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => setSelectedStoreTemplateId(t.id)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                isSelected
+                                  ? 'bg-white text-slate-900 shadow-xs'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${t.enabled !== false ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                              <span>{language === 'ar' ? t.nameAr : t.nameEn}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Active Template Meta & Status */}
+                      {activeStoreTemplate && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                                activeStoreTemplate.enabled !== false
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : 'bg-rose-50 text-rose-800 border-rose-200'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${activeStoreTemplate.enabled !== false ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                              {activeStoreTemplate.enabled !== false
+                                ? (language === 'ar' ? 'مفعّل بالمتجر' : 'Active in Store')
+                                : (language === 'ar' ? 'معطّل من إدارة المنصة' : 'Disabled by Platform')}
+                            </span>
+                            {activeStoreTemplate.isDefaultModified && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                {language === 'ar' ? 'معدل ومخصص من المنصة' : 'Custom Platform Template'}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-500">
+                            {language === 'ar' ? activeStoreTemplate.triggerAr : activeStoreTemplate.triggerEn}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Rendered Text Box for this Store */}
+                      <div className="p-3.5 bg-slate-900 text-emerald-300 rounded-2xl border border-slate-800 text-[11px] font-mono leading-relaxed space-y-1 select-all shadow-inner whitespace-pre-line text-right" dir="rtl">
+                        {activeStoreTemplatePreview}
+                      </div>
                     </div>
                   )}
                 </div>
