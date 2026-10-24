@@ -253,13 +253,53 @@ const getSharedCookie = (key: string): any | null => {
 const setSharedCookie = (key: string, data: any) => {
   if (typeof document === 'undefined') return;
   const root = getCustomDomainRoot();
-  const domainPart = root && !root.includes('localhost') ? `; domain=.${root}` : '';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const canSetWildcard = root && !root.includes('localhost') && hostname.endsWith(root);
+  const domainPart = canSetWildcard ? `; domain=.${root}` : '';
   try {
     const val = encodeURIComponent(JSON.stringify(data));
-    document.cookie = `${key}=${val}; path=/${domainPart}; max-age=2592000; SameSite=Lax`;
+    // 1. Host cookie (guaranteed to be accepted by browser on localhost, vercel, or any domain)
+    document.cookie = `${key}=${val}; path=/; max-age=2592000; SameSite=Lax`;
+    // 2. Wildcard domain cookie (shares across *.bastiyah.com subdomains)
+    if (domainPart) {
+      document.cookie = `${key}=${val}; path=/; max-age=2592000; SameSite=Lax${domainPart}`;
+    }
   } catch {
     // ignore
   }
+};
+
+/**
+ * Fetches universal custom templates from WhatsApp Gateway HTTP API and updates localStorage + cookies.
+ */
+export const syncLiveGatewayTemplates = async (): Promise<Record<string, { content?: string; enabled?: boolean }>> => {
+  if (typeof window === 'undefined') return getStoredCustomTemplatesMap();
+  const gatewayUrl = ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+  try {
+    const res = await fetch(`${gatewayUrl}/templates`, { signal: AbortSignal.timeout(3500) });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.templates && typeof data.templates === 'object') {
+        const customMap = getStoredCustomTemplatesMap();
+        let changed = false;
+        for (const [id, item] of Object.entries(data.templates as Record<string, any>)) {
+          if (item?.content && customMap[id]?.content !== item.content) {
+            customMap[id] = { content: item.content, enabled: item.enabled };
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem(CUSTOM_MAP_KEY, JSON.stringify(customMap));
+          setSharedCookie(CUSTOM_MAP_KEY, customMap);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: customMap }));
+          }
+        }
+        return customMap;
+      }
+    }
+  } catch {}
+  return getStoredCustomTemplatesMap();
 };
 
 /**
@@ -377,6 +417,16 @@ export const saveStoredWhatsAppTemplate = (templateId: string, newContent: strin
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: fullTemplates }));
     }
     whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: fullTemplates });
+
+    // Sync to universal central WhatsApp Gateway
+    const gatewayUrl = ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+    if (gatewayUrl && typeof fetch !== 'undefined') {
+      fetch(`${gatewayUrl}/templates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, content: newContent, enabled }),
+      }).catch(() => {});
+    }
   } catch (e) {
     console.warn('Failed to save whatsapp template:', e);
   }
@@ -441,6 +491,16 @@ export const resetStoredWhatsAppTemplate = (templateId: string): WhatsAppTemplat
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: fullTemplates }));
     }
     whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: fullTemplates });
+
+    // Sync reset to universal central WhatsApp Gateway
+    const gatewayUrl = ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+    if (gatewayUrl && typeof fetch !== 'undefined') {
+      fetch(`${gatewayUrl}/templates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, content: '' }),
+      }).catch(() => {});
+    }
   } catch (e) {}
 
   return getStoredWhatsAppTemplates();
@@ -452,7 +512,8 @@ export const resetStoredWhatsAppTemplate = (templateId: string): WhatsAppTemplat
  */
 export const renderWhatsAppTemplate = (
   templateId: string,
-  variables: Record<string, string | number | undefined | null>
+  variables: Record<string, string | number | undefined | null>,
+  customContentOverride?: string
 ): { content: string; enabled: boolean; templateNameAr: string } => {
   const templates = getStoredWhatsAppTemplates();
   const template =
@@ -463,7 +524,9 @@ export const renderWhatsAppTemplate = (
     return { content: '', enabled: true, templateNameAr: '' };
   }
 
-  let text = template.content && template.content.trim() ? template.content : template.defaultContent;
+  let text = customContentOverride && customContentOverride.trim()
+    ? customContentOverride
+    : (template.content && template.content.trim() ? template.content : template.defaultContent);
 
   // Replace each {key} with provided value
   Object.entries(variables).forEach(([rawKey, val]) => {

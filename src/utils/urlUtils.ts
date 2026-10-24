@@ -45,7 +45,7 @@ export const getCustomDomainRoot = (): string => {
   if (parts.length >= 3 && parts[0] !== 'www' && !hostname.includes('localhost') && !hostname.endsWith('.vercel.app')) {
     return parts.slice(1).join('.');
   }
-  return BASTIYAH_CUSTOM_DOMAIN;
+  return hostname;
 };
 
 /**
@@ -111,14 +111,22 @@ export const getPlatformDisplayUrl = (page: 'landing' | 'owner-admin' = 'landing
 export const setSharedCustomerCookie = (customer: any | null) => {
   if (typeof document === 'undefined') return;
   const root = getCustomDomainRoot();
-  const domainPart = root && !root.includes('localhost') ? `; domain=.${root}` : '';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const canSetWildcard = root && !root.includes('localhost') && hostname.endsWith(root);
+  const domainPart = canSetWildcard ? `; domain=.${root}` : '';
   if (!customer) {
-    document.cookie = `bastiyah_shared_customer=; path=/${domainPart}; max-age=0; SameSite=Lax`;
+    document.cookie = `bastiyah_shared_customer=; path=/; max-age=0; SameSite=Lax`;
+    if (domainPart) {
+      document.cookie = `bastiyah_shared_customer=; path=/; domain=.${root}; max-age=0; SameSite=Lax`;
+    }
   } else {
     try {
       const val = encodeURIComponent(JSON.stringify(customer));
-      // 30 days expiration
-      document.cookie = `bastiyah_shared_customer=${val}; path=/${domainPart}; max-age=2592000; SameSite=Lax`;
+      // 30 days expiration - set both host-specific and cross-subdomain
+      document.cookie = `bastiyah_shared_customer=${val}; path=/; max-age=2592000; SameSite=Lax`;
+      if (domainPart) {
+        document.cookie = `bastiyah_shared_customer=${val}; path=/; domain=.${root}; max-age=2592000; SameSite=Lax`;
+      }
     } catch {
       // ignore
     }
@@ -147,11 +155,16 @@ export const getSharedCustomerCookie = (): any | null => {
 export const setSharedStoresCookie = (allStores: any[]) => {
   if (typeof document === 'undefined') return;
   const root = getCustomDomainRoot();
-  const domainPart = root && !root.includes('localhost') ? `; domain=.${root}` : '';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const canSetWildcard = root && !root.includes('localhost') && hostname.endsWith(root);
+  const domainPart = canSetWildcard ? `; domain=.${root}` : '';
   const initialSlugs = new Set(['panda', 'royal-oud', 'velvet']);
   const customStores = allStores.filter((s) => s.slug && !initialSlugs.has(s.slug.toLowerCase()));
   if (customStores.length === 0) {
-    document.cookie = `bastiyah_shared_stores=; path=/${domainPart}; max-age=0; SameSite=Lax`;
+    document.cookie = `bastiyah_shared_stores=; path=/; max-age=0; SameSite=Lax`;
+    if (domainPart) {
+      document.cookie = `bastiyah_shared_stores=; path=/; domain=.${root}; max-age=0; SameSite=Lax`;
+    }
     return;
   }
   try {
@@ -176,7 +189,10 @@ export const setSharedStoresCookie = (allStores: any[]) => {
       settings: s.settings,
     }));
     const val = encodeURIComponent(JSON.stringify(summaries));
-    document.cookie = `bastiyah_shared_stores=${val}; path=/${domainPart}; max-age=2592000; SameSite=Lax`;
+    document.cookie = `bastiyah_shared_stores=${val}; path=/; max-age=2592000; SameSite=Lax`;
+    if (domainPart) {
+      document.cookie = `bastiyah_shared_stores=${val}; path=/; domain=.${root}; max-age=2592000; SameSite=Lax`;
+    }
   } catch (e) {
     console.warn('Failed to set shared stores cookie:', e);
   }

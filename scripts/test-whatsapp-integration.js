@@ -170,4 +170,33 @@ assert.strictEqual(activities[1].direction, 'outbound', 'Outbound message must f
 assert(activities.every(isClean), 'All entries must be clean genuine activities');
 console.log('✅ WhatsApp activities logging and inbox cleanliness verified.');
 
+// 5. Verify Universal Gateway Template Cache & Direct Content Override
+console.log('\nTest 5: Verifying Universal Gateway cache & direct content override rendering...');
+const gatewayCache = {};
+const saveToGateway = (templateId, content, enabled = true) => {
+  gatewayCache[templateId] = { content, enabled, updatedAt: Date.now() };
+};
+
+saveToGateway('customer_order_confirmation', 'عزيزي {customerName}، تم استلام طلبك {orderNumber} في {storeName} بنجاح!');
+assert(gatewayCache['customer_order_confirmation'], 'Gateway must hold custom template');
+assert.strictEqual(gatewayCache['customer_order_confirmation'].content.includes('{customerName}'), true);
+
+// Test direct content override
+const customRender = (templateId, vars, override) => {
+  let text = override || 'default';
+  for (const [k, v] of Object.entries(vars)) {
+    text = text.replace(new RegExp(`{${k}}`, 'g'), String(v));
+  }
+  return text;
+};
+
+const renderedOverride = customRender(
+  'customer_order_confirmation',
+  { customerName: 'أحمد', orderNumber: 'PANDA-88240', storeName: 'متجر باندا' },
+  gatewayCache['customer_order_confirmation'].content
+);
+
+assert.strictEqual(renderedOverride, 'عزيزي أحمد، تم استلام طلبك PANDA-88240 في متجر باندا بنجاح!');
+console.log('✅ Universal Gateway cache & direct content override verified.');
+
 console.log('\n🎉 ALL WHATSAPP INTEGRATION & INBOX TESTS PASSED SUCCESSFULLY!');

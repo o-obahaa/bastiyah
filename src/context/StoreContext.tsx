@@ -64,6 +64,7 @@ import {
   toggleStoredWhatsAppTemplateStatus,
   renderWhatsAppTemplate,
   logWhatsAppActivity,
+  syncLiveGatewayTemplates,
 } from '../utils/whatsappPlatformUtils';
 import { convexClient, isConvexConfigured } from '../convexClient';
 import { api } from '../convexApi';
@@ -244,7 +245,7 @@ interface StoreContextType {
   updateWhatsAppTemplate: (templateId: string, content: string, enabled?: boolean) => WhatsAppTemplate[];
   resetWhatsAppTemplate: (templateId: string) => WhatsAppTemplate[];
   toggleWhatsAppTemplate: (templateId: string, enabled: boolean) => WhatsAppTemplate[];
-  syncWhatsAppTemplates: () => void;
+  syncWhatsAppTemplates: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -535,6 +536,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Platform WhatsApp Forms Synchronization (Reactive across Owner & Store Manager panels)
   const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
 
+  const syncWhatsAppTemplates = async () => {
+    // 1. Universal sync via WhatsApp Gateway HTTP API
+    try {
+      await syncLiveGatewayTemplates();
+    } catch {}
+
+    // 2. Sync via Convex Realtime Cloud (Dev & Prod)
+    if (convexClient && typeof (convexClient as any).query === 'function') {
+      try {
+        const remote = await (convexClient as any).query(api.whatsappTemplates.getTemplates, {});
+        if (Array.isArray(remote) && remote.length > 0) {
+          for (const item of remote) {
+            if (item?.templateId && item?.content) {
+              saveStoredWhatsAppTemplate(item.templateId, item.content, item.enabled);
+            }
+          }
+        }
+      } catch {}
+    }
+
+    setWhatsappTemplates(getStoredWhatsAppTemplates());
+  };
+
   useEffect(() => {
     const handleTemplateChange = () => {
       setWhatsappTemplates(getStoredWhatsAppTemplates());
@@ -543,21 +567,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     window.addEventListener('bastiyah_whatsapp_templates_updated', handleTemplateChange);
     window.addEventListener('storage', handleTemplateChange);
 
-    // Initial Convex sync if client is available
-    if (convexClient && typeof (convexClient as any).query === 'function') {
-      try {
-        (convexClient as any).query(api.whatsappTemplates.getTemplates, {}).then((remote: any[]) => {
-          if (Array.isArray(remote) && remote.length > 0) {
-            for (const item of remote) {
-              if (item?.templateId && item?.content) {
-                saveStoredWhatsAppTemplate(item.templateId, item.content, item.enabled);
-              }
-            }
-            setWhatsappTemplates(getStoredWhatsAppTemplates());
-          }
-        }).catch(() => {});
-      } catch {}
-    }
+    // Initial background sync from Gateway & Convex
+    syncWhatsAppTemplates();
 
     return () => {
       window.removeEventListener('bastiyah_whatsapp_templates_updated', handleTemplateChange);
@@ -601,10 +612,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updated = toggleStoredWhatsAppTemplateStatus(templateId, enabled);
     setWhatsappTemplates(updated);
     return updated;
-  };
-
-  const syncWhatsAppTemplates = () => {
-    setWhatsappTemplates(getStoredWhatsAppTemplates());
   };
 
   // Language State

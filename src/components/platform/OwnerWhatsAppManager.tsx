@@ -87,7 +87,8 @@ export const OwnerWhatsAppManager: React.FC = () => {
       syncWhatsAppTemplates();
     };
 
-    // Live sync with gateway on render
+    // Live sync with gateway and cloud on render
+    syncWhatsAppTemplates();
     syncLiveGatewayActivities().then((live) => {
       if (live && live.length > 0) setActivities(live);
     }).catch(() => {});

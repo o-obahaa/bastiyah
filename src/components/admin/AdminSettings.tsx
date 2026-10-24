@@ -169,6 +169,12 @@ export const AdminSettings: React.FC = () => {
   const [selectedStoreTemplateId, setSelectedStoreTemplateId] = useState<string>('merchant_order_alert');
   const [isEditingStoreTemplate, setIsEditingStoreTemplate] = useState<boolean>(false);
   const [storeTemplateContent, setStoreTemplateContent] = useState<string>('');
+  const [isSyncingTemplates, setIsSyncingTemplates] = useState<boolean>(false);
+
+  // Auto-fetch fresh platform templates on mount
+  useEffect(() => {
+    syncWhatsAppTemplates();
+  }, []);
 
   const activeStoreTemplate = useMemo(() => {
     return storeWhatsAppTemplates.find((t) => t.id === selectedStoreTemplateId) || storeWhatsAppTemplates[0];
@@ -206,30 +212,34 @@ export const AdminSettings: React.FC = () => {
 
   const activeStoreTemplatePreview = useMemo(() => {
     if (!activeStoreTemplate) return '';
-    const rendered = renderWhatsAppTemplate(activeStoreTemplate.id, {
-      storeName: storeTitle,
-      orderNumber: previewSampleOrder.orderNumber,
-      date: new Date().toLocaleString('ar-IQ'),
-      customerName: previewSampleOrder.customer.fullName,
-      customerPhone: previewSampleOrder.customer.phone,
-      customerAddress: `${previewSampleOrder.customer.city} - ${previewSampleOrder.customer.address}`,
-      itemsList: `1. ${activeStore.products[0]?.nameAr || activeStore.products[0]?.name || 'منتج بالمتجر'} (الكمية: 2)\n2. ${activeStore.products[1]?.nameAr || activeStore.products[1]?.name || 'منتج إضافي'} (الكمية: 1)`,
-      subtotal: `${previewSampleOrder.subtotal.toLocaleString()}`,
-      shipping: `${previewSampleOrder.shipping.toLocaleString()}`,
-      total: `${previewSampleOrder.total.toLocaleString()}`,
-      currency: storeCurrency,
-      paymentMethod: 'الدفع نقداً عند الاستلام',
-      courier: 'واصل إكسبريس (Wasel Express)',
-      trackingNumber: 'WAS-BG-88412',
-      orderUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/orders`,
-      reviewUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
-      ownerName: activeStore.ownerName || 'مدير المتجر',
-      storeUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
-      adminUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}/admin`,
-      supportPhone: '+964 771 483 4776',
-      couponCode: 'SAVE10',
-      cartUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}/cart`,
-    });
+    const rendered = renderWhatsAppTemplate(
+      activeStoreTemplate.id,
+      {
+        storeName: storeTitle,
+        orderNumber: previewSampleOrder.orderNumber,
+        date: new Date().toLocaleString('ar-IQ'),
+        customerName: previewSampleOrder.customer.fullName,
+        customerPhone: previewSampleOrder.customer.phone,
+        customerAddress: `${previewSampleOrder.customer.city} - ${previewSampleOrder.customer.address}`,
+        itemsList: `1. ${activeStore.products[0]?.nameAr || activeStore.products[0]?.name || 'منتج بالمتجر'} (الكمية: 2)\n2. ${activeStore.products[1]?.nameAr || activeStore.products[1]?.name || 'منتج إضافي'} (الكمية: 1)`,
+        subtotal: `${previewSampleOrder.subtotal.toLocaleString()}`,
+        shipping: `${previewSampleOrder.shipping.toLocaleString()}`,
+        total: `${previewSampleOrder.total.toLocaleString()}`,
+        currency: storeCurrency,
+        paymentMethod: 'الدفع نقداً عند الاستلام',
+        courier: 'واصل إكسبريس (Wasel Express)',
+        trackingNumber: 'WAS-BG-88412',
+        orderUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/orders`,
+        reviewUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
+        ownerName: activeStore.ownerName || 'مدير المتجر',
+        storeUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}`,
+        adminUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}/admin`,
+        supportPhone: '+964 771 483 4776',
+        couponCode: 'SAVE10',
+        cartUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/${activeStore.slug}/cart`,
+      },
+      activeStoreTemplate.content || activeStoreTemplate.defaultContent
+    );
     return rendered.content;
   }, [activeStoreTemplate, storeTitle, storeCurrency, previewSampleOrder, activeStore]);
 
@@ -1016,15 +1026,26 @@ export const AdminSettings: React.FC = () => {
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={() => {
-                                syncWhatsAppTemplates();
-                                addToast(language === 'ar' ? 'تمت مزامنة أحدث النماذج بنجاح!' : 'Templates synchronized successfully!', 'info');
+                              disabled={isSyncingTemplates}
+                              onClick={async () => {
+                                setIsSyncingTemplates(true);
+                                try {
+                                  await syncWhatsAppTemplates();
+                                  addToast(
+                                    language === 'ar'
+                                      ? 'تمت مزامنة أحدث نماذج رسائل واتساب من المنصة بنجاح! 🔄'
+                                      : 'WhatsApp message forms synchronized from platform successfully!',
+                                    'info'
+                                  );
+                                } finally {
+                                  setIsSyncingTemplates(false);
+                                }
                               }}
-                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                               title={language === 'ar' ? 'تحديث المزامنة مع المنصة' : 'Sync templates'}
                             >
-                              <RefreshCw className="w-3 h-3" />
-                              <span>{language === 'ar' ? 'مزامنة 🔄' : 'Sync'}</span>
+                              <RefreshCw className={`w-3 h-3 ${isSyncingTemplates ? 'animate-spin text-emerald-600' : ''}`} />
+                              <span>{isSyncingTemplates ? (language === 'ar' ? 'جارِ المزامنة...' : 'Syncing...') : (language === 'ar' ? 'مزامنة 🔄' : 'Sync')}</span>
                             </button>
 
                             <button

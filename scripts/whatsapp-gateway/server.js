@@ -89,6 +89,29 @@ function saveMessage(id, message, text) {
 
 loadMessageCache();
 
+// Universal Custom WhatsApp Templates Cache & Persistence
+const TEMPLATES_FILE = path.join(AUTH_DIR, 'custom_templates.json');
+let gatewayCustomTemplates = {};
+
+function loadGatewayTemplates() {
+  try {
+    if (fs.existsSync(TEMPLATES_FILE)) {
+      const data = JSON.parse(fs.readFileSync(TEMPLATES_FILE, 'utf8'));
+      if (data && typeof data === 'object') {
+        gatewayCustomTemplates = data;
+      }
+    }
+  } catch (e) {}
+}
+
+function saveGatewayTemplates() {
+  try {
+    fs.writeFileSync(TEMPLATES_FILE, JSON.stringify(gatewayCustomTemplates), 'utf8');
+  } catch (e) {}
+}
+
+loadGatewayTemplates();
+
 // Ensure auth directory exists
 if (!fs.existsSync(AUTH_DIR)) {
   fs.mkdirSync(AUTH_DIR, { recursive: true });
@@ -436,6 +459,42 @@ app.post('/log-activity', (req, res) => {
     recordGatewayActivity(req.body);
   }
   res.json({ success: true });
+});
+
+// Universal Templates synchronization across Owner & Store Manager panels
+app.get('/templates', (req, res) => {
+  res.json({
+    success: true,
+    templates: gatewayCustomTemplates,
+  });
+});
+
+app.post('/templates', (req, res) => {
+  try {
+    const { templateId, content, enabled, fullMap } = req.body || {};
+    if (fullMap && typeof fullMap === 'object') {
+      gatewayCustomTemplates = { ...gatewayCustomTemplates, ...fullMap };
+      saveGatewayTemplates();
+      return res.json({ success: true, templates: gatewayCustomTemplates });
+    }
+    if (templateId) {
+      if (content === '' || content === null) {
+        // Revert to factory default
+        delete gatewayCustomTemplates[templateId];
+      } else {
+        gatewayCustomTemplates[templateId] = {
+          content,
+          enabled: enabled !== undefined ? enabled : gatewayCustomTemplates[templateId]?.enabled ?? true,
+          updatedAt: Date.now(),
+        };
+      }
+      saveGatewayTemplates();
+      return res.json({ success: true, templates: gatewayCustomTemplates });
+    }
+    res.status(400).json({ success: false, error: 'templateId or fullMap is required' });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 // 3. Send WhatsApp OTP endpoint
