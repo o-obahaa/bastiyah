@@ -1004,6 +1004,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  // Helper to sanitize governorates to primary clean name
+  const sanitizeCustomerGov = (gov?: string): string => {
+    if (!gov) return '';
+    let cleaned = gov.replace(/\s*\(.*?\)/g, '').trim();
+    cleaned = cleaned.replace(/\s+الأشرف$/g, '').replace(/\s+المقدسة$/g, '').trim();
+    return cleaned;
+  };
+
   // Customer User Authentication & Universal Profile across all hosted stores
   const [currentCustomer, setCurrentCustomer] = useState<CustomerUser | null>(() => {
     try {
@@ -1014,7 +1022,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           parsed.avatar = ANONYMOUS_USER_AVATAR;
         }
         if (parsed.state) {
-          parsed.state = parsed.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim();
+          parsed.state = sanitizeCustomerGov(parsed.state);
         }
         return parsed;
       }
@@ -1022,7 +1030,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const cookieUser = getSharedCustomerCookie();
       if (cookieUser) {
         if (cookieUser.state) {
-          cookieUser.state = cookieUser.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim();
+          cookieUser.state = sanitizeCustomerGov(cookieUser.state);
         }
         return cookieUser;
       }
@@ -1444,7 +1452,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           phone: matchedCust.phone || rawPhone,
           email: matchedCust.email,
           city: matchedCust.city,
-          state: (matchedCust.state ? matchedCust.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim() : '') || (matchedCust.city?.includes('بغداد') ? 'بغداد' : matchedCust.city || 'بغداد'),
+          state: sanitizeCustomerGov(matchedCust.state) || (matchedCust.city?.includes('بغداد') ? 'بغداد' : matchedCust.city || 'بغداد'),
           address: matchedCust.address || '',
           landmark: matchedCust.landmark || '',
           avatar: matchedCust.avatar || ANONYMOUS_USER_AVATAR,
@@ -1606,7 +1614,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       name: customerName,
       phone: fullFormattedPhone,
       email: matchedProfile?.email || matchedPastOrder?.customer.email || `user.${normalized.slice(-4)}@customer.iq`,
-      state: (matchedProfile?.state || matchedPastOrder?.customer.state || (language === 'ar' ? 'بغداد' : 'Baghdad')).replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim(),
+      state: sanitizeCustomerGov(matchedProfile?.state || matchedPastOrder?.customer.state || (language === 'ar' ? 'بغداد' : 'Baghdad')) || (language === 'ar' ? 'بغداد' : 'Baghdad'),
       city: matchedProfile?.city || matchedPastOrder?.customer.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
       address: matchedProfile?.address || matchedPastOrder?.customer.address || '',
       landmark: matchedProfile?.landmark || '',
@@ -1660,7 +1668,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateCustomerProfile = (updates: Partial<CustomerUser>) => {
     const cleanUpdates = { ...updates };
     if (cleanUpdates.state) {
-      cleanUpdates.state = cleanUpdates.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim();
+      cleanUpdates.state = sanitizeCustomerGov(cleanUpdates.state) || cleanUpdates.state;
     }
 
     setCurrentCustomer((prev) => {

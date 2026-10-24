@@ -105,7 +105,7 @@ const syncCustomerToAllStores = (profile) => {
         email: profile.email?.trim() || `${cleanPhone.slice(-6)}@customer.iq`,
         avatar: '',
         city: profile.city?.trim() || 'Baghdad',
-        state: profile.state?.trim() || 'Baghdad (Capital)',
+        state: profile.state?.trim() || 'Baghdad',
         address: profile.address?.trim() || '',
         landmark: profile.landmark?.trim() || '',
         country: 'Iraq',
@@ -162,7 +162,7 @@ syncCustomerToAllStores({
   name: 'أحمد البغدادي',
   phone: '0770 123 9999',
   email: 'ahmed@baghdad.iq',
-  state: 'بغداد (العاصمة)',
+  state: 'بغداد',
   city: 'المنصور',
   address: 'شارع 14 رمضان، عمارة الأمل، طابق 2',
   landmark: 'قرب مطعم الساعة'
@@ -193,7 +193,7 @@ syncCustomerToAllStores({
   name: 'أحمد البغدادي',
   phone: '0770 123 9999',
   email: 'ahmed@baghdad.iq',
-  state: 'بغداد (العاصمة)',
+  state: 'بغداد',
   city: 'اليرموك',
   address: 'ساحة قحطان، مجمع اليرموك السكني',
   landmark: 'مقابل مستشفى اليرموك'

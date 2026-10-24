@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { IRAQ_GOVERNORATES } from '../store/CheckoutPage';
+import { IRAQ_GOVERNORATES, cleanGovernorateName } from '../store/CheckoutPage';
 import { 
   X, 
   MessageCircle, 
@@ -515,15 +515,18 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
                     <span>{language === 'ar' ? 'المحافظة' : 'Governorate'} *</span>
                   </label>
                   <select
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
+                    value={cleanGovernorateName(state)}
+                    onChange={(e) => setState(cleanGovernorateName(e.target.value))}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:bg-white"
                   >
-                    {IRAQ_GOVERNORATES.map((g) => (
-                      <option key={g.code} value={language === 'ar' ? g.ar : g.en}>
-                        {language === 'ar' ? g.ar : g.en}
-                      </option>
-                    ))}
+                    {IRAQ_GOVERNORATES.map((g) => {
+                      const val = cleanGovernorateName(language === 'ar' ? g.ar : g.en);
+                      return (
+                        <option key={g.code} value={val}>
+                          {val}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

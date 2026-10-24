@@ -17,28 +17,32 @@ import {
 
 export const cleanGovernorateName = (name?: string): string => {
   if (!name) return 'بغداد';
-  return name.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim() || 'بغداد';
+  // Strip any parenthetical notes/cities e.g. (الموصل), (الحلة), (العاصمة), (الرمادي/الفلوجة), etc.
+  let cleaned = name.replace(/\s*\(.*?\)/g, '').trim();
+  // Strip honorary suffixes to yield the primary province name
+  cleaned = cleaned.replace(/\s+الأشرف$/g, '').replace(/\s+المقدسة$/g, '').trim();
+  return cleaned || 'بغداد';
 };
 
 export const IRAQ_GOVERNORATES = [
   { ar: 'بغداد', en: 'Baghdad', code: 'BG' },
   { ar: 'البصرة', en: 'Basra', code: 'BA' },
   { ar: 'أربيل', en: 'Erbil', code: 'ER' },
-  { ar: 'النجف الأشرف', en: 'Najaf', code: 'NA' },
-  { ar: 'كربلاء المقدسة', en: 'Karbala', code: 'KA' },
-  { ar: 'نينوى (الموصل)', en: 'Nineveh (Mosul)', code: 'NI' },
+  { ar: 'النجف', en: 'Najaf', code: 'NA' },
+  { ar: 'كربلاء', en: 'Karbala', code: 'KA' },
+  { ar: 'نينوى', en: 'Nineveh', code: 'NI' },
   { ar: 'كركوك', en: 'Kirkuk', code: 'KI' },
   { ar: 'السليمانية', en: 'Sulaymaniyah', code: 'SU' },
   { ar: 'دهوك', en: 'Duhok', code: 'DA' },
-  { ar: 'بابل (الحلة)', en: 'Babylon (Hillah)', code: 'BB' },
-  { ar: 'الأنبار (الرمادي/الفلوجة)', en: 'Anbar (Ramadi/Fallujah)', code: 'AN' },
-  { ar: 'ديالى (بعقوبة)', en: 'Diyala (Baqubah)', code: 'DI' },
-  { ar: 'ذي قار (الناصرية)', en: 'Dhi Qar (Nasiriyah)', code: 'DQ' },
-  { ar: 'ميسان (العمارة)', en: 'Maysan (Amarah)', code: 'MA' },
-  { ar: 'المثنى (السماوة)', en: 'Muthanna (Samawah)', code: 'MU' },
-  { ar: 'القادسية (الديوانية)', en: 'Al-Qadisiyyah (Diwaniyah)', code: 'QA' },
-  { ar: 'واسط (الكوت)', en: 'Wasit (Kut)', code: 'WA' },
-  { ar: 'صلاح الدين (تكريت/سامراء)', en: 'Saladin (Tikrit/Samarra)', code: 'SD' },
+  { ar: 'بابل', en: 'Babylon', code: 'BB' },
+  { ar: 'الأنبار', en: 'Anbar', code: 'AN' },
+  { ar: 'ديالى', en: 'Diyala', code: 'DI' },
+  { ar: 'ذي قار', en: 'Dhi Qar', code: 'DQ' },
+  { ar: 'ميسان', en: 'Maysan', code: 'MA' },
+  { ar: 'المثنى', en: 'Muthanna', code: 'MU' },
+  { ar: 'القادسية', en: 'Al-Qadisiyyah', code: 'QA' },
+  { ar: 'واسط', en: 'Wasit', code: 'WA' },
+  { ar: 'صلاح الدين', en: 'Saladin', code: 'SD' },
 ];
 
 export const CheckoutPage: React.FC = () => {
@@ -331,9 +335,9 @@ export const CheckoutPage: React.FC = () => {
                 </label>
                 <select
                   required
-                  value={shippingInfo.state}
+                  value={cleanGovernorateName(shippingInfo.state)}
                   onChange={(e) => {
-                    const gov = e.target.value;
+                    const gov = cleanGovernorateName(e.target.value);
                     handleInputChange('state', gov);
                   }}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
