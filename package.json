@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test-store-routing.js && node scripts/test-universal-customers.js",
     "whatsapp:gateway": "node scripts/whatsapp-gateway/server.js"
   },
   "dependencies": {

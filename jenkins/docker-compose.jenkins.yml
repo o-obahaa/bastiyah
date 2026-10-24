@@ -1,0 +1,35 @@
+version: '3.8'
+
+# ==============================================================================
+# Jenkins Local DevOps Environment with Docker-in-Docker support
+# Run with: docker compose -f jenkins/docker-compose.jenkins.yml up -d
+# Access at: http://localhost:8080
+# ==============================================================================
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: bastiyah_jenkins
+    privileged: true
+    user: root
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      # Mount host docker socket to enable building docker containers from inside Jenkins
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - devops_net
+
+volumes:
+  jenkins_data:
+    name: bastiyah_jenkins_data
+
+networks:
+  devops_net:
+    name: bastiyah_devops_net

@@ -1,0 +1,31 @@
+version: '3.8'
+
+# ==============================================================================
+# Bastiyah E-Commerce Multi-Store Platform - Application Docker Compose
+# Run with: docker compose up -d --build
+# Access at: http://localhost:80
+# ==============================================================================
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bastiyah_store_web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - store_net
+
+networks:
+  store_net:
+    name: bastiyah_store_net
