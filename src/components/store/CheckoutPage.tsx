@@ -15,8 +15,13 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+export const cleanGovernorateName = (name?: string): string => {
+  if (!name) return 'بغداد';
+  return name.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim() || 'بغداد';
+};
+
 export const IRAQ_GOVERNORATES = [
-  { ar: 'بغداد (العاصمة)', en: 'Baghdad (Capital)', code: 'BG' },
+  { ar: 'بغداد', en: 'Baghdad', code: 'BG' },
   { ar: 'البصرة', en: 'Basra', code: 'BA' },
   { ar: 'أربيل', en: 'Erbil', code: 'ER' },
   { ar: 'النجف الأشرف', en: 'Najaf', code: 'NA' },
@@ -70,7 +75,7 @@ export const CheckoutPage: React.FC = () => {
         email: currentCustomer.email || '',
         address: currentCustomer.address || '',
         city: currentCustomer.city || '',
-        state: currentCustomer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'),
+        state: cleanGovernorateName(currentCustomer.state) || (language === 'ar' ? 'بغداد' : 'Baghdad'),
         zipCode: '10011',
         country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
       };
@@ -81,7 +86,7 @@ export const CheckoutPage: React.FC = () => {
       phone: '',
       address: '',
       city: '',
-      state: language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)',
+      state: language === 'ar' ? 'بغداد' : 'Baghdad',
       zipCode: '10011',
       country: language === 'ar' ? 'جمهورية العراق 🇮🇶' : 'Republic of Iraq 🇮🇶',
     };

@@ -42,7 +42,7 @@ export const CustomerWhatsAppAuthModal: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [state, setState] = useState(language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)');
+  const [state, setState] = useState(language === 'ar' ? 'بغداد' : 'Baghdad');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [landmark, setLandmark] = useState('');

@@ -1013,11 +1013,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (!parsed.avatar || parsed.avatar.includes('unsplash.com')) {
           parsed.avatar = ANONYMOUS_USER_AVATAR;
         }
+        if (parsed.state) {
+          parsed.state = parsed.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim();
+        }
         return parsed;
       }
       // Check shared cookie across subdomains
       const cookieUser = getSharedCustomerCookie();
       if (cookieUser) {
+        if (cookieUser.state) {
+          cookieUser.state = cookieUser.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim();
+        }
         return cookieUser;
       }
       return null;
@@ -1438,7 +1444,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           phone: matchedCust.phone || rawPhone,
           email: matchedCust.email,
           city: matchedCust.city,
-          state: matchedCust.state || (matchedCust.city?.includes('بغداد') ? 'بغداد (العاصمة)' : matchedCust.city),
+          state: (matchedCust.state ? matchedCust.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim() : '') || (matchedCust.city?.includes('بغداد') ? 'بغداد' : matchedCust.city || 'بغداد'),
           address: matchedCust.address || '',
           landmark: matchedCust.landmark || '',
           avatar: matchedCust.avatar || ANONYMOUS_USER_AVATAR,
@@ -1600,7 +1606,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       name: customerName,
       phone: fullFormattedPhone,
       email: matchedProfile?.email || matchedPastOrder?.customer.email || `user.${normalized.slice(-4)}@customer.iq`,
-      state: matchedProfile?.state || matchedPastOrder?.customer.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'),
+      state: (matchedProfile?.state || matchedPastOrder?.customer.state || (language === 'ar' ? 'بغداد' : 'Baghdad')).replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim(),
       city: matchedProfile?.city || matchedPastOrder?.customer.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
       address: matchedProfile?.address || matchedPastOrder?.customer.address || '',
       landmark: matchedProfile?.landmark || '',
@@ -1652,18 +1658,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateCustomerProfile = (updates: Partial<CustomerUser>) => {
+    const cleanUpdates = { ...updates };
+    if (cleanUpdates.state) {
+      cleanUpdates.state = cleanUpdates.state.replace(/\s*\(العاصمة\)/g, '').replace(/\s*\(Capital\)/gi, '').trim();
+    }
+
     setCurrentCustomer((prev) => {
       const updated: CustomerUser = prev
-        ? { ...prev, ...updates }
+        ? { ...prev, ...cleanUpdates }
         : {
             id: `cust-${Date.now()}`,
-            name: updates.name || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer'),
-            phone: updates.phone || '+964 770 123 4567',
-            state: updates.state || (language === 'ar' ? 'بغداد (العاصمة)' : 'Baghdad (Capital)'),
-            city: updates.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
-            address: updates.address || '',
-            landmark: updates.landmark || '',
-            avatar: updates.avatar && !updates.avatar.includes('unsplash.com') ? updates.avatar : ANONYMOUS_USER_AVATAR,
+            name: cleanUpdates.name || (language === 'ar' ? 'عميل بسطية' : 'Bastiyah Customer'),
+            phone: cleanUpdates.phone || '+964 770 123 4567',
+            state: cleanUpdates.state || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+            city: cleanUpdates.city || (language === 'ar' ? 'بغداد' : 'Baghdad'),
+            address: cleanUpdates.address || '',
+            landmark: cleanUpdates.landmark || '',
+            avatar: cleanUpdates.avatar && !cleanUpdates.avatar.includes('unsplash.com') ? cleanUpdates.avatar : ANONYMOUS_USER_AVATAR,
             authenticatedVia: 'phone_auth',
             authenticatedAt: new Date().toISOString(),
           };
