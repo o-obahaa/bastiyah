@@ -293,38 +293,25 @@ export const CustomerAccountModal: React.FC = () => {
             </div>
           )}
 
-          {/* UI-UX ProMax Section: Shipping Location Details (بيانات وموقع التوصيل المعتمد) */}
+          {/* Shipping Location Details (بيانات وموقع التوصيل المعتمد) */}
           <div className="bg-gradient-to-b from-white via-slate-50/60 to-slate-50/90 rounded-[22px] p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-4 transition-all">
-            {/* Box Header with Iraq Country Badge */}
-            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 gap-2">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/70 text-emerald-700 flex items-center justify-center shrink-0 shadow-2xs">
-                  <MapPin className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
-                    <span>{language === 'ar' ? 'بيانات وموقع التوصيل المعتمد' : 'Default Delivery Location'}</span>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70 hidden sm:inline-flex">
-                      {language === 'ar' ? 'موحد لكافة المتاجر' : 'Universal Across Stores'}
-                    </span>
-                  </h4>
-                  <p className="text-[11px] text-slate-500 truncate">
-                    {language === 'ar' ? 'تُطبّق هذه البيانات تلقائياً في صفحة الشراء لسرعة الطلب من أي متجر مستضاف' : 'Auto-applied at checkout for fast 1-click ordering from any hosted store'}
-                  </p>
-                </div>
+            {/* Box Header - Clean, balanced, no redundant badges */}
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/80">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
+                <MapPin className="w-5 h-5 text-emerald-600" />
               </div>
-
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-800 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>العراق 🇮🇶</span>
-              </span>
+              <div className="min-w-0">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                  {language === 'ar' ? 'بيانات وموقع التوصيل المعتمد' : 'Default Delivery Location'}
+                </h4>
+              </div>
             </div>
 
             <form onSubmit={handleSaveShippingDetails} className="space-y-3.5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* Full Name */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-slate-400" />
                     <span>{language === 'ar' ? 'اسم المستلم الثلاثي' : 'Recipient Name'}</span>
                     <span className="text-rose-500 font-bold">*</span>
@@ -337,14 +324,14 @@ export const CustomerAccountModal: React.FC = () => {
                       setName(e.target.value);
                       setIsEditing(true);
                     }}
-                    placeholder={language === 'ar' ? 'مثال: حيدر علي العراقي' : 'Full Name'}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"
+                    placeholder={language === 'ar' ? 'اسم المستلم بالكامل' : 'Full Name'}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
                   />
                 </div>
 
                 {/* Mobile Phone */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-slate-400" />
                     <span>{language === 'ar' ? 'رقم هاتف المستلم (واتساب)' : 'Delivery Phone'}</span>
                     <span className="text-rose-500 font-bold">*</span>
@@ -356,13 +343,13 @@ export const CustomerAccountModal: React.FC = () => {
                     value={phone}
                     onChange={(e) => handlePhoneInputChange(e.target.value)}
                     placeholder="0770 123 4567"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
                   />
                 </div>
 
                 {/* Email Address */}
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
                     <span>{language === 'ar' ? 'البريد الإلكتروني (لتلقي إشعارات وفواتير الشراء)' : 'Email Address (For receipts & invoices)'}</span>
                   </label>
@@ -374,16 +361,16 @@ export const CustomerAccountModal: React.FC = () => {
                       setIsEditing(true);
                     }}
                     placeholder={language === 'ar' ? 'customer@example.com (اختياري)' : 'customer@example.com (optional)'}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
                   />
                 </div>
               </div>
 
-              {/* Governorate (بغداد clean without العاصمة) & District / Neighborhood */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Governorate & District / Neighborhood */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* Governorate Selection */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                     <Compass className="w-3.5 h-3.5 text-slate-400" />
                     <span>{language === 'ar' ? 'المحافظة' : 'Governorate'}</span>
                     <span className="text-rose-500 font-bold">*</span>
@@ -395,7 +382,7 @@ export const CustomerAccountModal: React.FC = () => {
                       setState(cleanGovernorateName(e.target.value));
                       setIsEditing(true);
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all cursor-pointer"
                   >
                     {IRAQ_GOVERNORATES.map((g) => {
                       const val = language === 'ar' ? cleanGovernorateName(g.ar) : cleanGovernorateName(g.en);
@@ -410,7 +397,7 @@ export const CustomerAccountModal: React.FC = () => {
 
                 {/* District / City / Neighborhood */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                     <Building className="w-3.5 h-3.5 text-slate-400" />
                     <span>{language === 'ar' ? 'المدينة / المنطقة / الحي' : 'City / District'}</span>
                     <span className="text-rose-500 font-bold">*</span>
@@ -424,14 +411,14 @@ export const CustomerAccountModal: React.FC = () => {
                       setIsEditing(true);
                     }}
                     placeholder={language === 'ar' ? 'مثال: حي الجامعة، المنصور، الكرادة...' : 'e.g. Al-Jami\'a, Al-Mansour'}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
                   />
                 </div>
               </div>
 
               {/* Street Address & Details (تفاصيل الشارع والدار) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                   <Navigation className="w-3.5 h-3.5 text-slate-400" />
                   <span>{language === 'ar' ? 'تفاصيل العنوان (الشارع، الزقاق، رقم الدار أو العمارة)' : 'Street & Building Details'}</span>
                   <span className="text-rose-500 font-bold">*</span>
@@ -445,13 +432,13 @@ export const CustomerAccountModal: React.FC = () => {
                     setIsEditing(true);
                   }}
                   placeholder={language === 'ar' ? 'مثال: شارع 66، محلة 603، زقاق 12، دار 8' : 'Street name, building #, apartment'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
                 />
               </div>
 
               {/* Nearest Landmark (أقرب نقطة دالة) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>{language === 'ar' ? 'أقرب نقطة دالة لتسهيل وصول المندوب' : 'Nearest Landmark'}</span>
                 </label>
@@ -463,29 +450,29 @@ export const CustomerAccountModal: React.FC = () => {
                     setIsEditing(true);
                   }}
                   placeholder={language === 'ar' ? 'مثال: قرب أسواق الريان، مقابل صيدلية الرواد' : 'e.g. Near Al-Rayan Market, opposite pharmacy'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
                 />
               </div>
 
-              {/* UI-UX ProMax: Live Delivery Label Preview Strip */}
-              <div className="p-3.5 rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 space-y-1.5 shadow-inner">
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
+              {/* Live Delivery Label Preview Strip */}
+              <div className="p-3.5 rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 space-y-2 shadow-inner">
+                <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-bold text-emerald-400">
                     <Truck className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'معاينة بوليصة الشحن المعتمدة للمتاجر:' : 'Universal Shipping Label Preview:'}</span>
+                    <span>{language === 'ar' ? 'معاينة عنوان التوصيل المعتمد:' : 'Delivery Address Preview:'}</span>
                   </span>
-                  <span className="text-[10px] bg-slate-800 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-slate-700 flex items-center gap-1">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
-                    <span>{language === 'ar' ? 'توصيل معتمد' : 'Verified'}</span>
+                  <span className="text-[10px] bg-emerald-500/15 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>{language === 'ar' ? 'معتمد' : 'Verified'}</span>
                   </span>
                 </div>
-                <p className="text-xs font-semibold text-white leading-relaxed">
+                <p className="text-xs sm:text-sm font-semibold text-white leading-relaxed">
                   <span className="text-emerald-300 font-bold">{activeGovernorate}</span>
                   {city ? <span className="text-slate-200"> • {city}</span> : null}
                   {address ? <span className="text-slate-300"> • {address}</span> : null}
-                  {landmark ? <span className="text-amber-300/95 text-[11px] font-normal"> ({landmark})</span> : null}
+                  {landmark ? <span className="text-amber-300/95 text-xs font-normal"> ({landmark})</span> : null}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 pt-1.5 border-t border-slate-800">
                   <span className="text-slate-300 font-medium">👤 {name || (language === 'ar' ? 'اسم المستلم' : 'Recipient')}</span>
                   <span>•</span>
                   <span dir="ltr" className="font-mono text-emerald-400 font-bold">{phone || (language === 'ar' ? 'رقم الهاتف' : 'Phone')}</span>
@@ -493,17 +480,17 @@ export const CustomerAccountModal: React.FC = () => {
               </div>
 
               {/* Save Button */}
-              <div className="pt-1 flex items-center justify-end">
+              <div className="pt-2 flex items-center justify-end">
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
+                  className="w-full sm:w-auto px-7 py-3 rounded-xl text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer disabled:opacity-60"
                   style={{ backgroundColor: theme.hex }}
                 >
                   <Save className="w-4 h-4" />
                   <span>
                     {isSaving
-                      ? (language === 'ar' ? 'جارِ الحفظ والمزامنة...' : 'Saving...')
+                      ? (language === 'ar' ? 'جارِ الحفظ...' : 'Saving...')
                       : (language === 'ar' ? 'حفظ وتحديث موقع التوصيل' : 'Save Shipping Location')}
                   </span>
                 </button>
