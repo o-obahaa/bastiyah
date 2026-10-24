@@ -274,7 +274,7 @@ export const ProductQuickViewModal: React.FC = () => {
                   className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 transition-all disabled:bg-slate-200 disabled:text-slate-400"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>{isOutOfStock ? t.outOfStock : `${t.addToBag} • ${currency}${(quickViewProduct.price * quantity).toFixed(0)}`}</span>
+                  <span>{isOutOfStock ? t.outOfStock : `${t.addToBag} • ${(quickViewProduct.price * quantity).toLocaleString()} ${currency}`}</span>
                 </button>
               </div>
 

@@ -11,9 +11,13 @@ export const WishlistPage: React.FC = () => {
     setCurrentPage, 
     setSelectedProductId,
     t,
+    language,
+    activeStore,
     getProductName,
     getCategoryName
   } = useStore();
+
+  const currency = activeStore.settings?.currency || (language === 'ar' ? 'د.ع' : 'IQD');
 
   const wishlistedProducts = products.filter((p) => wishlist.includes(p.id));
 
@@ -112,11 +116,11 @@ export const WishlistPage: React.FC = () => {
                     </h3>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="font-black text-slate-900 text-base">
-                        ${product.price}
+                        {product.price.toLocaleString()} {currency}
                       </span>
                       {product.originalPrice && (
                         <span className="text-xs text-slate-400 line-through">
-                          ${product.originalPrice}
+                          {product.originalPrice.toLocaleString()} {currency}
                         </span>
                       )}
                     </div>

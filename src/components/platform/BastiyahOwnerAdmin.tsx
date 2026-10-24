@@ -1282,7 +1282,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
             <span className="text-slate-300">|</span>
             <span className="flex items-center gap-1.5">
               <span className="text-slate-500">GMV:</span>
-              <strong className="text-emerald-600 font-bold">${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              <strong className="text-emerald-600 font-bold">{totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {language === 'ar' ? 'د.ع' : 'IQD'}</strong>
             </span>
             <span className="text-slate-300">|</span>
             <span className="flex items-center gap-1.5">
@@ -2045,7 +2045,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="font-mono">
-                                <span className="font-bold text-emerald-600">${revenue.toFixed(2)}</span>
+                                <span className="font-bold text-emerald-600">{revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {store.settings?.currency || (language === 'ar' ? 'د.ع' : 'IQD')}</span>
                                 <span className="text-slate-400 text-[11px] ms-1.5">({realOrders.length} {language === 'ar' ? 'طلب' : 'orders'})</span>
                               </div>
                             </td>
@@ -2112,10 +2112,10 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   {language === 'ar' ? 'إجمالي المبيعات المحققة عبر كافة المتاجر المستضافة' : 'Cross-Store Gross Merchandise Value (GMV)'}
                 </span>
                 <p className="text-3xl sm:text-4xl font-black text-slate-900 font-brand">
-                  ${totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {totalPlatformRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-lg font-bold text-slate-500">{language === 'ar' ? 'د.ع' : 'IQD'}</span>
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  {language === 'ar' ? `من إجمالي ${totalPlatformOrders} طلب عبر الشبكة بمتوسط قيمة سلة $${averageOrderValue.toFixed(2)}` : `From ${totalPlatformOrders} orders across the network with an AOV of $${averageOrderValue.toFixed(2)}`}
+                  {language === 'ar' ? `من إجمالي ${totalPlatformOrders} طلب عبر الشبكة بمتوسط قيمة سلة ${averageOrderValue.toFixed(2)} د.ع` : `From ${totalPlatformOrders} orders across the network with an AOV of ${averageOrderValue.toFixed(2)} IQD`}
                 </p>
               </div>
 
@@ -2159,7 +2159,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                             <span className="text-slate-400 font-mono text-[11px]">({st.slug}.bastiyah.com)</span>
                           </div>
                           <div className="text-end font-mono">
-                            <strong className="text-emerald-600 text-sm font-black">${st.totalRev.toFixed(2)}</strong>
+                            <strong className="text-emerald-600 text-sm font-black">{st.totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {language === 'ar' ? 'د.ع' : 'IQD'}</strong>
                             <span className="text-slate-500 text-[11px] ms-2">({st.realOrdersCount} {language === 'ar' ? 'طلب' : 'orders'})</span>
                           </div>
                         </div>
@@ -2195,7 +2195,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between text-xs font-mono pt-1">
                       <span className="text-slate-500">{cat.products} {language === 'ar' ? 'منتج' : 'products'}</span>
-                      <strong className="text-emerald-600 font-bold">${cat.revenue.toFixed(2)}</strong>
+                      <strong className="text-emerald-600 font-bold">{cat.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {language === 'ar' ? 'د.ع' : 'IQD'}</strong>
                     </div>
                   </div>
                 ))}
@@ -2408,7 +2408,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                           <td className="py-3 px-4 font-mono font-bold text-slate-800">
                             {cust.ordersCount}
                           </td>
-                          <td className="py-3 px-4 font-mono font-bold text-emerald-600">${cust.totalSpent.toFixed(2)}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-emerald-600">{cust.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {language === 'ar' ? 'د.ع' : 'IQD'}</td>
                           <td className="py-3 px-4">
                             <div className="flex flex-wrap gap-1">
                               {cust.stores.length > 0 ? (
@@ -3369,7 +3369,7 @@ export const BastiyahOwnerAdmin: React.FC = () => {
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
                       <span className="text-[10px] text-slate-400 uppercase block">{language === 'ar' ? 'المبيعات' : 'GMV'}</span>
-                      <span className="font-mono font-bold text-emerald-600">$0.00</span>
+                      <span className="font-mono font-bold text-emerald-600">0.00 {CURRENCY_OPTIONS.find((c) => c.code === newCurrency)?.symbol || (language === 'ar' ? 'د.ع' : 'IQD')}</span>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
                       <span className="text-[10px] text-slate-400 uppercase block">{language === 'ar' ? 'المنتجات' : 'Products'}</span>
