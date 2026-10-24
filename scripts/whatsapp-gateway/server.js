@@ -32,6 +32,21 @@ let connectedPhone = null;
 // Map sent notification messageId -> orderNumber for 100% accurate reply tracking
 const sentOrderMessages = new Map();
 
+// In-memory sliding activities log for Owner WhatsApp Inbox
+const gatewayActivities = [];
+
+function recordGatewayActivity(act) {
+  if (!act || !act.content) return;
+  const entry = {
+    ...act,
+    id: act.id || `act-gw-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    timestamp: act.timestamp || new Date().toISOString(),
+  };
+  gatewayActivities.unshift(entry);
+  if (gatewayActivities.length > 200) gatewayActivities.pop();
+  return entry;
+}
+
 // In-memory + persisted message cache to resolve "Waiting for this message" decryption retries
 const recentMessages = new Map();
 const recentMessageTexts = new Map();
@@ -260,6 +275,21 @@ async function connectToWhatsApp() {
 
       console.log(`[Bastiyah Gateway] 💬 Incoming message from ${senderJid}: "${incomingText}" (mappedOrder: ${mappedOrderNumber || 'none'})`);
 
+      // Record inbound message for Owner Panel
+      recordGatewayActivity({
+        direction: 'inbound',
+        storeId: 'store-1',
+        storeName: 'متجر بسطية',
+        storeSlug: 'panda',
+        recipientName: senderJid ? `+${senderJid.replace('@s.whatsapp.net', '')}` : 'زبون المتجر',
+        recipientPhone: senderJid ? `+${senderJid.replace('@s.whatsapp.net', '')}` : '',
+        categoryLabelAr: 'رسالة / رد وارد من الزبون',
+        categoryLabelEn: 'Inbound Customer Reply',
+        content: incomingText,
+        status: 'received',
+        orderNumber: mappedOrderNumber,
+      });
+
       // Forward to Convex WhatsApp command handler
       const res = await fetch(`${CONVEX_SITE_URL}/whatsapp-command`, {
         method: 'POST',
@@ -393,6 +423,21 @@ app.get('/qr', (req, res) => {
   res.redirect('/');
 });
 
+// Live Activities for Owner Panel
+app.get('/activities', (req, res) => {
+  res.json({
+    success: true,
+    activities: gatewayActivities,
+  });
+});
+
+app.post('/log-activity', (req, res) => {
+  if (req.body && req.body.content) {
+    recordGatewayActivity(req.body);
+  }
+  res.json({ success: true });
+});
+
 // 3. Send WhatsApp OTP endpoint
 app.post('/send-otp', async (req, res) => {
   try {
@@ -476,6 +521,21 @@ app.post('/send-message', async (req, res) => {
     if (orderMatch && sent?.key?.id) {
       sentOrderMessages.set(sent.key.id, orderMatch[1].toUpperCase());
     }
+
+    // Record outbound activity for Owner WhatsApp Inbox
+    recordGatewayActivity({
+      direction: 'outbound',
+      storeId: 'store-1',
+      storeName: 'متجر بسطية',
+      storeSlug: 'panda',
+      recipientName: 'مدير المتجر',
+      recipientPhone: `+${cleanPhone}`,
+      categoryLabelAr: 'إشعار صادر لمدير المتجر',
+      categoryLabelEn: 'Outbound Store Alert',
+      content: message,
+      status: 'sent',
+      orderNumber: orderMatch ? orderMatch[1].toUpperCase() : undefined,
+    });
 
     console.log(`[Bastiyah Gateway] ✅ Message dispatched to manager [${cleanPhone}] via WhatsApp! MsgId: ${sent?.key?.id}`);
 

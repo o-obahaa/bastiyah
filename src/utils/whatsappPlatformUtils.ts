@@ -1,3 +1,5 @@
+import { getCustomDomainRoot } from './urlUtils';
+
 export interface WhatsAppVariable {
   key: string;
   labelAr: string;
@@ -230,23 +232,86 @@ const TEMPLATES_STORAGE_KEY = 'bastiyah_whatsapp_templates';
 const ACTIVITIES_STORAGE_KEY = 'bastiyah_whatsapp_activities';
 
 /**
- * Loads WhatsApp templates from localStorage or fallback to defaults.
+ * Cross-Subdomain Cookie Storage Helpers:
+ * Ensures *.bastiyah.com, subdomains, and root platform share the identical
+ * WhatsApp forms and inbox activities seamlessly.
+ */
+const getSharedCookie = (key: string): any | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${key}=([^;]*)`));
+  if (match && match[1]) {
+    try {
+      return JSON.parse(decodeURIComponent(match[1]));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+const setSharedCookie = (key: string, data: any) => {
+  if (typeof document === 'undefined') return;
+  const root = getCustomDomainRoot();
+  const domainPart = root && !root.includes('localhost') ? `; domain=.${root}` : '';
+  try {
+    const val = encodeURIComponent(JSON.stringify(data));
+    document.cookie = `${key}=${val}; path=/${domainPart}; max-age=2592000; SameSite=Lax`;
+  } catch {
+    // ignore
+  }
+};
+
+/**
+ * Real-time Cross-Tab and Cross-Subdomain Broadcast Channel
+ */
+let whatsappSyncChannel: BroadcastChannel | null = null;
+if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+  try {
+    whatsappSyncChannel = new BroadcastChannel('bastiyah_whatsapp_sync_channel');
+    whatsappSyncChannel.onmessage = (event) => {
+      if (event?.data?.type === 'TEMPLATES_UPDATED') {
+        window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: event.data.data }));
+      } else if (event?.data?.type === 'ACTIVITY_LOGGED' || event?.data?.type === 'ACTIVITIES_UPDATED') {
+        window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_activity_updated', { detail: event.data.activity }));
+      }
+    };
+  } catch {
+    // BroadcastChannel unsupported or blocked
+  }
+}
+
+/**
+ * Loads WhatsApp templates from localStorage, falling back to shared cookie, or factory defaults.
  */
 export const getStoredWhatsAppTemplates = (): WhatsAppTemplate[] => {
   if (typeof window === 'undefined') return DEFAULT_WHATSAPP_TEMPLATES;
   try {
+    let parsed: any = null;
     const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
-    if (!raw) {
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
+    }
+    // Fallback to shared subdomain cookie if localStorage is empty
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+      parsed = getSharedCookie(TEMPLATES_STORAGE_KEY);
+    }
+
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
       return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t, content: t.defaultContent, enabled: t.enabled ?? true }));
     }
-    const parsed = JSON.parse(raw);
+
     return DEFAULT_WHATSAPP_TEMPLATES.map((def) => {
       const match = parsed.find((p: any) => p.id === def.id);
+      const customContent = match?.content !== undefined && match?.content !== null ? match.content : def.defaultContent;
       return {
         ...def,
-        content: match?.content || def.defaultContent,
+        content: customContent,
         enabled: match?.enabled !== undefined ? match.enabled : (def.enabled ?? true),
-        isDefaultModified: match ? match.content !== def.defaultContent : false,
+        isDefaultModified: customContent.trim() !== def.defaultContent.trim(),
       };
     });
   } catch (e) {
@@ -255,7 +320,7 @@ export const getStoredWhatsAppTemplates = (): WhatsAppTemplate[] => {
 };
 
 /**
- * Saves an edited template to localStorage and notifies the application.
+ * Saves an edited template to localStorage, shared cookie, and broadcasts to all tabs & stores.
  */
 export const saveStoredWhatsAppTemplate = (templateId: string, newContent: string, enabled?: boolean): WhatsAppTemplate[] => {
   const current = getStoredWhatsAppTemplates();
@@ -269,14 +334,19 @@ export const saveStoredWhatsAppTemplate = (templateId: string, newContent: strin
         }
       : t
   );
+
   try {
     localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(updated));
+    setSharedCookie(TEMPLATES_STORAGE_KEY, updated);
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: updated }));
     }
+    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: updated });
   } catch (e) {
-    console.warn('Failed to save whatsapp template to localStorage:', e);
+    console.warn('Failed to save whatsapp template:', e);
   }
+
   return updated;
 };
 
@@ -293,14 +363,19 @@ export const toggleStoredWhatsAppTemplateStatus = (templateId: string, enabled: 
         }
       : t
   );
+
   try {
     localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(updated));
+    setSharedCookie(TEMPLATES_STORAGE_KEY, updated);
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: updated }));
     }
+    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: updated });
   } catch (e) {
-    console.warn('Failed to toggle whatsapp template status in localStorage:', e);
+    console.warn('Failed to toggle whatsapp template status:', e);
   }
+
   return updated;
 };
 
@@ -320,15 +395,12 @@ export const resetStoredWhatsAppTemplate = (templateId: string): WhatsAppTemplat
   const def = DEFAULT_WHATSAPP_TEMPLATES.find((t) => t.id === templateId);
   if (!def) return getStoredWhatsAppTemplates();
   const res = saveStoredWhatsAppTemplate(templateId, def.defaultContent);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: res }));
-  }
   return res;
 };
 
 /**
- * Renders any WhatsApp template using the owner-configured text from localStorage,
- * replacing all dynamic variables with the supplied key-value pairs.
+ * Renders any WhatsApp template using the owner-configured text,
+ * replacing dynamic variables with provided values.
  */
 export const renderWhatsAppTemplate = (
   templateId: string,
@@ -366,28 +438,52 @@ const MOCK_ACTIVITY_IDS = new Set([
 ]);
 
 /**
- * Loads WhatsApp activities (sent & received messages) from localStorage.
- * Automatically cleanses any legacy random/mock activity items.
+ * Cleanses activity lists so that NO random or placeholder messages appear in the inbox.
+ */
+const isCleanActivity = (a: any): boolean => {
+  if (!a || typeof a !== 'object') return false;
+  const idStr = String(a.id || '');
+  if (MOCK_ACTIVITY_IDS.has(idStr)) return false;
+  if (idStr.startsWith('act-sync-') || idStr.startsWith('act-10') || idStr.startsWith('act-sample')) return false;
+  return true;
+};
+
+/**
+ * Loads WhatsApp activities (sent & received messages) from localStorage and shared cookie.
  */
 export const getStoredWhatsAppActivities = (): WhatsAppActivity[] => {
   if (typeof window === 'undefined') return [];
   try {
+    let list: WhatsAppActivity[] = [];
     const raw = localStorage.getItem(ACTIVITIES_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    
-    // Strictly cleanse out any mock placeholder entries OR auto-synced dummy items
-    const cleaned = parsed.filter(
-      (a: any) =>
-        !MOCK_ACTIVITY_IDS.has(a?.id) &&
-        !String(a?.id || '').startsWith('act-sync-') &&
-        !String(a?.id || '').startsWith('act-10') &&
-        !String(a?.id || '').startsWith('act-sample')
-    );
-    if (cleaned.length !== parsed.length) {
-      localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(cleaned));
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch {}
     }
+
+    // Merge shared cookie if available
+    const cookieActivities = getSharedCookie(ACTIVITIES_STORAGE_KEY);
+    if (Array.isArray(cookieActivities) && cookieActivities.length > 0) {
+      const existingIds = new Set(list.map((x) => x.id));
+      for (const item of cookieActivities) {
+        if (item?.id && !existingIds.has(item.id)) {
+          list.push(item);
+        }
+      }
+    }
+
+    // Strictly cleanse out any mock placeholder entries
+    const cleaned = list.filter(isCleanActivity);
+    if (cleaned.length !== list.length) {
+      localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(cleaned));
+      setSharedCookie(ACTIVITIES_STORAGE_KEY, cleaned);
+    }
+
+    // Sort descending by timestamp
+    cleaned.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
     return cleaned;
   } catch (e) {
     return [];
@@ -402,9 +498,11 @@ export const deleteStoredWhatsAppActivity = (activityId: string): WhatsAppActivi
   const updated = current.filter((a) => a.id !== activityId);
   try {
     localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(updated));
+    setSharedCookie(ACTIVITIES_STORAGE_KEY, updated);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_activity_updated', { detail: updated }));
     }
+    whatsappSyncChannel?.postMessage({ type: 'ACTIVITIES_UPDATED', activity: updated });
   } catch (e) {
     console.warn('Failed to delete whatsapp activity:', e);
   }
@@ -417,9 +515,11 @@ export const deleteStoredWhatsAppActivity = (activityId: string): WhatsAppActivi
 export const clearStoredWhatsAppActivities = (): WhatsAppActivity[] => {
   try {
     localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify([]));
+    setSharedCookie(ACTIVITIES_STORAGE_KEY, []);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_activity_updated', { detail: [] }));
     }
+    whatsappSyncChannel?.postMessage({ type: 'ACTIVITIES_UPDATED', activity: [] });
   } catch (e) {
     console.warn('Failed to clear whatsapp activities:', e);
   }
@@ -427,8 +527,8 @@ export const clearStoredWhatsAppActivities = (): WhatsAppActivity[] => {
 };
 
 /**
- * Appends a new activity entry (either sent or received) to localStorage
- * and dispatches a live window event so the Owner Panel instantly updates.
+ * Appends a new activity entry (either sent or received) to localStorage,
+ * shared cookie, dispatches a live window event, and broadcasts across all tabs.
  */
 export const logWhatsAppActivity = (activity: Omit<WhatsAppActivity, 'id' | 'timestamp'> & { timestamp?: string }): WhatsAppActivity => {
   const newEntry: WhatsAppActivity = {
@@ -441,14 +541,65 @@ export const logWhatsAppActivity = (activity: Omit<WhatsAppActivity, 'id' | 'tim
     const current = getStoredWhatsAppActivities();
     const updated = [newEntry, ...current].slice(0, 200); // keep last 200 messages
     localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(updated));
+    setSharedCookie(ACTIVITIES_STORAGE_KEY, updated);
     
     // Notify all listeners across tabs and inside the single-page application
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_activity_updated', { detail: newEntry }));
     }
+    whatsappSyncChannel?.postMessage({ type: 'ACTIVITY_LOGGED', activity: newEntry });
+
+    // Inform Render WhatsApp gateway if reachable
+    const gatewayUrl = ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+    if (gatewayUrl && typeof fetch !== 'undefined') {
+      fetch(`${gatewayUrl}/log-activity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEntry),
+      }).catch(() => {});
+    }
   } catch (e) {
-    console.warn('Failed to save whatsapp activity to localStorage:', e);
+    console.warn('Failed to save whatsapp activity:', e);
   }
 
   return newEntry;
+};
+
+/**
+ * Fetches recent live activities from WhatsApp gateway (Render/Baileys) and merges them.
+ */
+export const syncLiveGatewayActivities = async (): Promise<WhatsAppActivity[]> => {
+  if (typeof window === 'undefined') return [];
+  const gatewayUrl = ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+  try {
+    const res = await fetch(`${gatewayUrl}/activities`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.activities) && data.activities.length > 0) {
+        const current = getStoredWhatsAppActivities();
+        const existingIds = new Set(current.map((c) => c.id));
+        let addedCount = 0;
+
+        for (const act of data.activities) {
+          if (act && act.id && !existingIds.has(act.id) && isCleanActivity(act)) {
+            current.unshift(act);
+            existingIds.add(act.id);
+            addedCount++;
+          }
+        }
+
+        if (addedCount > 0) {
+          current.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          const trimmed = current.slice(0, 200);
+          localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(trimmed));
+          setSharedCookie(ACTIVITIES_STORAGE_KEY, trimmed);
+          window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_activity_updated', { detail: trimmed }));
+          return trimmed;
+        }
+      }
+    }
+  } catch {
+    // Gateway offline or timeout
+  }
+  return getStoredWhatsAppActivities();
 };

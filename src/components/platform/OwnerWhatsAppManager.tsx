@@ -47,6 +47,7 @@ import {
   logWhatsAppActivity,
   deleteStoredWhatsAppActivity,
   clearStoredWhatsAppActivities,
+  syncLiveGatewayActivities,
 } from '../../utils/whatsappPlatformUtils';
 
 export const OwnerWhatsAppManager: React.FC = () => {
@@ -77,12 +78,22 @@ export const OwnerWhatsAppManager: React.FC = () => {
       setTemplates(getStoredWhatsAppTemplates());
     };
 
+    // Live sync with gateway on render
+    syncLiveGatewayActivities().then((live) => {
+      if (live && live.length > 0) setActivities(live);
+    }).catch(() => {});
+
     window.addEventListener('bastiyah_whatsapp_activity_updated', handleUpdate);
     window.addEventListener('bastiyah_whatsapp_templates_updated', handleTemplatesUpdate);
     window.addEventListener('storage', handleUpdate);
 
-    // Polling every 2.5 seconds ensures instantaneous reactivity across tabs
-    const pollId = setInterval(handleUpdate, 2500);
+    // Polling every 2.5 seconds ensures instantaneous reactivity across tabs & subdomains
+    const pollId = setInterval(() => {
+      handleUpdate();
+      syncLiveGatewayActivities().then((live) => {
+        if (live && live.length > 0) setActivities(live);
+      }).catch(() => {});
+    }, 2500);
 
     return () => {
       window.removeEventListener('bastiyah_whatsapp_activity_updated', handleUpdate);
