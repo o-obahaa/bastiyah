@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   Product, 
   CartItem, 
@@ -59,6 +59,7 @@ import {
 import {
   WhatsAppTemplate,
   getStoredWhatsAppTemplates,
+  getStoredCustomTemplatesMap,
   saveStoredWhatsAppTemplate,
   resetStoredWhatsAppTemplate,
   toggleStoredWhatsAppTemplateStatus,
@@ -535,28 +536,41 @@ export const broadcastPlatformSync = (data: any) => {
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Platform WhatsApp Forms Synchronization (Reactive across Owner & Store Manager panels)
   const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
+  const isSyncingTemplatesRef = useRef<boolean>(false);
 
   const syncWhatsAppTemplates = async () => {
-    // 1. Universal sync via WhatsApp Gateway HTTP API
+    if (isSyncingTemplatesRef.current) return;
+    isSyncingTemplatesRef.current = true;
     try {
-      await syncLiveGatewayTemplates();
-    } catch {}
-
-    // 2. Sync via Convex Realtime Cloud (Dev & Prod)
-    if (convexClient && typeof (convexClient as any).query === 'function') {
+      // 1. Universal sync via WhatsApp Gateway HTTP API
       try {
-        const remote = await (convexClient as any).query(api.whatsappTemplates.getTemplates, {});
-        if (Array.isArray(remote) && remote.length > 0) {
-          for (const item of remote) {
-            if (item?.templateId && item?.content) {
-              saveStoredWhatsAppTemplate(item.templateId, item.content, item.enabled);
+        await syncLiveGatewayTemplates();
+      } catch {}
+
+      // 2. Sync via Convex Realtime Cloud (Dev & Prod)
+      if (convexClient && typeof (convexClient as any).query === 'function') {
+        try {
+          const remote = await (convexClient as any).query(api.whatsappTemplates.getTemplates, {});
+          if (Array.isArray(remote) && remote.length > 0) {
+            const customMap = getStoredCustomTemplatesMap();
+            let hasChanged = false;
+            for (const item of remote) {
+              if (item?.templateId && item?.content && customMap[item.templateId]?.content !== item.content) {
+                customMap[item.templateId] = { content: item.content, enabled: item.enabled };
+                hasChanged = true;
+              }
+            }
+            if (hasChanged) {
+              localStorage.setItem('bastiyah_whatsapp_custom_map', JSON.stringify(customMap));
             }
           }
-        }
-      } catch {}
-    }
+        } catch {}
+      }
 
-    setWhatsappTemplates(getStoredWhatsAppTemplates());
+      setWhatsappTemplates(getStoredWhatsAppTemplates());
+    } finally {
+      isSyncingTemplatesRef.current = false;
+    }
   };
 
   useEffect(() => {

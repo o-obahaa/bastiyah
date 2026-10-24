@@ -118,7 +118,7 @@ export const AdminSettings: React.FC = () => {
   const storeTitle = activeStore.nameAr || activeStore.name;
   const storeCurrency = activeStore.settings.currency || 'د.ع';
 
-  const previewSampleOrder: Order = {
+  const previewSampleOrder: Order = useMemo(() => ({
     id: 'ord-preview-sample',
     orderNumber: `${activeStore.slug.toUpperCase().slice(0, 5)}-88240`,
     date: new Date().toISOString(),
@@ -159,10 +159,20 @@ export const AdminSettings: React.FC = () => {
     total: (((activeStore.products[0]?.price || 25000) * 2) + (activeStore.products[1]?.price || 45000) - 5000) + (activeStore.settings.standardShippingFee || 5000),
     status: 'processing',
     paymentMethod: 'Cash on Delivery',
+    paymentStatus: 'pending',
+    shippingAddress: {
+      fullName: 'أحمد علي العبيدي',
+      phone: '+964 771 000 0000',
+      address: 'شارع 14 رمضان - مقابل مجمع النور التجاري',
+      city: 'المنصور',
+      state: 'بغداد',
+      zipCode: '10001',
+      country: 'Iraq'
+    },
     courier: 'واصل إكسبريس (Wasel Express)',
     trackingNumber: 'WAS-BG-88412',
     notes: 'يرجى الاتصال بالزبون قبل التوصيل'
-  };
+  }), [activeStore.slug, activeStore.products, activeStore.settings.standardShippingFee]);
 
   // Live Platform WhatsApp Templates synchronized to this store (via StoreContext reactive state)
   const storeWhatsAppTemplates = whatsappTemplates;
@@ -184,7 +194,7 @@ export const AdminSettings: React.FC = () => {
     if (activeStoreTemplate && !isEditingStoreTemplate) {
       setStoreTemplateContent(activeStoreTemplate.content || activeStoreTemplate.defaultContent);
     }
-  }, [activeStoreTemplate, selectedStoreTemplateId, isEditingStoreTemplate]);
+  }, [selectedStoreTemplateId, isEditingStoreTemplate]);
 
   const handleSaveStoreTemplate = () => {
     if (!activeStoreTemplate) return;
@@ -243,7 +253,9 @@ export const AdminSettings: React.FC = () => {
     return rendered.content;
   }, [activeStoreTemplate, storeTitle, storeCurrency, previewSampleOrder, activeStore]);
 
-  const sampleOrderMessage = formatOrderWhatsAppMessage(previewSampleOrder, storeTitle, storeCurrency);
+  const sampleOrderMessage = useMemo(() => {
+    return formatOrderWhatsAppMessage(previewSampleOrder, storeTitle, storeCurrency);
+  }, [previewSampleOrder, storeTitle, storeCurrency]);
 
   const handleCopyMessageForm = () => {
     navigator.clipboard.writeText(activeStoreTemplatePreview || sampleOrderMessage);

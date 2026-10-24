@@ -78,36 +78,35 @@ export const OwnerWhatsAppManager: React.FC = () => {
   const [storeFilter, setStoreFilter] = useState<string>('all');
   const [selectedActivityForModal, setSelectedActivityForModal] = useState<WhatsAppActivity | null>(null);
 
-  // Real-time synchronization of WhatsApp activities and templates
+  // Real-time synchronization of WhatsApp activities (templates are reactive from StoreContext)
   useEffect(() => {
     const handleUpdate = () => {
-      setActivities(getStoredWhatsAppActivities());
-    };
-    const handleTemplatesUpdate = () => {
-      syncWhatsAppTemplates();
+      const fresh = getStoredWhatsAppActivities();
+      setActivities((prev) => (prev.length === fresh.length && prev[0]?.id === fresh[0]?.id ? prev : fresh));
     };
 
-    // Live sync with gateway and cloud on render
-    syncWhatsAppTemplates();
+    // Live sync with gateway on render
     syncLiveGatewayActivities().then((live) => {
-      if (live && live.length > 0) setActivities(live);
+      if (live && live.length > 0) {
+        setActivities((prev) => (prev.length === live.length && prev[0]?.id === live[0]?.id ? prev : live));
+      }
     }).catch(() => {});
 
     window.addEventListener('bastiyah_whatsapp_activity_updated', handleUpdate);
-    window.addEventListener('bastiyah_whatsapp_templates_updated', handleTemplatesUpdate);
     window.addEventListener('storage', handleUpdate);
 
-    // Polling every 2.5 seconds ensures instantaneous reactivity across tabs & subdomains
+    // Polling every 5 seconds ensures instantaneous reactivity across tabs without burning CPU
     const pollId = setInterval(() => {
       handleUpdate();
       syncLiveGatewayActivities().then((live) => {
-        if (live && live.length > 0) setActivities(live);
+        if (live && live.length > 0) {
+          setActivities((prev) => (prev.length === live.length && prev[0]?.id === live[0]?.id ? prev : live));
+        }
       }).catch(() => {});
-    }, 2500);
+    }, 5000);
 
     return () => {
       window.removeEventListener('bastiyah_whatsapp_activity_updated', handleUpdate);
-      window.removeEventListener('bastiyah_whatsapp_templates_updated', handleTemplatesUpdate);
       window.removeEventListener('storage', handleUpdate);
       clearInterval(pollId);
     };
