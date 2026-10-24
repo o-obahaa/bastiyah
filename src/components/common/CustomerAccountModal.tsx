@@ -293,208 +293,242 @@ export const CustomerAccountModal: React.FC = () => {
             </div>
           )}
 
-          {/* Shipping Location Details (بيانات وموقع التوصيل المعتمد) */}
-          <div className="bg-gradient-to-b from-white via-slate-50/60 to-slate-50/90 rounded-[22px] p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-4 transition-all">
-            {/* Box Header - Clean, balanced, no redundant badges */}
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/80">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
-                <MapPin className="w-5 h-5 text-emerald-600" />
+          {/* ─────────────────────────────────────────────────────────── */}
+          {/* Delivery Details Card — Formal Modern Design             */}
+          {/* ─────────────────────────────────────────────────────────── */}
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+
+            {/* Card Header */}
+            <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 border-b border-slate-200">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${theme.hex}15`, color: theme.hex }}
+              >
+                <MapPin className="w-4 h-4" />
               </div>
-              <div className="min-w-0">
-                <h4 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-                  {language === 'ar' ? 'بيانات وموقع التوصيل المعتمد' : 'Default Delivery Location'}
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 tracking-tight leading-none">
+                  {language === 'ar' ? 'بيانات وموقع التوصيل' : 'Delivery Information'}
                 </h4>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {language === 'ar' ? 'تُطبَّق تلقائياً عند إتمام الطلبات' : 'Auto-filled at checkout'}
+                </p>
               </div>
             </div>
 
-            <form onSubmit={handleSaveShippingDetails} className="space-y-3.5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* Full Name */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{language === 'ar' ? 'اسم المستلم الثلاثي' : 'Recipient Name'}</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      setIsEditing(true);
-                    }}
-                    placeholder={language === 'ar' ? 'اسم المستلم بالكامل' : 'Full Name'}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
-                  />
-                </div>
+            {/* Card Body — Form */}
+            <form onSubmit={handleSaveShippingDetails} className="p-5 space-y-5">
 
-                {/* Mobile Phone */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{language === 'ar' ? 'رقم هاتف المستلم (واتساب)' : 'Delivery Phone'}</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    dir="ltr"
-                    value={phone}
-                    onChange={(e) => handlePhoneInputChange(e.target.value)}
-                    placeholder="0770 123 4567"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
-                  />
-                </div>
-
-                {/* Email Address */}
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{language === 'ar' ? 'البريد الإلكتروني (لتلقي إشعارات وفواتير الشراء)' : 'Email Address (For receipts & invoices)'}</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setIsEditing(true);
-                    }}
-                    placeholder={language === 'ar' ? 'customer@example.com (اختياري)' : 'customer@example.com (optional)'}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Governorate & District / Neighborhood */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* Governorate Selection */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                    <Compass className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{language === 'ar' ? 'المحافظة' : 'Governorate'}</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <select
-                    required
-                    value={activeGovernorate}
-                    onChange={(e) => {
-                      setState(cleanGovernorateName(e.target.value));
-                      setIsEditing(true);
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all cursor-pointer"
-                  >
-                    {IRAQ_GOVERNORATES.map((g) => {
-                      const val = language === 'ar' ? cleanGovernorateName(g.ar) : cleanGovernorateName(g.en);
-                      return (
-                        <option key={g.code} value={val}>
-                          {val}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
-                {/* District / City / Neighborhood */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{language === 'ar' ? 'المدينة / المنطقة / الحي' : 'City / District'}</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={city}
-                    onChange={(e) => {
-                      setCity(e.target.value);
-                      setIsEditing(true);
-                    }}
-                    placeholder={language === 'ar' ? 'مثال: حي الجامعة، المنصور، الكرادة...' : 'e.g. Al-Jami\'a, Al-Mansour'}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Street Address & Details (تفاصيل الشارع والدار) */}
+              {/* ── Section 1: Contact ── */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <Navigation className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{language === 'ar' ? 'تفاصيل العنوان (الشارع، الزقاق، رقم الدار أو العمارة)' : 'Street & Building Details'}</span>
-                  <span className="text-rose-500 font-bold">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={address}
-                  onChange={(e) => {
-                    setAddress(e.target.value);
-                    setIsEditing(true);
-                  }}
-                  placeholder={language === 'ar' ? 'مثال: شارع 66، محلة 603، زقاق 12، دار 8' : 'Street name, building #, apartment'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
-                />
-              </div>
-
-              {/* Nearest Landmark (أقرب نقطة دالة) */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{language === 'ar' ? 'أقرب نقطة دالة لتسهيل وصول المندوب' : 'Nearest Landmark'}</span>
-                </label>
-                <input
-                  type="text"
-                  value={landmark}
-                  onChange={(e) => {
-                    setLandmark(e.target.value);
-                    setIsEditing(true);
-                  }}
-                  placeholder={language === 'ar' ? 'مثال: قرب أسواق الريان، مقابل صيدلية الرواد' : 'e.g. Near Al-Rayan Market, opposite pharmacy'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-500 shadow-2xs transition-all"
-                />
-              </div>
-
-              {/* Live Delivery Label Preview Strip */}
-              <div className="p-3.5 rounded-2xl bg-slate-900 text-slate-100 border border-slate-800 space-y-2 shadow-inner">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                    <Truck className="w-3.5 h-3.5" />
-                    <span>{language === 'ar' ? 'معاينة عنوان التوصيل المعتمد:' : 'Delivery Address Preview:'}</span>
-                  </span>
-                  <span className="text-[10px] bg-emerald-500/15 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>{language === 'ar' ? 'معتمد' : 'Verified'}</span>
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-white leading-relaxed">
-                  <span className="text-emerald-300 font-bold">{activeGovernorate}</span>
-                  {city ? <span className="text-slate-200"> • {city}</span> : null}
-                  {address ? <span className="text-slate-300"> • {address}</span> : null}
-                  {landmark ? <span className="text-amber-300/95 text-xs font-normal"> ({landmark})</span> : null}
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  {language === 'ar' ? 'معلومات التواصل' : 'Contact'}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400 pt-1.5 border-t border-slate-800">
-                  <span className="text-slate-300 font-medium">👤 {name || (language === 'ar' ? 'اسم المستلم' : 'Recipient')}</span>
-                  <span>•</span>
-                  <span dir="ltr" className="font-mono text-emerald-400 font-bold">{phone || (language === 'ar' ? 'رقم الهاتف' : 'Phone')}</span>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Full Name */}
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                        <User className="w-3 h-3" />
+                        {language === 'ar' ? 'اسم المستلم' : 'Recipient'}
+                        <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => { setName(e.target.value); setIsEditing(true); }}
+                        placeholder={language === 'ar' ? 'الاسم الثلاثي' : 'Full name'}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+                        style={{ '--tw-ring-color': `${theme.hex}40` } as React.CSSProperties}
+                        onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                        onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                      />
+                    </div>
+
+                    {/* Phone */}
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                        <Phone className="w-3 h-3" />
+                        {language === 'ar' ? 'الهاتف (واتساب)' : 'Phone (WhatsApp)'}
+                        <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        dir="ltr"
+                        value={phone}
+                        onChange={(e) => handlePhoneInputChange(e.target.value)}
+                        placeholder="0770 000 0000"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-mono font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none transition-all"
+                        onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                        onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                      <Mail className="w-3 h-3" />
+                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                      <span className="text-slate-400 normal-case font-normal text-[10px]">
+                        ({language === 'ar' ? 'اختياري' : 'optional'})
+                      </span>
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setIsEditing(true); }}
+                      placeholder="example@email.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none transition-all"
+                      onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                      onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Save Button */}
-              <div className="pt-2 flex items-center justify-end">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="w-full sm:w-auto px-7 py-3 rounded-xl text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer disabled:opacity-60"
-                  style={{ backgroundColor: theme.hex }}
-                >
-                  <Save className="w-4 h-4" />
-                  <span>
-                    {isSaving
-                      ? (language === 'ar' ? 'جارِ الحفظ...' : 'Saving...')
-                      : (language === 'ar' ? 'حفظ وتحديث موقع التوصيل' : 'Save Shipping Location')}
-                  </span>
-                </button>
+              {/* Divider */}
+              <div className="h-px bg-slate-100" />
+
+              {/* ── Section 2: Address ── */}
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  {language === 'ar' ? 'العنوان التفصيلي' : 'Address Details'}
+                </p>
+                <div className="space-y-3">
+                  {/* Governorate + City Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                        <Compass className="w-3 h-3" />
+                        {language === 'ar' ? 'المحافظة' : 'Governorate'}
+                        <span className="text-rose-400">*</span>
+                      </label>
+                      <select
+                        required
+                        value={activeGovernorate}
+                        onChange={(e) => { setState(cleanGovernorateName(e.target.value)); setIsEditing(true); }}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 focus:outline-none transition-all cursor-pointer appearance-none"
+                        onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                        onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                      >
+                        {IRAQ_GOVERNORATES.map((g) => {
+                          const val = language === 'ar' ? cleanGovernorateName(g.ar) : cleanGovernorateName(g.en);
+                          return <option key={g.code} value={val}>{val}</option>;
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                        <Building className="w-3 h-3" />
+                        {language === 'ar' ? 'المنطقة / الحي' : 'District / Area'}
+                        <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={city}
+                        onChange={(e) => { setCity(e.target.value); setIsEditing(true); }}
+                        placeholder={language === 'ar' ? 'الحي أو المنطقة' : 'e.g. Al-Mansour'}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none transition-all"
+                        onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                        onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Street */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                      <Navigation className="w-3 h-3" />
+                      {language === 'ar' ? 'الشارع والدار' : 'Street & Building'}
+                      <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={address}
+                      onChange={(e) => { setAddress(e.target.value); setIsEditing(true); }}
+                      placeholder={language === 'ar' ? 'شارع، زقاق، رقم الدار أو العمارة' : 'Street, alley, building number'}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none transition-all"
+                      onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                      onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                    />
+                  </div>
+
+                  {/* Landmark */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wide">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      {language === 'ar' ? 'أقرب نقطة دالة' : 'Nearest Landmark'}
+                      <span className="text-slate-400 normal-case font-normal text-[10px]">
+                        ({language === 'ar' ? 'اختياري' : 'optional'})
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={landmark}
+                      onChange={(e) => { setLandmark(e.target.value); setIsEditing(true); }}
+                      placeholder={language === 'ar' ? 'قرب مطعم، صيدلية، مدرسة...' : 'Near a restaurant, pharmacy, school...'}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none transition-all"
+                      onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.hex}25`; e.currentTarget.style.borderColor = theme.hex; }}
+                      onBlur={(e) => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                    />
+                  </div>
+                </div>
               </div>
+
+              {/* Divider */}
+              <div className="h-px bg-slate-100" />
+
+              {/* ── Address Preview Strip ── */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white">
+                  <span className="flex items-center gap-2 text-[11px] font-bold text-slate-600 uppercase tracking-wide">
+                    <Truck className="w-3.5 h-3.5" style={{ color: theme.hex }} />
+                    {language === 'ar' ? 'معاينة عنوان الشحن' : 'Shipping Preview'}
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    {language === 'ar' ? 'جاهز' : 'Ready'}
+                  </span>
+                </div>
+                <div className="px-4 py-3 space-y-2">
+                  <p className="text-sm font-semibold text-slate-800 leading-relaxed">
+                    <span className="font-bold" style={{ color: theme.hex }}>{activeGovernorate}</span>
+                    {city && <span className="text-slate-600"> · {city}</span>}
+                    {address && <span className="text-slate-500"> · {address}</span>}
+                    {landmark && <span className="text-slate-400 text-xs font-normal"> ({landmark})</span>}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 border-t border-slate-200/70 pt-2">
+                    <span className="font-semibold text-slate-700">
+                      {name || (language === 'ar' ? 'اسم المستلم' : 'Recipient')}
+                    </span>
+                    <span className="text-slate-300">|</span>
+                    <span dir="ltr" className="font-mono text-slate-600">
+                      {phone || (language === 'ar' ? 'رقم الهاتف' : 'Phone number')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Save Button ── */}
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="w-full py-3 rounded-xl text-white text-sm font-bold tracking-wide flex items-center justify-center gap-2.5 shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+                style={{ backgroundColor: theme.hex }}
+                onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.filter = ''; }}
+              >
+                <Save className="w-4 h-4" />
+                {isSaving
+                  ? (language === 'ar' ? 'جارِ الحفظ...' : 'Saving...')
+                  : (language === 'ar' ? 'حفظ بيانات التوصيل' : 'Save Delivery Info')}
+              </button>
             </form>
           </div>
 
