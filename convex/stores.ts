@@ -145,6 +145,44 @@ export const updateSettings = mutation({
   },
 });
 
+export const updateFeatures = mutation({
+  args: {
+    id: v.id("stores"),
+    features: v.object({
+      reviews: v.optional(v.boolean()),
+      wishlist: v.optional(v.boolean()),
+      heroSlider: v.optional(v.boolean()),
+      deliveryTracking: v.optional(v.boolean()),
+      whatsappOrders: v.optional(v.boolean()),
+      customDiscounts: v.optional(v.boolean()),
+      showBadges: v.optional(v.boolean()),
+      orderTrackingLookup: v.optional(v.boolean()),
+      announcements: v.optional(v.boolean()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { features: args.features });
+  },
+});
+
+export const updateThemeTokens = mutation({
+  args: {
+    id: v.id("stores"),
+    themeTokens: v.object({
+      primaryColor: v.optional(v.string()),
+      accentColor: v.optional(v.string()),
+      fontFamily: v.optional(v.string()),
+      cardBorderRadius: v.optional(v.string()),
+      cardShadow: v.optional(v.string()),
+      headerLayout: v.optional(v.string()),
+      footerLayout: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { themeTokens: args.themeTokens });
+  },
+});
+
 export const remove = mutation({
   args: { id: v.id("stores") },
   handler: async (ctx, args) => {

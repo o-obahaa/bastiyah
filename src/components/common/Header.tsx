@@ -54,7 +54,8 @@ export const Header: React.FC = () => {
     currentCustomer,
     setIsCustomerAuthModalOpen,
     setIsCustomerAccountModalOpen,
-    logoutCustomer
+    logoutCustomer,
+    isFeatureEnabled
   } = useStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -412,7 +413,7 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 shadow-sm transition-all">
       {/* 1. Store announcement micro banner (Optional) */}
-      {activeStore.design.showAnnouncementBar && (
+      {isFeatureEnabled('announcements') && activeStore.design.showAnnouncementBar && (
         <div
           className="text-white text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2 border-b border-black/10"
           style={{ backgroundColor: isDarkHeader ? '#0f172a' : theme.hex }}
@@ -618,16 +619,18 @@ export const Header: React.FC = () => {
                               <span>{t.navMyOrders}</span>
                             </button>
 
-                            <button
-                              onClick={() => {
-                                setCurrentPage('wishlist');
-                                setUserMenuOpen(false);
-                              }}
-                              className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
-                            >
-                              <Heart className="w-4 h-4 text-rose-500" />
-                              <span>{t.navWishlist}</span>
-                            </button>
+                            {isFeatureEnabled('wishlist') && (
+                              <button
+                                onClick={() => {
+                                  setCurrentPage('wishlist');
+                                  setUserMenuOpen(false);
+                                }}
+                                className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
+                              >
+                                <Heart className="w-4 h-4 text-rose-500" />
+                                <span>{t.navWishlist}</span>
+                              </button>
+                            )}
                           </div>
 
                           <div className="pt-1 border-t border-slate-100">
@@ -682,18 +685,20 @@ export const Header: React.FC = () => {
               </button>
 
               {/* Wishlist Button */}
-              <button
-                onClick={() => setCurrentPage('wishlist')}
-                className="relative p-2 rounded-full text-white hover:bg-white/10 transition-colors hidden sm:flex shrink-0"
-                title={t.navWishlist}
-              >
-                <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${wishlist.length > 0 ? 'text-rose-300 fill-rose-300' : 'text-white'}`} />
-                {wishlist.length > 0 && (
-                  <span className="absolute -top-1 -end-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
-                    {wishlist.length}
-                  </span>
-                )}
-              </button>
+              {isFeatureEnabled('wishlist') && (
+                <button
+                  onClick={() => setCurrentPage('wishlist')}
+                  className="relative p-2 rounded-full text-white hover:bg-white/10 transition-colors hidden sm:flex shrink-0"
+                  title={t.navWishlist}
+                >
+                  <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${wishlist.length > 0 ? 'text-rose-300 fill-rose-300' : 'text-white'}`} />
+                  {wishlist.length > 0 && (
+                    <span className="absolute -top-1 -end-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
+                      {wishlist.length}
+                    </span>
+                  )}
+                </button>
+              )}
 
               {/* Mobile menu hamburger */}
               <button
@@ -871,23 +876,25 @@ export const Header: React.FC = () => {
               <span>{t.navMyOrders}</span>
             </button>
 
-            <button
-              onClick={() => {
-                setCurrentPage('wishlist');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 flex items-center justify-between transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <Heart className={`w-4 h-4 ${wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
-                <span>{t.navWishlist}</span>
-              </div>
-              {wishlist.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-xs font-bold font-mono">
-                  {wishlist.length}
-                </span>
-              )}
-            </button>
+            {isFeatureEnabled('wishlist') && (
+              <button
+                onClick={() => {
+                  setCurrentPage('wishlist');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 flex items-center justify-between transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Heart className={`w-4 h-4 ${wishlist.length > 0 ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
+                  <span>{t.navWishlist}</span>
+                </div>
+                {wishlist.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-xs font-bold font-mono">
+                    {wishlist.length}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Language Switcher in Mobile Drawer */}

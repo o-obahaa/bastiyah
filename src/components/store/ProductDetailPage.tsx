@@ -48,7 +48,8 @@ export const ProductDetailPage: React.FC = () => {
     getProductName,
     getProductTagline,
     getProductDescription,
-    getCategoryName
+    getCategoryName,
+    isFeatureEnabled
   } = useStore();
 
   const currency = activeStore.settings.currency || 'د.ع';
@@ -329,18 +330,20 @@ export const ProductDetailPage: React.FC = () => {
               >
                 <Share2 className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
-                className={`w-10 h-10 rounded-full shadow-md backdrop-blur-sm border transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${
-                  isFavorited 
-                    ? 'bg-rose-50 text-rose-500 border-rose-200' 
-                    : 'bg-white/90 hover:bg-white text-slate-700 border-slate-200/80'
-                }`}
-                title="Wishlist"
-              >
-                <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current text-rose-500' : ''}`} />
-              </button>
+              {isFeatureEnabled('wishlist') && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                  className={`w-10 h-10 rounded-full shadow-md backdrop-blur-sm border transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${
+                    isFavorited 
+                      ? 'bg-rose-50 text-rose-500 border-rose-200' 
+                      : 'bg-white/90 hover:bg-white text-slate-700 border-slate-200/80'
+                  }`}
+                  title="Wishlist"
+                >
+                  <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current text-rose-500' : ''}`} />
+                </button>
+              )}
             </div>
 
             {/* Next and Back Buttons */}
@@ -414,15 +417,17 @@ export const ProductDetailPage: React.FC = () => {
             </p>
             
             {/* Rating row */}
-            <div className="flex items-center gap-2 mt-2.5 text-xs">
-              <div className="flex items-center gap-1 text-amber-500 font-semibold">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="text-slate-800 font-bold">{product.rating}</span>
+            {isFeatureEnabled('reviews') && (
+              <div className="flex items-center gap-2 mt-2.5 text-xs">
+                <div className="flex items-center gap-1 text-amber-500 font-semibold">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span className="text-slate-800 font-bold">{product.rating}</span>
+                </div>
+                <span className="text-slate-400">
+                  ({productReviews.length || product.reviewCount} {t.reviews})
+                </span>
               </div>
-              <span className="text-slate-400">
-                ({productReviews.length || product.reviewCount} {t.reviews})
-              </span>
-            </div>
+            )}
           </div>
 
           {/* Price display with discount badge */}
@@ -659,16 +664,18 @@ export const ProductDetailPage: React.FC = () => {
           >
             {t.specifications}
           </button>
-          <button
-            onClick={() => setActiveTab('reviews')}
-            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${
-              activeTab === 'reviews'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {t.customerReviews} ({productReviews.length})
-          </button>
+          {isFeatureEnabled('reviews') && (
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className={`pb-4 text-sm font-bold border-b-2 transition-colors ${
+                activeTab === 'reviews'
+                  ? 'border-emerald-600 text-emerald-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {t.customerReviews} ({productReviews.length})
+            </button>
+          )}
         </div>
 
         <div className="py-6">
@@ -690,7 +697,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'reviews' && (
+          {activeTab === 'reviews' && isFeatureEnabled('reviews') && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 max-w-3xl space-y-8">
               {/* Rating Summary */}
               <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">

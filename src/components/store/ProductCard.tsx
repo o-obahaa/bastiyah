@@ -21,7 +21,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     language,
     getProductName,
     getProductTagline,
-    getCategoryName
+    getCategoryName,
+    isFeatureEnabled,
+    themeTokens
   } = useStore();
 
   const isFavorited = isInWishlist(product.id);
@@ -56,11 +58,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const isCompact = cardSize === 'compact' || activeStore.design.desktopGridCols === 5 || activeStore.design.desktopGridCols === 6;
   const isLargeOrSpacious = cardSize === 'large' || cardSize === 'spacious' || activeStore.design.desktopGridCols === 2 || activeStore.design.desktopGridCols === 3;
 
+  const cardRadius = themeTokens?.cardBorderRadius || 
+    (activeStore.design.cardRadius === 'sharp' ? 'none' : activeStore.design.cardRadius === 'pill' ? 'full' : 'xl');
   const radiusClass =
-    activeStore.design.cardRadius === 'sharp'
+    cardRadius === 'none'
       ? 'rounded-none'
-      : activeStore.design.cardRadius === 'pill'
+      : cardRadius === 'full'
       ? 'rounded-3xl'
+      : cardRadius === 'sm'
+      ? 'rounded-sm'
+      : cardRadius === 'md'
+      ? 'rounded-md'
+      : cardRadius === 'lg'
+      ? 'rounded-lg'
       : 'rounded-2xl';
 
   return (
@@ -77,40 +87,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         />
 
         {/* Floating Badges */}
-        <div className="absolute top-3 start-3 flex flex-col gap-1.5 z-10 pointer-events-none">
-          {product.badge && (
-            <span
-              className={`${isCompact ? 'text-[10px] sm:text-xs px-2.5 py-0.5' : 'text-xs px-3 py-1'} font-black uppercase tracking-wider rounded-full shadow-md text-white backdrop-blur-xs`}
-              style={{
-                backgroundColor:
-                  product.badge === 'Hot Sale'
-                    ? '#f43f5e'
-                    : product.badge === 'Limited Stock'
-                    ? '#f59e0b'
-                    : theme.hex,
-              }}
-            >
-              {getBadgeLabel(product.badge)}
-            </span>
-          )}
-          {product.originalPrice && product.originalPrice > product.price && (
-            <span className={`${isCompact ? 'text-[10px] sm:text-xs px-2 py-0.5' : 'text-xs px-2.5 py-0.5'} font-black rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-xs w-fit`}>
-              {t.save} {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-            </span>
-          )}
-        </div>
+        {isFeatureEnabled('showBadges') && (
+          <div className="absolute top-3 start-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+            {product.badge && (
+              <span
+                className={`${isCompact ? 'text-[10px] sm:text-xs px-2.5 py-0.5' : 'text-xs px-3 py-1'} font-black uppercase tracking-wider rounded-full shadow-md text-white backdrop-blur-xs`}
+                style={{
+                  backgroundColor:
+                    product.badge === 'Hot Sale'
+                      ? '#f43f5e'
+                      : product.badge === 'Limited Stock'
+                      ? '#f59e0b'
+                      : theme.hex,
+                }}
+              >
+                {getBadgeLabel(product.badge)}
+              </span>
+            )}
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className={`${isCompact ? 'text-[10px] sm:text-xs px-2 py-0.5' : 'text-xs px-2.5 py-0.5'} font-black rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-xs w-fit`}>
+                {t.save} {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Wishlist toggle */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleWishlist(product.id);
-          }}
-          className={`absolute top-3 end-3 z-10 ${isCompact ? 'w-8 h-8' : 'w-9 h-9'} rounded-full bg-white/90 backdrop-blur-md shadow-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:scale-110 active:scale-90 transition-all`}
-          title={isFavorited ? 'Remove' : 'Save'}
-        >
-          <Heart className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'} ${isFavorited ? 'text-rose-500 fill-rose-500' : ''}`} />
-        </button>
+        {isFeatureEnabled('wishlist') && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWishlist(product.id);
+            }}
+            className={`absolute top-3 end-3 z-10 ${isCompact ? 'w-8 h-8' : 'w-9 h-9'} rounded-full bg-white/90 backdrop-blur-md shadow-md flex items-center justify-center text-slate-400 hover:text-rose-500 hover:scale-110 active:scale-90 transition-all`}
+            title={isFavorited ? 'Remove' : 'Save'}
+          >
+            <Heart className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'} ${isFavorited ? 'text-rose-500 fill-rose-500' : ''}`} />
+          </button>
+        )}
 
         {/* Quick View Button overlay on hover */}
         <div className="absolute inset-x-0 bottom-3 px-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
@@ -138,13 +152,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             >
               {categoryName}
             </span>
-            <div className="flex items-center gap-1 bg-amber-50/90 border border-amber-200/70 px-1.5 py-0.5 rounded-md text-amber-950 shrink-0">
-              <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-              <span className="text-[11px] font-black font-mono leading-none">{product.rating}</span>
-              {!isCompact && (
-                <span className="text-slate-400 text-[10px] leading-none hidden sm:inline">({product.reviewCount})</span>
-              )}
-            </div>
+            {isFeatureEnabled('reviews') && (
+              <div className="flex items-center gap-1 bg-amber-50/90 border border-amber-200/70 px-1.5 py-0.5 rounded-md text-amber-950 shrink-0">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                <span className="text-[11px] font-black font-mono leading-none">{product.rating}</span>
+                {!isCompact && (
+                  <span className="text-slate-400 text-[10px] leading-none hidden sm:inline">({product.reviewCount})</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Product Name (Properly sized so full text appears clearly) */}

@@ -318,6 +318,50 @@ export interface StoreDesign {
   showTrustBadges?: boolean;
 }
 
+export interface StoreFeaturesConfig {
+  reviews: boolean;
+  wishlist: boolean;
+  heroSlider: boolean;
+  deliveryTracking: boolean;
+  whatsappOrders: boolean;
+  customDiscounts: boolean;
+  showBadges: boolean;
+  orderTrackingLookup: boolean;
+  announcements: boolean;
+}
+
+export interface StoreThemeTokens {
+  primaryColor: string;
+  accentColor?: string;
+  fontFamily?: 'sans' | 'serif' | 'mono' | 'heading-display';
+  cardBorderRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  cardShadow: 'none' | 'sm' | 'md' | 'lg';
+  headerLayout: 'standard' | 'minimal' | 'centered';
+  footerLayout: 'simple' | 'multi-column' | 'minimal';
+}
+
+export const DEFAULT_STORE_FEATURES: StoreFeaturesConfig = {
+  reviews: true,
+  wishlist: true,
+  heroSlider: true,
+  deliveryTracking: true,
+  whatsappOrders: true,
+  customDiscounts: true,
+  showBadges: true,
+  orderTrackingLookup: true,
+  announcements: true,
+};
+
+export const DEFAULT_STORE_THEME_TOKENS: StoreThemeTokens = {
+  primaryColor: '#059669', // Emerald-600 default
+  accentColor: '#10b981',
+  fontFamily: 'sans',
+  cardBorderRadius: 'xl',
+  cardShadow: 'sm',
+  headerLayout: 'standard',
+  footerLayout: 'simple',
+};
+
 export interface HostedStore {
   id: string;
   slug: string; // e.g. "panda" -> panda.bastiyah.com
@@ -339,6 +383,8 @@ export interface HostedStore {
   logo?: string;
   design: StoreDesign;
   settings: StoreSettings;
+  features?: Partial<StoreFeaturesConfig>;
+  themeTokens?: Partial<StoreThemeTokens>;
   products: Product[];
   orders: Order[];
   customers: Customer[];

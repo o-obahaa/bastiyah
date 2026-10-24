@@ -22,8 +22,17 @@ import {
   CustomerUser,
   AdminNotification,
   NotificationSettings,
-  ANONYMOUS_USER_AVATAR
+  ANONYMOUS_USER_AVATAR,
+  StoreFeaturesConfig,
+  StoreThemeTokens,
 } from '../types';
+import {
+  resolveStoreFeatures,
+  resolveStoreTheme,
+  isStoreFeatureEnabled,
+  applyStoreThemeToDocument,
+  TenantIsolationGuard,
+} from '../services/storeTenantEngine';
 import { generateIraqiTrackingNumber } from '../utils/iraqShipping';
 import { 
   INITIAL_HOSTED_STORES,
@@ -132,16 +141,21 @@ interface StoreContextType {
   getProductTagline: (product: Product) => string;
   getProductDescription: (product: Product) => string;
 
-  // Multi-Store Platform (Bastiyah)
+  // Multi-Store Platform & Tenant Customization (Bastiyah Core & Store Layers)
   stores: HostedStore[];
   activeStore: HostedStore;
   theme: ThemeClasses;
+  storeFeatures: StoreFeaturesConfig;
+  themeTokens: StoreThemeTokens;
+  isFeatureEnabled: (feature: keyof StoreFeaturesConfig) => boolean;
   switchStore: (storeIdOrSlug: string, targetPage?: ActivePage) => void;
   goToPlatform: (targetPage?: 'landing' | 'admin') => void;
   createHostedStore: (input: CreateStoreInput) => HostedStore;
   updateHostedStore: (storeId: string, updates: Partial<HostedStore>) => void;
   registerStoreMerchantByOwner: (storeId: string, merchant: { name: string; phone: string; password?: string }) => void;
   updateStoreDesign: (designUpdates: Partial<StoreDesign>, storeId?: string) => void;
+  updateStoreFeatures: (features: Partial<StoreFeaturesConfig>, storeId?: string) => void;
+  updateStoreThemeTokens: (tokens: Partial<StoreThemeTokens>, storeId?: string) => void;
   deleteHostedStore: (storeId: string) => void;
 
   // Products (scoped to activeStore)
@@ -294,6 +308,8 @@ export const hydrateCustomStore = (s: any): HostedStore => {
       standardShippingFee: 5000,
       taxRate: 0,
     },
+    features: s.features ? resolveStoreFeatures(s) : resolveStoreFeatures(),
+    themeTokens: s.themeTokens ? resolveStoreTheme(s) : resolveStoreTheme(s),
     products: Array.isArray(s.products) && s.products.length > 0 ? s.products : starterProducts.map((p, idx) => ({
       ...p,
       id: `${cleanSlug}-prod-${idx + 1}`,
@@ -1760,6 +1776,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
   const theme = getThemeClasses(activeStore.design.themeColor, activeStore.design.customThemeColor);
+  const storeFeatures = resolveStoreFeatures(activeStore);
+  const themeTokens = resolveStoreTheme(activeStore);
+
+  const isFeatureEnabled = (feature: keyof StoreFeaturesConfig): boolean => {
+    return isStoreFeatureEnabled(activeStore, feature);
+  };
+
+  useEffect(() => {
+    applyStoreThemeToDocument(activeStore);
+  }, [activeStore]);
 
   // Per-store carts stored by store ID
   const [cartsByStore, setCartsByStore] = useState<Record<string, CartItem[]>>(() => {
@@ -2594,6 +2620,56 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  const updateStoreFeatures = (featureUpdates: Partial<StoreFeaturesConfig>, storeId?: string) => {
+    const targetId = storeId || activeStore.id;
+    setStores((prev) =>
+      prev.map((s) => {
+        if (s.id !== targetId && s.slug !== targetId) return s;
+        return {
+          ...s,
+          features: {
+            ...resolveStoreFeatures(s),
+            ...featureUpdates,
+          },
+        };
+      })
+    );
+    broadcastPlatformSync({
+      type: 'STORE_FEATURES_UPDATED',
+      storeId: targetId,
+      featureUpdates,
+    });
+    addToast(
+      language === 'ar' ? '⚙️ تم حفظ وتحديث ميزات المتجر!' : '⚙️ Store features updated!',
+      'success'
+    );
+  };
+
+  const updateStoreThemeTokens = (tokenUpdates: Partial<StoreThemeTokens>, storeId?: string) => {
+    const targetId = storeId || activeStore.id;
+    setStores((prev) =>
+      prev.map((s) => {
+        if (s.id !== targetId && s.slug !== targetId) return s;
+        return {
+          ...s,
+          themeTokens: {
+            ...resolveStoreTheme(s),
+            ...tokenUpdates,
+          },
+        };
+      })
+    );
+    broadcastPlatformSync({
+      type: 'STORE_THEME_TOKENS_UPDATED',
+      storeId: targetId,
+      tokenUpdates,
+    });
+    addToast(
+      language === 'ar' ? '🎨 تم تحديث هوية ومظهر المتجر!' : '🎨 Store theme tokens updated!',
+      'success'
+    );
+  };
+
   const deleteHostedStore = (storeId: string) => {
     if (stores.length <= 1) {
       addToast(
@@ -3082,6 +3158,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     const targetOrder = activeStore.orders.find((o) => o.id === orderId);
+    if (!targetOrder) {
+      console.warn(`[TenantIsolationGuard] Prevented order status update for ${orderId}: Not owned by active store ${activeStore.id}`);
+      return;
+    }
 
     mutateActiveStore((store) => ({
       ...store,
@@ -3112,6 +3192,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateOrder = (orderId: string, updates: Partial<Order>) => {
     const targetOrder = activeStore.orders.find((o) => o.id === orderId);
+    if (!targetOrder) {
+      console.warn(`[TenantIsolationGuard] Prevented order update for ${orderId}: Not owned by active store ${activeStore.id}`);
+      return;
+    }
 
     mutateActiveStore((store) => ({
       ...store,
@@ -3313,12 +3397,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         stores,
         activeStore,
         theme,
+        storeFeatures,
+        themeTokens,
+        isFeatureEnabled,
         switchStore,
         goToPlatform,
         createHostedStore,
         updateHostedStore,
         registerStoreMerchantByOwner,
         updateStoreDesign,
+        updateStoreFeatures,
+        updateStoreThemeTokens,
         deleteHostedStore,
         products,
         addProduct,

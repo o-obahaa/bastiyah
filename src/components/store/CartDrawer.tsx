@@ -29,7 +29,8 @@ export const CartDrawer: React.FC = () => {
     setCurrentPage,
     t,
     language,
-    getProductName
+    getProductName,
+    isFeatureEnabled
   } = useStore();
 
   const [couponInput, setCouponInput] = useState('');
@@ -189,38 +190,40 @@ export const CartDrawer: React.FC = () => {
           {cart.length > 0 && (
             <div className="p-5 border-t border-slate-200 bg-slate-50 space-y-4">
               {/* Coupon input */}
-              <div>
-                {appliedCoupon ? (
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <Tag className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{t.couponCode}: {appliedCoupon.code} (-{appliedCoupon.discountPercent}%)</span>
+              {isFeatureEnabled('customDiscounts') && (
+                <div>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{t.couponCode}: {appliedCoupon.code} (-{appliedCoupon.discountPercent}%)</span>
+                      </div>
+                      <button
+                        onClick={removeCoupon}
+                        className="text-emerald-700 hover:text-rose-600 font-semibold"
+                      >
+                        {language === 'ar' ? 'إلغاء' : 'Remove'}
+                      </button>
                     </div>
-                    <button
-                      onClick={removeCoupon}
-                      className="text-emerald-700 hover:text-rose-600 font-semibold"
-                    >
-                      {language === 'ar' ? 'إلغاء' : 'Remove'}
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder={t.couponPlaceholder}
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase"
-                    />
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
-                    >
-                      {t.applyCoupon}
-                    </button>
-                  </form>
-                )}
-              </div>
+                  ) : (
+                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder={t.couponPlaceholder}
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
+                      >
+                        {t.applyCoupon}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
 
               {/* Price Breakdown */}
               <div className="space-y-1.5 text-xs text-slate-600">

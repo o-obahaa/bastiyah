@@ -51,6 +51,26 @@ export default defineSchema({
       standardShippingFee: v.number(),
       taxRate: v.number(),
     }),
+    features: v.optional(v.object({
+      reviews: v.optional(v.boolean()),
+      wishlist: v.optional(v.boolean()),
+      heroSlider: v.optional(v.boolean()),
+      deliveryTracking: v.optional(v.boolean()),
+      whatsappOrders: v.optional(v.boolean()),
+      customDiscounts: v.optional(v.boolean()),
+      showBadges: v.optional(v.boolean()),
+      orderTrackingLookup: v.optional(v.boolean()),
+      announcements: v.optional(v.boolean()),
+    })),
+    themeTokens: v.optional(v.object({
+      primaryColor: v.optional(v.string()),
+      accentColor: v.optional(v.string()),
+      fontFamily: v.optional(v.string()),
+      cardBorderRadius: v.optional(v.string()),
+      cardShadow: v.optional(v.string()),
+      headerLayout: v.optional(v.string()),
+      footerLayout: v.optional(v.string()),
+    })),
   })
     .index("by_slug", ["slug"]),
 

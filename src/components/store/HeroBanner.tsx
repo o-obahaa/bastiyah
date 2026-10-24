@@ -18,12 +18,16 @@ export const HeroBanner: React.FC = () => {
     language, 
     getProductName, 
     getProductTagline, 
-    getCategoryName 
+    getCategoryName,
+    isFeatureEnabled
   } = useStore();
 
   // If the store owner configured a custom Hero Section or Banner Slider, render it!
   if (activeStore.design.heroConfig?.enabled) {
-    return <StoreHeroSlider config={activeStore.design.heroConfig} />;
+    const effectiveConfig = !isFeatureEnabled('heroSlider') 
+      ? { ...activeStore.design.heroConfig, mode: 'single' as const } 
+      : activeStore.design.heroConfig;
+    return <StoreHeroSlider config={effectiveConfig} />;
   }
 
   const featuredProduct = products.find((p) => p.featured) || products[0];

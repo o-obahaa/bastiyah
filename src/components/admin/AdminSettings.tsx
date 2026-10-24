@@ -38,7 +38,12 @@ import {
   Eye,
   Bot,
   RotateCcw,
-  Edit3
+  Edit3,
+  SlidersHorizontal,
+  Heart,
+  Star,
+  Compass,
+  Layers
 } from 'lucide-react';
 import { formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
 import { 
@@ -60,6 +65,8 @@ export const AdminSettings: React.FC = () => {
     toggleCouponStatus, 
     deleteCoupon,
     updateHostedStore,
+    storeFeatures,
+    updateStoreFeatures,
     t, 
     language,
     activeStore,
@@ -744,6 +751,146 @@ export const AdminSettings: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* Store Feature Modules & Tenant Customization (Layer B & C) */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-xs">
+                  <SlidersHorizontal className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900">
+                    {language === 'ar' ? 'ميزات ووحدات المتجر المستقلة' : 'Store Feature Modules & Capabilities'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {language === 'ar' 
+                      ? 'تفعيل أو تعطيل وظائف المتجر بشكل مستقل دون التأثير على المتاجر الأخرى' 
+                      : 'Enable or disable independent store features and visitor capabilities'}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full">
+                {activeStore.slug}.bastiyah.com
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+              {/* Reviews */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeFeatures.reviews}
+                  onChange={(e) => updateStoreFeatures({ reviews: e.target.checked })}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Star className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{language === 'ar' ? 'تقييمات وآراء الزبائن' : 'Customer Reviews & Ratings'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {language === 'ar' ? 'عرض النجوم وإمكانية كتابة مراجعات للمنتجات' : 'Show star ratings and allow visitors to leave reviews'}
+                  </p>
+                </div>
+              </label>
+
+              {/* Wishlist */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeFeatures.wishlist}
+                  onChange={(e) => updateStoreFeatures({ wishlist: e.target.checked })}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Heart className="w-3.5 h-3.5 text-rose-500" />
+                    <span>{language === 'ar' ? 'قائمة المفضلة' : 'Wishlist & Favorites'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {language === 'ar' ? 'تمكين الزبائن من حفظ المنتجات المفضلة' : 'Allow customers to save products to their wishlist'}
+                  </p>
+                </div>
+              </label>
+
+              {/* Hero Slider */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeFeatures.heroSlider}
+                  onChange={(e) => updateStoreFeatures({ heroSlider: e.target.checked })}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{language === 'ar' ? 'سلايدر العروض والبانرات' : 'Hero Slider & Multi-Slides'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {language === 'ar' ? 'عرض بانرات متعددة متحركة في الواجهة' : 'Display multiple rotating slides on store homepage'}
+                  </p>
+                </div>
+              </label>
+
+              {/* Custom Discounts */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeFeatures.customDiscounts}
+                  onChange={(e) => updateStoreFeatures({ customDiscounts: e.target.checked })}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{language === 'ar' ? 'كوبونات وأكواد الخصم' : 'Coupons & Discount Codes'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {language === 'ar' ? 'إتاحة إدخال وتطبيق كوبونات الخصم بالسلة' : 'Allow shoppers to apply discount codes during checkout'}
+                  </p>
+                </div>
+              </label>
+
+              {/* WhatsApp Orders */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeFeatures.whatsappOrders}
+                  onChange={(e) => updateStoreFeatures({ whatsappOrders: e.target.checked })}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{language === 'ar' ? 'الطلب والتأكيد عبر واتساب' : 'WhatsApp Checkout & Alerts'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {language === 'ar' ? 'إرسال تفاصيل الطلب وتأكيده عبر واتساب' : 'Enable instant order confirmation and customer dispatch via WhatsApp'}
+                  </p>
+                </div>
+              </label>
+
+              {/* Delivery Tracking Lookup */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeFeatures.orderTrackingLookup}
+                  onChange={(e) => updateStoreFeatures({ orderTrackingLookup: e.target.checked })}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Compass className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{language === 'ar' ? 'تتبع الطلبات المباشر' : 'Live Order Tracking Lookup'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {language === 'ar' ? 'تمكين الزبائن من البحث ومتابعة حالة شحناتهم' : 'Provide customer self-service order and delivery lookup'}
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* New Order Notifications & Alert Settings */}
