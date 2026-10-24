@@ -966,7 +966,7 @@ export const AdminSettings: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
                       <div className="font-bold text-emerald-700 flex items-center gap-1 font-mono text-[11px]">
-                        <span>تأكيد #PAN-88240</span>
+                        <span>1️⃣ أرسل 1 أو (تأكيد #{previewSampleOrder.orderNumber})</span>
                       </div>
                       <p className="text-slate-500 text-[10px]">
                         {language === 'ar' ? 'قبول الطلب وتغيير حالته إلى (قيد التجهيز والتغليف 📦)' : 'Confirm order and mark as processing'}
@@ -975,7 +975,7 @@ export const AdminSettings: React.FC = () => {
 
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
                       <div className="font-bold text-indigo-700 flex items-center gap-1 font-mono text-[11px]">
-                        <span>شحن #PAN-88240 WAS-991</span>
+                        <span>2️⃣ أرسل 2 أو (شحن #{previewSampleOrder.orderNumber} WAS-991)</span>
                       </div>
                       <p className="text-slate-500 text-[10px]">
                         {language === 'ar' ? 'تسليم للمندوب مع حفظ كود التتبع وتغيير الحالة لـ (تم الشحن 🚚)' : 'Ship order with tracking number'}
@@ -984,7 +984,7 @@ export const AdminSettings: React.FC = () => {
 
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
                       <div className="font-bold text-emerald-800 flex items-center gap-1 font-mono text-[11px]">
-                        <span>تسليم #PAN-88240</span>
+                        <span>3️⃣ أرسل 3 أو (تسليم #{previewSampleOrder.orderNumber})</span>
                       </div>
                       <p className="text-slate-500 text-[10px]">
                         {language === 'ar' ? 'تأكيد استلام الزبون للطلب وتحصيل المبلغ (تم التوصيل ✅)' : 'Mark as delivered and completed'}
@@ -993,7 +993,7 @@ export const AdminSettings: React.FC = () => {
 
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
                       <div className="font-bold text-rose-700 flex items-center gap-1 font-mono text-[11px]">
-                        <span>الغاء #PAN-88240</span>
+                        <span>4️⃣ أرسل 4 أو (الغاء #{previewSampleOrder.orderNumber})</span>
                       </div>
                       <p className="text-slate-500 text-[10px]">
                         {language === 'ar' ? 'إلغاء الطلب فوراً وتحديث اللوحة (ملغي ❌)' : 'Cancel order'}
@@ -1002,7 +1002,7 @@ export const AdminSettings: React.FC = () => {
 
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
                       <div className="font-bold text-slate-800 flex items-center gap-1 font-mono text-[11px]">
-                        <span>تفاصيل #PAN-88240</span>
+                        <span>5️⃣ أرسل 5 أو (تفاصيل #{previewSampleOrder.orderNumber})</span>
                       </div>
                       <p className="text-slate-500 text-[10px]">
                         {language === 'ar' ? 'استرجاع تفاصيل العميل، العنوان والمنتجات المطلوبة 📋' : 'Show full order items and customer address'}
