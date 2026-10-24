@@ -132,7 +132,7 @@ export const OwnerWhatsAppManager: React.FC = () => {
       setActiveContent(activeTemplate.content || activeTemplate.defaultContent);
       setHasUnsavedChanges(false);
     }
-  }, [activeTemplate]);
+  }, [selectedTemplateId]);
 
   // Handle template selection
   const handleSelectTemplate = (id: string) => {

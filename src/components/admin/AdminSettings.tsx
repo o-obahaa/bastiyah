@@ -181,10 +181,10 @@ export const AdminSettings: React.FC = () => {
   }, [storeWhatsAppTemplates, selectedStoreTemplateId]);
 
   useEffect(() => {
-    if (activeStoreTemplate) {
+    if (activeStoreTemplate && !isEditingStoreTemplate) {
       setStoreTemplateContent(activeStoreTemplate.content || activeStoreTemplate.defaultContent);
     }
-  }, [activeStoreTemplate, selectedStoreTemplateId]);
+  }, [activeStoreTemplate, selectedStoreTemplateId, isEditingStoreTemplate]);
 
   const handleSaveStoreTemplate = () => {
     if (!activeStoreTemplate) return;
@@ -1021,6 +1021,9 @@ export const AdminSettings: React.FC = () => {
                                 {language === 'ar' ? 'النموذج الافتراضي' : 'Default Form'}
                               </span>
                             )}
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                              <span>🔗 {language === 'ar' ? 'مربوط بنموذج المنصة' : 'Linked to Platform Form'}</span>
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-1.5">

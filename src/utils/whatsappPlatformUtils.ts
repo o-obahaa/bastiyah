@@ -255,14 +255,16 @@ const setSharedCookie = (key: string, data: any) => {
   const root = getCustomDomainRoot();
   const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
   const canSetWildcard = root && !root.includes('localhost') && hostname.endsWith(root);
-  const domainPart = canSetWildcard ? `; domain=.${root}` : '';
   try {
     const val = encodeURIComponent(JSON.stringify(data));
-    // 1. Host cookie (guaranteed to be accepted by browser on localhost, vercel, or any domain)
-    document.cookie = `${key}=${val}; path=/; max-age=2592000; SameSite=Lax`;
-    // 2. Wildcard domain cookie (shares across *.bastiyah.com subdomains)
-    if (domainPart) {
-      document.cookie = `${key}=${val}; path=/; max-age=2592000; SameSite=Lax${domainPart}`;
+    if (canSetWildcard) {
+      // Clear host-only cookie to prevent RFC 6265 cookie shadowing
+      document.cookie = `${key}=; path=/; max-age=0; SameSite=Lax`;
+      // Set the shared wildcard cookie across all subdomains (*.bastiyah.com)
+      document.cookie = `${key}=${val}; path=/; domain=.${root}; max-age=2592000; SameSite=Lax`;
+    } else {
+      // Localhost or preview deployment
+      document.cookie = `${key}=${val}; path=/; max-age=2592000; SameSite=Lax`;
     }
   } catch {
     // ignore
@@ -309,28 +311,43 @@ export const syncLiveGatewayTemplates = async (): Promise<Record<string, { conte
 export const getStoredCustomTemplatesMap = (): Record<string, { content?: string; enabled?: boolean }> => {
   if (typeof window === 'undefined') return {};
   try {
+    let map: Record<string, { content?: string; enabled?: boolean }> = {};
+
+    // 1. Check shared cookie first (cross-subdomain source of truth)
+    const cookieVal = getSharedCookie(CUSTOM_MAP_KEY);
+    if (cookieVal && typeof cookieVal === 'object') {
+      map = { ...map, ...cookieVal };
+    }
+
+    // 2. Check localStorage (same-origin cache)
     const raw = localStorage.getItem(CUSTOM_MAP_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') return parsed;
-    }
-    const cookieVal = getSharedCookie(CUSTOM_MAP_KEY);
-    if (cookieVal && typeof cookieVal === 'object') return cookieVal;
-
-    // Backward compatibility: inspect legacy full templates array
-    const legacyRaw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
-    if (legacyRaw) {
-      const legacy = JSON.parse(legacyRaw);
-      if (Array.isArray(legacy)) {
-        const map: Record<string, { content?: string; enabled?: boolean }> = {};
-        for (const item of legacy) {
-          if (item?.id && item?.content) {
-            map[item.id] = { content: item.content, enabled: item.enabled };
-          }
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          map = { ...map, ...parsed };
         }
-        return map;
+      } catch {}
+    }
+
+    // 3. Fallback: legacy full templates storage
+    if (Object.keys(map).length === 0) {
+      const legacyRaw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
+      if (legacyRaw) {
+        try {
+          const legacy = JSON.parse(legacyRaw);
+          if (Array.isArray(legacy)) {
+            for (const item of legacy) {
+              if (item?.id && item?.content) {
+                map[item.id] = { content: item.content, enabled: item.enabled };
+              }
+            }
+          }
+        } catch {}
       }
     }
+
+    return map;
   } catch {}
   return {};
 };
@@ -411,7 +428,6 @@ export const saveStoredWhatsAppTemplate = (templateId: string, newContent: strin
     });
 
     localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(fullTemplates));
-    setSharedCookie(TEMPLATES_STORAGE_KEY, fullTemplates);
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: fullTemplates }));

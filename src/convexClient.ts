@@ -1,7 +1,7 @@
 import { ConvexReactClient } from 'convex/react';
 
-// Read Convex URL from environment variables
-const rawConvexUrl = import.meta.env.VITE_CONVEX_URL?.trim();
+// Read Convex URL from environment variables with production fallback
+const rawConvexUrl = (import.meta.env.VITE_CONVEX_URL || 'https://aromatic-vole-851.convex.cloud').trim();
 
 export const isConvexConfigured = (): boolean => {
   return Boolean(rawConvexUrl && rawConvexUrl.startsWith('https://') && !rawConvexUrl.includes('placeholder'));
