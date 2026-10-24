@@ -36,13 +36,17 @@ import {
   FileText,
   Copy,
   Eye,
-  Bot
+  Bot,
+  RotateCcw,
+  Edit3
 } from 'lucide-react';
 import { formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
 import { 
   WhatsAppTemplate, 
   getStoredWhatsAppTemplates, 
   renderWhatsAppTemplate,
+  saveStoredWhatsAppTemplate,
+  resetStoredWhatsAppTemplate,
   logWhatsAppActivity
 } from '../../utils/whatsappPlatformUtils';
 import { Order } from '../../types';
@@ -159,6 +163,8 @@ export const AdminSettings: React.FC = () => {
   // Live Platform WhatsApp Templates synchronized to this store
   const [storeWhatsAppTemplates, setStoreWhatsAppTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
   const [selectedStoreTemplateId, setSelectedStoreTemplateId] = useState<string>('merchant_order_alert');
+  const [isEditingStoreTemplate, setIsEditingStoreTemplate] = useState<boolean>(false);
+  const [storeTemplateContent, setStoreTemplateContent] = useState<string>('');
 
   useEffect(() => {
     const refresh = () => setStoreWhatsAppTemplates(getStoredWhatsAppTemplates());
@@ -173,6 +179,38 @@ export const AdminSettings: React.FC = () => {
   const activeStoreTemplate = useMemo(() => {
     return storeWhatsAppTemplates.find((t) => t.id === selectedStoreTemplateId) || storeWhatsAppTemplates[0];
   }, [storeWhatsAppTemplates, selectedStoreTemplateId]);
+
+  useEffect(() => {
+    if (activeStoreTemplate) {
+      setStoreTemplateContent(activeStoreTemplate.content || activeStoreTemplate.defaultContent);
+    }
+  }, [activeStoreTemplate, selectedStoreTemplateId]);
+
+  const handleSaveStoreTemplate = () => {
+    if (!activeStoreTemplate) return;
+    const updated = saveStoredWhatsAppTemplate(activeStoreTemplate.id, storeTemplateContent);
+    setStoreWhatsAppTemplates(updated);
+    setIsEditingStoreTemplate(false);
+    addToast(
+      language === 'ar'
+        ? `✅ تم حفظ وتطبيق نموذج (${activeStoreTemplate.nameAr}) بنجاح!`
+        : `✅ Template (${activeStoreTemplate.nameEn}) saved and applied!`,
+      'success'
+    );
+  };
+
+  const handleResetStoreTemplate = () => {
+    if (!activeStoreTemplate) return;
+    const updated = resetStoredWhatsAppTemplate(activeStoreTemplate.id);
+    setStoreWhatsAppTemplates(updated);
+    setStoreTemplateContent(activeStoreTemplate.defaultContent);
+    setIsEditingStoreTemplate(false);
+    addToast(language === 'ar' ? 'تمت استعادة النص الافتراضي للنموذج بنجاح' : 'Reverted to default template', 'info');
+  };
+
+  const handleInsertStoreVariable = (key: string) => {
+    setStoreTemplateContent((prev) => `${prev} ${key}`);
+  };
 
   const activeStoreTemplatePreview = useMemo(() => {
     if (!activeStoreTemplate) return '';
@@ -955,7 +993,7 @@ export const AdminSettings: React.FC = () => {
                         })}
                       </div>
 
-                      {/* Active Template Meta & Status */}
+                      {/* Active Template Meta, Actions & Status */}
                       {activeStoreTemplate && (
                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                           <div className="flex items-center gap-2">
@@ -971,22 +1009,117 @@ export const AdminSettings: React.FC = () => {
                                 ? (language === 'ar' ? 'مفعّل بالمتجر' : 'Active in Store')
                                 : (language === 'ar' ? 'معطّل من إدارة المنصة' : 'Disabled by Platform')}
                             </span>
-                            {activeStoreTemplate.isDefaultModified && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                                {language === 'ar' ? 'معدل ومخصص من المنصة' : 'Custom Platform Template'}
+                            {activeStoreTemplate.isDefaultModified ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-amber-600" />
+                                <span>{language === 'ar' ? 'نموذج محدث ومخصص' : 'Custom Modified Form'}</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                {language === 'ar' ? 'النموذج الافتراضي' : 'Default Form'}
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-slate-500">
-                            {language === 'ar' ? activeStoreTemplate.triggerAr : activeStoreTemplate.triggerEn}
-                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setStoreWhatsAppTemplates(getStoredWhatsAppTemplates());
+                                addToast(language === 'ar' ? 'تمت مزامنة أحدث النماذج بنجاح!' : 'Templates synchronized successfully!', 'info');
+                              }}
+                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                              title={language === 'ar' ? 'تحديث المزامنة مع المنصة' : 'Sync templates'}
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>{language === 'ar' ? 'مزامنة 🔄' : 'Sync'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingStoreTemplate(!isEditingStoreTemplate)}
+                              className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                                isEditingStoreTemplate
+                                  ? 'bg-slate-900 text-white'
+                                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                              }`}
+                            >
+                              <Edit3 className="w-3 h-3 text-emerald-600" />
+                              <span>{isEditingStoreTemplate ? (language === 'ar' ? 'معاينة 👁️' : 'Preview') : (language === 'ar' ? 'تعديل هذا النموذج ✏️' : 'Edit Form')}</span>
+                            </button>
+                          </div>
                         </div>
                       )}
 
-                      {/* Rendered Text Box for this Store */}
-                      <div className="p-3.5 bg-slate-900 text-emerald-300 rounded-2xl border border-slate-800 text-[11px] font-mono leading-relaxed space-y-1 select-all shadow-inner whitespace-pre-line text-right" dir="rtl">
-                        {activeStoreTemplatePreview}
-                      </div>
+                      {/* Editor vs Preview Mode */}
+                      {isEditingStoreTemplate ? (
+                        <div className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl animate-fadeIn">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                            <span>{language === 'ar' ? 'تعديل نص النموذج لهذا المتجر والمنصة:' : 'Edit template form text:'}</span>
+                            <span className="text-[10px] text-slate-400 font-normal">
+                              {language === 'ar' ? 'انقر لإدراج المتغيرات:' : 'Click to insert variables:'}
+                            </span>
+                          </div>
+
+                          {/* Quick Insert Variables */}
+                          <div className="flex flex-wrap gap-1 p-2 bg-white rounded-xl border border-slate-200">
+                            {activeStoreTemplate.variables.map((v) => (
+                              <button
+                                key={v.key}
+                                type="button"
+                                onClick={() => handleInsertStoreVariable(v.key)}
+                                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 border border-slate-200 transition-colors cursor-pointer"
+                              >
+                                {v.key}
+                              </button>
+                            ))}
+                          </div>
+
+                          <textarea
+                            rows={8}
+                            dir="rtl"
+                            value={storeTemplateContent}
+                            onChange={(e) => setStoreTemplateContent(e.target.value)}
+                            className="w-full p-3 rounded-xl bg-white border border-slate-200 text-xs font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                          />
+
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            {activeStoreTemplate.isDefaultModified && (
+                              <button
+                                type="button"
+                                onClick={handleResetStoreTemplate}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <RotateCcw className="w-3 h-3 text-slate-500" />
+                                <span>{language === 'ar' ? 'استعادة الافتراضي' : 'Reset'}</span>
+                              </button>
+                            )}
+
+                            <div className="flex items-center gap-2 mr-auto">
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingStoreTemplate(false)}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold cursor-pointer"
+                              >
+                                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveStoreTemplate}
+                                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                              >
+                                <Save className="w-3.5 h-3.5" />
+                                <span>{language === 'ar' ? 'حفظ وتطبيق النموذج فوراً 💾' : 'Save & Apply'}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Rendered Text Box for this Store */
+                        <div className="p-3.5 bg-slate-900 text-emerald-300 rounded-2xl border border-slate-800 text-[11px] font-mono leading-relaxed space-y-1 select-all shadow-inner whitespace-pre-line text-right" dir="rtl">
+                          {activeStoreTemplatePreview}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

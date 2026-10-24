@@ -229,6 +229,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 export const INITIAL_WHATSAPP_ACTIVITIES: WhatsAppActivity[] = [];
 
 const TEMPLATES_STORAGE_KEY = 'bastiyah_whatsapp_templates';
+const CUSTOM_MAP_KEY = 'bastiyah_whatsapp_custom_map';
 const ACTIVITIES_STORAGE_KEY = 'bastiyah_whatsapp_activities';
 
 /**
@@ -262,6 +263,39 @@ const setSharedCookie = (key: string, data: any) => {
 };
 
 /**
+ * Retrieves the compact custom templates map: { [templateId]: { content, enabled } }
+ * Compact size (< 300 bytes) guarantees it safely fits in cookies & localStorage across subdomains.
+ */
+export const getStoredCustomTemplatesMap = (): Record<string, { content?: string; enabled?: boolean }> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CUSTOM_MAP_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+    const cookieVal = getSharedCookie(CUSTOM_MAP_KEY);
+    if (cookieVal && typeof cookieVal === 'object') return cookieVal;
+
+    // Backward compatibility: inspect legacy full templates array
+    const legacyRaw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
+    if (legacyRaw) {
+      const legacy = JSON.parse(legacyRaw);
+      if (Array.isArray(legacy)) {
+        const map: Record<string, { content?: string; enabled?: boolean }> = {};
+        for (const item of legacy) {
+          if (item?.id && item?.content) {
+            map[item.id] = { content: item.content, enabled: item.enabled };
+          }
+        }
+        return map;
+      }
+    }
+  } catch {}
+  return {};
+};
+
+/**
  * Real-time Cross-Tab and Cross-Subdomain Broadcast Channel
  */
 let whatsappSyncChannel: BroadcastChannel | null = null;
@@ -281,37 +315,27 @@ if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
 }
 
 /**
- * Loads WhatsApp templates from localStorage, falling back to shared cookie, or factory defaults.
+ * Loads WhatsApp templates from compact custom map, localStorage, shared cookie, or factory defaults.
  */
 export const getStoredWhatsAppTemplates = (): WhatsAppTemplate[] => {
   if (typeof window === 'undefined') return DEFAULT_WHATSAPP_TEMPLATES;
   try {
-    let parsed: any = null;
-    const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
-    if (raw) {
-      try {
-        parsed = JSON.parse(raw);
-      } catch {
-        parsed = null;
-      }
-    }
-    // Fallback to shared subdomain cookie if localStorage is empty
-    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
-      parsed = getSharedCookie(TEMPLATES_STORAGE_KEY);
-    }
-
-    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
-      return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t, content: t.defaultContent, enabled: t.enabled ?? true }));
-    }
+    const customMap = getStoredCustomTemplatesMap();
 
     return DEFAULT_WHATSAPP_TEMPLATES.map((def) => {
-      const match = parsed.find((p: any) => p.id === def.id);
-      const customContent = match?.content !== undefined && match?.content !== null ? match.content : def.defaultContent;
+      const custom = customMap[def.id];
+      const customContent =
+        custom?.content !== undefined && custom?.content !== null && custom?.content.trim() !== ''
+          ? custom.content
+          : def.defaultContent;
+      const enabled = custom?.enabled !== undefined ? custom.enabled : (def.enabled ?? true);
+      const isDefaultModified = customContent.trim() !== def.defaultContent.trim();
+
       return {
         ...def,
         content: customContent,
-        enabled: match?.enabled !== undefined ? match.enabled : (def.enabled ?? true),
-        isDefaultModified: customContent.trim() !== def.defaultContent.trim(),
+        enabled,
+        isDefaultModified,
       };
     });
   } catch (e) {
@@ -320,63 +344,74 @@ export const getStoredWhatsAppTemplates = (): WhatsAppTemplate[] => {
 };
 
 /**
- * Saves an edited template to localStorage, shared cookie, and broadcasts to all tabs & stores.
+ * Saves an edited template to compact custom map, localStorage, shared cookie, and broadcasts to all tabs & stores.
  */
 export const saveStoredWhatsAppTemplate = (templateId: string, newContent: string, enabled?: boolean): WhatsAppTemplate[] => {
-  const current = getStoredWhatsAppTemplates();
-  const updated = current.map((t) =>
-    t.id === templateId
-      ? {
-          ...t,
-          content: newContent,
-          enabled: enabled !== undefined ? enabled : t.enabled,
-          isDefaultModified: newContent.trim() !== t.defaultContent.trim(),
-        }
-      : t
-  );
+  const customMap = getStoredCustomTemplatesMap();
+  const def = DEFAULT_WHATSAPP_TEMPLATES.find((t) => t.id === templateId);
+
+  customMap[templateId] = {
+    content: newContent,
+    enabled: enabled !== undefined ? enabled : customMap[templateId]?.enabled ?? def?.enabled ?? true,
+  };
 
   try {
-    localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(updated));
-    setSharedCookie(TEMPLATES_STORAGE_KEY, updated);
+    localStorage.setItem(CUSTOM_MAP_KEY, JSON.stringify(customMap));
+    setSharedCookie(CUSTOM_MAP_KEY, customMap);
+
+    const fullTemplates = DEFAULT_WHATSAPP_TEMPLATES.map((d) => {
+      const c = customMap[d.id];
+      const text = c?.content !== undefined && c?.content !== null && c?.content.trim() !== '' ? c.content : d.defaultContent;
+      return {
+        ...d,
+        content: text,
+        enabled: c?.enabled !== undefined ? c.enabled : (d.enabled ?? true),
+        isDefaultModified: text.trim() !== d.defaultContent.trim(),
+      };
+    });
+
+    localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(fullTemplates));
+    setSharedCookie(TEMPLATES_STORAGE_KEY, fullTemplates);
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: updated }));
+      window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: fullTemplates }));
     }
-    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: updated });
+    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: fullTemplates });
   } catch (e) {
     console.warn('Failed to save whatsapp template:', e);
   }
 
-  return updated;
+  return getStoredWhatsAppTemplates();
 };
 
 /**
  * Toggles a template's enabled/disabled status.
  */
 export const toggleStoredWhatsAppTemplateStatus = (templateId: string, enabled: boolean): WhatsAppTemplate[] => {
-  const current = getStoredWhatsAppTemplates();
-  const updated = current.map((t) =>
-    t.id === templateId
-      ? {
-          ...t,
-          enabled,
-        }
-      : t
-  );
+  const customMap = getStoredCustomTemplatesMap();
+  const def = DEFAULT_WHATSAPP_TEMPLATES.find((t) => t.id === templateId);
+
+  customMap[templateId] = {
+    content: customMap[templateId]?.content ?? def?.defaultContent ?? '',
+    enabled,
+  };
 
   try {
-    localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(updated));
-    setSharedCookie(TEMPLATES_STORAGE_KEY, updated);
+    localStorage.setItem(CUSTOM_MAP_KEY, JSON.stringify(customMap));
+    setSharedCookie(CUSTOM_MAP_KEY, customMap);
+
+    const fullTemplates = getStoredWhatsAppTemplates();
+    localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(fullTemplates));
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: updated }));
+      window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: fullTemplates }));
     }
-    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: updated });
+    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: fullTemplates });
   } catch (e) {
     console.warn('Failed to toggle whatsapp template status:', e);
   }
 
-  return updated;
+  return getStoredWhatsAppTemplates();
 };
 
 /**
@@ -392,10 +427,23 @@ export const isWhatsAppTemplateEnabled = (templateId: string): boolean => {
  * Resets a single template to its factory default content.
  */
 export const resetStoredWhatsAppTemplate = (templateId: string): WhatsAppTemplate[] => {
-  const def = DEFAULT_WHATSAPP_TEMPLATES.find((t) => t.id === templateId);
-  if (!def) return getStoredWhatsAppTemplates();
-  const res = saveStoredWhatsAppTemplate(templateId, def.defaultContent);
-  return res;
+  const customMap = getStoredCustomTemplatesMap();
+  delete customMap[templateId];
+
+  try {
+    localStorage.setItem(CUSTOM_MAP_KEY, JSON.stringify(customMap));
+    setSharedCookie(CUSTOM_MAP_KEY, customMap);
+
+    const fullTemplates = getStoredWhatsAppTemplates();
+    localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(fullTemplates));
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bastiyah_whatsapp_templates_updated', { detail: fullTemplates }));
+    }
+    whatsappSyncChannel?.postMessage({ type: 'TEMPLATES_UPDATED', data: fullTemplates });
+  } catch (e) {}
+
+  return getStoredWhatsAppTemplates();
 };
 
 /**
