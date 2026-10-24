@@ -1,3 +1,5 @@
+import { ActivePage } from '../types';
+
 /**
  * Utility helpers for Bastiyah multi-store URLs
  * Canonical Domain: bastiyah.com
@@ -84,6 +86,85 @@ export const getStorePathLabel = (slug: string, isStoreAdmin: boolean = false): 
   const root = getCustomDomainRoot();
   const base = `${slug}.${root}`;
   return isStoreAdmin ? `${base}/admin` : base;
+};
+
+/**
+ * Resolves the canonical relative URL path for any page and store context.
+ * Supports both subdomain-based and path-based multi-tenant routing.
+ */
+export const getPagePath = (
+  page: ActivePage,
+  storeSlug?: string,
+  productId?: string | null,
+  currentHostname?: string
+): string => {
+  const hostname = (currentHostname || (typeof window !== 'undefined' ? window.location.hostname : '')).toLowerCase();
+  const hostParts = hostname.split('.');
+  const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
+  const isStoreSubdomain = !isLocalOrVercel && hostParts.length >= 3 && storeSlug && hostParts[0] === storeSlug.toLowerCase();
+
+  // 1. Platform Landing
+  if (page === 'bastiyah-landing') {
+    return '/';
+  }
+
+  // 2. Platform Owner Admin
+  if (page === 'bastiyah-admin') {
+    return '/owner';
+  }
+
+  // 3. Subdomain-based Store Routes (e.g. panda.bastiyah.com)
+  if (isStoreSubdomain) {
+    switch (page) {
+      case 'home':
+        return '/';
+      case 'shop':
+        return '/shop';
+      case 'product-detail':
+        return productId ? `/product/${productId}` : '/shop';
+      case 'cart':
+        return '/cart';
+      case 'checkout':
+        return '/checkout';
+      case 'order-success':
+        return '/order-success';
+      case 'orders':
+        return '/orders';
+      case 'wishlist':
+        return '/wishlist';
+      case 'admin':
+        return '/admin';
+      default:
+        return '/';
+    }
+  }
+
+  // 4. Path-based Store Routes (e.g. /store/:slug or /store/:slug/:subpage)
+  const baseSlug = storeSlug || 'panda';
+  const storePrefix = `/store/${baseSlug}`;
+
+  switch (page) {
+    case 'home':
+      return storePrefix;
+    case 'shop':
+      return `${storePrefix}/shop`;
+    case 'product-detail':
+      return productId ? `${storePrefix}/product/${productId}` : `${storePrefix}/shop`;
+    case 'cart':
+      return `${storePrefix}/cart`;
+    case 'checkout':
+      return `${storePrefix}/checkout`;
+    case 'order-success':
+      return `${storePrefix}/order-success`;
+    case 'orders':
+      return `${storePrefix}/orders`;
+    case 'wishlist':
+      return `${storePrefix}/wishlist`;
+    case 'admin':
+      return `${storePrefix}/admin`;
+    default:
+      return storePrefix;
+  }
 };
 
 /**

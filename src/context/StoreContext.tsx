@@ -42,6 +42,7 @@ import {
   getStoreDisplayUrl, 
   getStorePathLabel, 
   getPlatformDisplayUrl,
+  getPagePath,
   setSharedCustomerCookie,
   getSharedCustomerCookie,
   setSharedStoresCookie,
@@ -303,6 +304,17 @@ export const hydrateCustomStore = (s: any): HostedStore => {
   };
 };
 
+export const KNOWN_STORE_SUBPAGES: Record<string, ActivePage> = {
+  shop: 'shop',
+  checkout: 'checkout',
+  'order-success': 'order-success',
+  orders: 'orders',
+  wishlist: 'wishlist',
+  admin: 'admin',
+  home: 'home',
+  cart: 'cart',
+};
+
 export const detectInitialRouting = (allStores: HostedStore[]): { storeId: string; page: ActivePage; productId?: string } => {
   if (typeof window === 'undefined') {
     return {
@@ -315,6 +327,33 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   const searchParams = new URLSearchParams(window.location.search);
   const pathname = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
   const queryProduct = searchParams.get('product') || searchParams.get('p') || undefined;
+  const queryPage = (searchParams.get('page') || '').toLowerCase();
+
+  // Helper to resolve active store fallback (from localStorage or first store)
+  const getFallbackStore = (): HostedStore => {
+    try {
+      const savedId = localStorage.getItem('bastiyah_active_store_id');
+      if (savedId) {
+        const found = allStores.find((s) => s.id === savedId || s.slug.toLowerCase() === savedId.toLowerCase());
+        if (found) return found;
+      }
+    } catch {}
+    return allStores[0] || INITIAL_HOSTED_STORES[0];
+  };
+
+  // Helper to find a store by slug or ID (including from shared cookie)
+  const findStoreBySlugOrId = (slugOrId: string): HostedStore | undefined => {
+    const clean = slugOrId.toLowerCase();
+    let found = allStores.find((s) => s.slug.toLowerCase() === clean || s.id === clean);
+    if (!found) {
+      const sharedStores = getSharedStoresCookie();
+      const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === clean || cs.id === clean);
+      if (cookieMatch) {
+        found = hydrateCustomStore(cookieMatch);
+      }
+    }
+    return found;
+  };
 
   // 1. Platform Super Admin (Strictly entered via bastiyah.com/owner or /owner)
   if (pathname === '/owner') {
@@ -335,110 +374,7 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     };
   }
 
-  // 2. Path-based Store Product Direct Routing: /store/:slug/product/:productId or /store/:slug/p/:productId
-  const storeProductMatch = pathname.match(/^\/store\/([a-z0-9-]+)\/(?:product|p)\/([a-z0-9-]+)/i);
-  if (storeProductMatch) {
-    const slug = storeProductMatch[1].toLowerCase();
-    const pid = storeProductMatch[2];
-    const found = allStores.find((s) => s.slug.toLowerCase() === slug || s.id === slug);
-    if (found) {
-      return {
-        storeId: found.id,
-        page: 'product-detail',
-        productId: pid,
-      };
-    }
-  }
-
-  // 3. Path-based Store Routing: /store/:slug or /store/:slug/admin
-  // e.g. /store/panda, /store/panda/admin, /store/royal-oud, /store/velvet
-  const storePathMatch = pathname.match(/^\/store\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?/i);
-  if (storePathMatch) {
-    const slug = storePathMatch[1].toLowerCase();
-    const subRoute = storePathMatch[2]?.toLowerCase();
-    let found = allStores.find((s) => s.slug.toLowerCase() === slug || s.id === slug);
-    if (!found) {
-      const sharedStores = getSharedStoresCookie();
-      const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === slug || cs.id === slug);
-      if (cookieMatch) {
-        found = hydrateCustomStore(cookieMatch);
-      }
-    }
-    if (found) {
-      const isStoreAdmin = subRoute === 'admin' || searchParams.get('admin') === 'true';
-      const targetPage: ActivePage = isStoreAdmin 
-        ? 'admin' 
-        : (queryProduct ? 'product-detail' : ((subRoute as ActivePage) || (searchParams.get('page') as ActivePage) || 'home'));
-      return {
-        storeId: found.id,
-        page: targetPage,
-        productId: queryProduct,
-      };
-    } else {
-      const isStoreAdmin = subRoute === 'admin' || searchParams.get('admin') === 'true';
-      return {
-        storeId: `store-${slug}`,
-        page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
-        productId: queryProduct,
-      };
-    }
-  }
-
-  // 4. Direct short product path: /:slug/product/:productId or /:slug/p/:productId
-  const directProductMatch = pathname.match(/^\/([a-z0-9-]+)\/(?:product|p)\/([a-z0-9-]+)/i);
-  if (directProductMatch) {
-    const slug = directProductMatch[1].toLowerCase();
-    const pid = directProductMatch[2];
-    const found = allStores.find((s) => s.slug.toLowerCase() === slug || s.id === slug);
-    if (found) {
-      return {
-        storeId: found.id,
-        page: 'product-detail',
-        productId: pid,
-      };
-    }
-  }
-
-  // 5. Direct short path: /:slug (e.g. /panda, /royal-oud, /velvet)
-  const segments = pathname.replace(/^\//, '').split('/');
-  const directSlug = segments[0]?.toLowerCase();
-  if (directSlug && directSlug !== 'store' && directSlug !== 'owner' && directSlug !== 'product' && directSlug !== 'p' && directSlug !== '') {
-    let found = allStores.find((s) => s.slug.toLowerCase() === directSlug || s.id === directSlug);
-    if (!found) {
-      const sharedStores = getSharedStoresCookie();
-      const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === directSlug || cs.id === directSlug);
-      if (cookieMatch) {
-        found = hydrateCustomStore(cookieMatch);
-      }
-    }
-    if (found) {
-      const isStoreAdmin = segments[1] === 'admin' || searchParams.get('admin') === 'true';
-      return {
-        storeId: found.id,
-        page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
-        productId: queryProduct,
-      };
-    }
-  }
-
-  // 6. Query param specifies store (?store=panda)
-  const storeQuery = searchParams.get('store');
-  if (storeQuery) {
-    const found = allStores.find(
-      (s) => s.slug.toLowerCase() === storeQuery.toLowerCase() || s.id === storeQuery
-    );
-    if (found) {
-      const isStoreAdmin = searchParams.get('admin') === 'true' || searchParams.get('page') === 'admin';
-      const targetPage: ActivePage = isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : ((searchParams.get('page') as ActivePage) || 'home'));
-      return {
-        storeId: found.id,
-        page: targetPage,
-        productId: queryProduct,
-      };
-    }
-  }
-
-  // 7. Subdomain specifies store (e.g. panda.bastiyah.com, panda.yourdomain.com, owner.yourdomain.com)
+  // 2. Subdomain specifies store (e.g. panda.bastiyah.com)
   const hostParts = hostname.split('.');
   const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
   if (!isLocalOrVercel && hostParts.length >= 3 && hostParts[0] !== 'www') {
@@ -452,48 +388,156 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
         page: 'bastiyah-admin',
       };
     }
-    const found = allStores.find((s) => s.slug.toLowerCase() === sub);
-    if (found) {
-      // Check subdomain product route /product/:productId or /p/:productId
-      const subProductMatch = pathname.match(/^\/(?:product|p)\/([a-z0-9-]+)/i);
-      if (subProductMatch) {
+
+    const found = findStoreBySlugOrId(sub);
+    const storeId = found?.id || `store-${sub}`;
+
+    // Subdomain product route: /product/:id or /p/:id
+    const subProductMatch = pathname.match(/^\/(?:product|p)\/([a-z0-9-]+)/i);
+    if (subProductMatch) {
+      return {
+        storeId,
+        page: 'product-detail',
+        productId: subProductMatch[1],
+      };
+    }
+
+    // Subdomain subpages: /shop, /checkout, /order-success, /orders, /wishlist, /admin, /cart
+    const subRoute = pathname.replace(/^\//, '').toLowerCase();
+    if (subRoute === 'admin' || searchParams.get('admin') === 'true') {
+      return { storeId, page: 'admin' };
+    }
+    if (subRoute in KNOWN_STORE_SUBPAGES) {
+      return { storeId, page: KNOWN_STORE_SUBPAGES[subRoute] };
+    }
+    if (queryPage in KNOWN_STORE_SUBPAGES) {
+      return { storeId, page: KNOWN_STORE_SUBPAGES[queryPage] };
+    }
+    if (queryProduct) {
+      return { storeId, page: 'product-detail', productId: queryProduct };
+    }
+
+    return { storeId, page: 'home' };
+  }
+
+  // 3. Path-based Store Product Direct Routing: /store/:slug/product/:productId or /store/:slug/p/:productId
+  const storeProductMatch = pathname.match(/^\/store\/([a-z0-9-]+)\/(?:product|p)\/([a-z0-9-]+)/i);
+  if (storeProductMatch) {
+    const slug = storeProductMatch[1].toLowerCase();
+    const pid = storeProductMatch[2];
+    const found = findStoreBySlugOrId(slug);
+    return {
+      storeId: found?.id || `store-${slug}`,
+      page: 'product-detail',
+      productId: pid,
+    };
+  }
+
+  // 4. Path-based Store Routing: /store/:slug or /store/:slug/:subpage
+  // e.g. /store/panda, /store/panda/shop, /store/panda/orders, /store/panda/admin
+  const storePathMatch = pathname.match(/^\/store\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?/i);
+  if (storePathMatch) {
+    const slug = storePathMatch[1].toLowerCase();
+    const subRoute = storePathMatch[2]?.toLowerCase();
+    const found = findStoreBySlugOrId(slug);
+    const storeId = found?.id || `store-${slug}`;
+
+    if (subRoute === 'admin' || searchParams.get('admin') === 'true') {
+      return { storeId, page: 'admin' };
+    }
+    if (subRoute && subRoute in KNOWN_STORE_SUBPAGES) {
+      return { storeId, page: KNOWN_STORE_SUBPAGES[subRoute] };
+    }
+    if (queryPage in KNOWN_STORE_SUBPAGES) {
+      return { storeId, page: KNOWN_STORE_SUBPAGES[queryPage] };
+    }
+    if (queryProduct) {
+      return { storeId, page: 'product-detail', productId: queryProduct };
+    }
+
+    return { storeId, page: 'home' };
+  }
+
+  // 5. Short Direct store product path: /:slug/product/:productId or /:slug/p/:productId
+  const directProductMatch = pathname.match(/^\/([a-z0-9-]+)\/(?:product|p)\/([a-z0-9-]+)/i);
+  if (directProductMatch) {
+    const slug = directProductMatch[1].toLowerCase();
+    if (slug !== 'store' && slug !== 'owner') {
+      const found = findStoreBySlugOrId(slug);
+      if (found) {
         return {
           storeId: found.id,
           page: 'product-detail',
-          productId: subProductMatch[1],
+          productId: directProductMatch[2],
         };
       }
-      const isStoreAdmin = pathname === '/admin' || pathname.startsWith('/admin') || searchParams.get('admin') === 'true';
-      return {
-        storeId: found.id,
-        page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
-        productId: queryProduct,
-      };
     }
+  }
 
-    // Check shared cross-subdomain cookie (*.bastiyah.com)
-    const sharedStores = getSharedStoresCookie();
-    const cookieMatch = sharedStores.find((cs: any) => (cs.slug || '').toLowerCase() === sub);
-    if (cookieMatch) {
-      const isStoreAdmin = pathname === '/admin' || pathname.startsWith('/admin') || searchParams.get('admin') === 'true';
-      return {
-        storeId: cookieMatch.id || `store-${cookieMatch.slug}`,
-        page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
-        productId: queryProduct,
-      };
+  // 6. Short Direct store path: /:slug/:subpage or /:slug (e.g. /panda, /panda/shop, /panda/admin)
+  const segments = pathname.replace(/^\//, '').split('/');
+  const directSlug = segments[0]?.toLowerCase();
+
+  // Check if first segment is a known store
+  if (directSlug && directSlug !== 'store' && directSlug !== 'owner' && !(directSlug in KNOWN_STORE_SUBPAGES)) {
+    const found = findStoreBySlugOrId(directSlug);
+    if (found) {
+      const subRoute = segments[1]?.toLowerCase();
+      if (subRoute === 'admin' || searchParams.get('admin') === 'true') {
+        return { storeId: found.id, page: 'admin' };
+      }
+      if (subRoute && subRoute in KNOWN_STORE_SUBPAGES) {
+        return { storeId: found.id, page: KNOWN_STORE_SUBPAGES[subRoute] };
+      }
+      if (queryPage in KNOWN_STORE_SUBPAGES) {
+        return { storeId: found.id, page: KNOWN_STORE_SUBPAGES[queryPage] };
+      }
+      if (queryProduct) {
+        return { storeId: found.id, page: 'product-detail', productId: queryProduct };
+      }
+      return { storeId: found.id, page: 'home' };
     }
+  }
 
-    // On any store subdomain, do not drop shopper/merchant onto bastiyah platform landing page.
-    // Keep them inside the store context.
-    const isStoreAdmin = pathname === '/admin' || pathname.startsWith('/admin') || searchParams.get('admin') === 'true';
+  // 7. Standalone routes (e.g. /shop, /checkout, /orders, /wishlist, /admin, /product/:id)
+  // on localhost or preview when accessed directly
+  if (directSlug && directSlug in KNOWN_STORE_SUBPAGES) {
+    const fallbackStore = getFallbackStore();
     return {
-      storeId: `store-${sub}`,
-      page: isStoreAdmin ? 'admin' : (queryProduct ? 'product-detail' : 'home'),
+      storeId: fallbackStore.id,
+      page: KNOWN_STORE_SUBPAGES[directSlug],
       productId: queryProduct,
     };
   }
 
-  // 8. Default: Bastiyah Platform Landing Page!
+  const standaloneProductMatch = pathname.match(/^\/(?:product|p)\/([a-z0-9-]+)/i);
+  if (standaloneProductMatch) {
+    const fallbackStore = getFallbackStore();
+    return {
+      storeId: fallbackStore.id,
+      page: 'product-detail',
+      productId: standaloneProductMatch[1],
+    };
+  }
+
+  // 8. Query param specifies store (?store=panda)
+  const storeQuery = searchParams.get('store');
+  if (storeQuery) {
+    const found = findStoreBySlugOrId(storeQuery);
+    if (found) {
+      const isStoreAdmin = searchParams.get('admin') === 'true' || searchParams.get('page') === 'admin';
+      const targetPage: ActivePage = isStoreAdmin
+        ? 'admin'
+        : (queryProduct ? 'product-detail' : ((queryPage as ActivePage) || 'home'));
+      return {
+        storeId: found.id,
+        page: targetPage,
+        productId: queryProduct,
+      };
+    }
+  }
+
+  // 9. Default: Bastiyah Platform Landing Page!
   return {
     storeId: allStores[0]?.id || 'store-panda',
     page: 'bastiyah-landing',
@@ -2006,72 +2050,80 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Synchronize browser URL cleanly based on current page and store
+  const isPopStateRef = useRef<boolean>(false);
+  const isInitialMountRef = useRef<boolean>(true);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // If change was triggered by popstate (browser back/forward), do not push duplicate history entry
+    if (isPopStateRef.current) {
+      isPopStateRef.current = false;
+      return;
+    }
 
     const hostname = window.location.hostname.toLowerCase();
     const hostParts = hostname.split('.');
     const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
-    const isStoreSubdomain = !isLocalOrVercel && hostParts.length >= 3 && hostParts[0] === activeStore.slug;
     const isOwnerSubdomain = !isLocalOrVercel && hostParts.length >= 3 && hostParts[0] === 'owner';
-
-    let targetPath = '/';
 
     if (isOwnerSubdomain) {
       const root = hostParts.slice(1).join('.');
       const protocol = window.location.protocol;
       window.location.replace(`${protocol}//${root}/owner`);
       return;
-    } else if (isStoreSubdomain) {
-      if (currentPage === 'bastiyah-admin') {
-        const root = hostParts.slice(1).join('.');
-        const protocol = window.location.protocol;
-        window.location.href = `${protocol}//${root}/owner`;
-        return;
-      }
-      if (currentPage === 'admin') {
-        targetPath = '/admin';
-      } else if (currentPage === 'home') {
-        targetPath = '/';
-      } else if (currentPage === 'product-detail' && selectedProductId) {
-        targetPath = `/product/${selectedProductId}`;
-      } else {
-        targetPath = `/?page=${currentPage}`;
-      }
-    } else {
-      // Path-based routing (Vercel or apex custom domain)
-      if (currentPage === 'bastiyah-landing') {
-        targetPath = '/';
-      } else if (currentPage === 'bastiyah-admin') {
-        targetPath = '/owner';
-      } else if (currentPage === 'admin') {
-        targetPath = `/store/${activeStore.slug}/admin`;
-      } else if (currentPage === 'home') {
-        targetPath = `/store/${activeStore.slug}`;
-      } else if (currentPage === 'product-detail' && selectedProductId) {
-        targetPath = `/store/${activeStore.slug}/product/${selectedProductId}`;
-      } else {
-        // e.g. shop, wishlist, orders, checkout
-        targetPath = `/store/${activeStore.slug}?page=${currentPage}`;
-      }
     }
 
-    if (window.location.pathname + window.location.search !== targetPath) {
-      window.history.pushState({}, '', targetPath);
+    // Resolve clean canonical path for the current page and store
+    const targetPath = getPagePath(currentPage, activeStore?.slug, selectedProductId, hostname);
+    const currentPathAndSearch = window.location.pathname + window.location.search;
+
+    const historyPayload = {
+      page: currentPage,
+      storeId: activeStore?.id,
+      storeSlug: activeStore?.slug,
+      productId: selectedProductId,
+    };
+
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      // On initial mount, replaceState if URL needs normalization (e.g. legacy ?page=shop -> /store/panda/shop)
+      if (currentPathAndSearch !== targetPath) {
+        window.history.replaceState(historyPayload, '', targetPath);
+      } else {
+        window.history.replaceState(historyPayload, '', currentPathAndSearch);
+      }
+      return;
     }
-  }, [currentPage, selectedProductId, activeStore.id, activeStore.slug]);
+
+    if (currentPathAndSearch !== targetPath) {
+      window.history.pushState(historyPayload, '', targetPath);
+    }
+  }, [currentPage, selectedProductId, activeStore?.id, activeStore?.slug]);
 
   // Support browser back/forward buttons
   useEffect(() => {
-    const handlePopState = () => {
-      const routing = detectInitialRouting(stores);
-      setActiveStoreId(routing.storeId);
-      setCurrentPage(routing.page);
-      if (routing.productId) {
-        setSelectedProductId(routing.productId);
+    const handlePopState = (event: PopStateEvent) => {
+      isPopStateRef.current = true;
+      const state = event.state;
+      if (state && state.page) {
+        if (state.storeId) {
+          setActiveStoreId(state.storeId);
+        } else if (state.storeSlug) {
+          const match = stores.find((s) => s.slug.toLowerCase() === state.storeSlug.toLowerCase());
+          if (match) setActiveStoreId(match.id);
+        }
+        setCurrentPage(state.page);
+        setSelectedProductId(state.productId || null);
+      } else {
+        const routing = detectInitialRouting(stores);
+        setActiveStoreId(routing.storeId);
+        setCurrentPage(routing.page);
+        setSelectedProductId(routing.productId || null);
       }
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     };
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [stores]);
