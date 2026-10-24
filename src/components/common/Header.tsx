@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCategory, ANONYMOUS_USER_AVATAR } from '../../types';
 import { filterProductsBySearch, matchCategorySearch } from '../../utils/searchUtils';
-import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
+import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
 import { 
   ShoppingBag, 
   Heart, 
@@ -55,7 +55,8 @@ export const Header: React.FC = () => {
     setIsCustomerAuthModalOpen,
     setIsCustomerAccountModalOpen,
     logoutCustomer,
-    isFeatureEnabled
+    isFeatureEnabled,
+    themeTokens
   } = useStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -438,7 +439,7 @@ export const Header: React.FC = () => {
       {/* 2. Top Bar (Colored / Primary Brand Bar) */}
       <div
         className="text-white transition-colors"
-        style={{ backgroundColor: isDarkHeader ? '#0f172a' : theme.hex }}
+        style={{ backgroundColor: isDarkHeader ? '#0f172a' : (themeTokens?.primaryColor || theme.hex) }}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-18 gap-2 sm:gap-4">
@@ -461,7 +462,7 @@ export const Header: React.FC = () => {
                   }}
                 >
                   <img
-                    src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                    src={getStoreLogo(activeStore)}
                     alt={displayStoreName}
                     className="max-h-full w-auto object-contain select-none rounded-lg"
                     style={{

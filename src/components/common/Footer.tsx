@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { renderBadgeIcon, getDefaultTrustBadges } from '../admin/TrustBadgesEditor';
-import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
+import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
 
 export const Footer: React.FC = () => {
   const { 
@@ -63,7 +63,7 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1 overflow-hidden">
                 <img
-                  src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                  src={getStoreLogo(activeStore)}
                   alt=""
                   className="w-full h-full object-contain rounded-lg"
                 />

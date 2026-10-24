@@ -6,7 +6,7 @@ import { AdminOrders } from './AdminOrders';
 import { AdminCustomers } from './AdminCustomers';
 import { AdminSettings } from './AdminSettings';
 import { AdminStoreDesign } from './AdminStoreDesign';
-import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
+import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
 import { 
   LayoutDashboard, 
   Package, 
@@ -187,7 +187,7 @@ export const AdminLayout: React.FC = () => {
               style={{ borderColor: `${theme.hex}55` }}
             >
               <img
-                src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                src={getStoreLogo(activeStore)}
                 alt=""
                 className="w-full h-full object-contain rounded-lg"
               />
@@ -246,7 +246,7 @@ export const AdminLayout: React.FC = () => {
                 style={{ borderColor: `${theme.hex}66` }}
               >
                 <img
-                  src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL}
+                  src={getStoreLogo(activeStore)}
                   alt=""
                   className="w-full h-full object-contain rounded-xl"
                 />

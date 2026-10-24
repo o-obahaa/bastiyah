@@ -151,7 +151,7 @@ export function App() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+                  <h2 className="text-xl sm:text-3xl font-black text-slate-900">
                     {language === 'ar'
                       ? `تشكيلة منتجات ${displayStoreName}`
                       : `${displayStoreName} Collection`}
@@ -205,7 +205,7 @@ export function App() {
                   >
                     {getStorePathLabel(activeStore.slug)}
                   </span>
-                  <h3 className="text-2xl sm:text-3xl font-black leading-tight">
+                  <h3 className="text-xl sm:text-3xl font-black leading-tight">
                     {language === 'ar'
                       ? `تسوق بثقة من ${displayStoreName}`
                       : `Shop Exclusively at ${displayStoreName}`}
@@ -234,7 +234,7 @@ export function App() {
         {currentPage === 'shop' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
             <div>
-              <h1 className="text-3xl font-black text-slate-900">
+              <h1 className="text-xl sm:text-3xl font-black text-slate-900">
                 {displayStoreName} — {t.navShopAll}
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">

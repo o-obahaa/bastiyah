@@ -1775,7 +1775,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const activeStore = stores.find((s) => s.id === activeStoreId) || stores[0];
-  const theme = getThemeClasses(activeStore.design.themeColor, activeStore.design.customThemeColor);
+  const theme = getThemeClasses(activeStore.design.themeColor, activeStore.design.customThemeColor || activeStore.themeTokens?.primaryColor);
   const storeFeatures = resolveStoreFeatures(activeStore);
   const themeTokens = resolveStoreTheme(activeStore);
 

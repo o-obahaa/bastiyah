@@ -3,7 +3,7 @@ import { useStore } from '../../context/StoreContext';
 import { ArrowRight, Sparkles, Star, Globe, Palette } from 'lucide-react';
 import { getStorePathLabel } from '../../utils/urlUtils';
 import { StoreHeroSlider } from './StoreHeroSlider';
-import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
+import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
 
 export const HeroBanner: React.FC = () => {
   const { 
@@ -54,11 +54,11 @@ export const HeroBanner: React.FC = () => {
         />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/15 text-xs font-bold tracking-widest uppercase">
-            <img src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL} alt="" className="w-4 h-4 rounded object-contain" />
+            <img src={getStoreLogo(activeStore)} alt="" className="w-4 h-4 rounded object-contain" />
             <span style={{ color: theme.hex }}>{getStorePathLabel(activeStore.slug)}</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tight leading-tight">
             {displayStoreName}
           </h1>
 
@@ -127,11 +127,11 @@ export const HeroBanner: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-6 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 border border-slate-900 text-slate-900 text-xs font-bold uppercase tracking-widest">
-                <img src={activeStore.design.customLogoUrl || BLANK_STORE_LOGO_URL} alt="" className="w-4 h-4 rounded object-contain" />
+                <img src={getStoreLogo(activeStore)} alt="" className="w-4 h-4 rounded object-contain" />
                 <span>{getStorePathLabel(activeStore.slug)}</span>
               </div>
 
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-950 leading-[1.08]">
+              <h1 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tight text-slate-950 leading-[1.08]">
                 {displayStoreName}
               </h1>
 
@@ -211,7 +211,7 @@ export const HeroBanner: React.FC = () => {
               <span className="font-mono">{getStorePathLabel(activeStore.slug)}</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-6xl font-black tracking-tight leading-tight">
               {displayStoreName}
             </h1>
 
@@ -267,7 +267,7 @@ export const HeroBanner: React.FC = () => {
               <span className="font-mono text-emerald-300" dir="ltr">{getStorePathLabel(activeStore.slug)}</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
+            <h1 className="text-2xl sm:text-4xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
               {displayTagline}
             </h1>
 
