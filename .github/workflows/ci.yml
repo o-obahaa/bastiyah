@@ -1,0 +1,49 @@
+name: Bastiyah Automated Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  automated-devops-pipeline:
+    name: Build, Test, DevSecOps & Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 3. Install Dependencies Cleanly
+        run: npm ci --prefer-offline
+
+      - name: 4. TypeScript Type Integrity Check
+        run: npm run typecheck
+
+      - name: 5. Unit & Cross-Store Integration Tests
+        run: npm test
+
+      - name: 6. Synthetic E2E Checkout Flow Verification
+        run: npm run test:e2e
+
+      - name: 7. DevSecOps Security Audit (NPM & Trivy)
+        run: npm run security:scan
+
+      - name: 8. Vite Production Build
+        run: npm run build
+
+      - name: 9. Disaster Recovery Backup Snapshot Test
+        run: npm run backup:create
+
+      - name: 10. Verify Production Artifacts
+        run: |
+          test -d dist
+          test -f dist/index.html
+          echo "🎉 All automated CI/CD stages completed successfully!"

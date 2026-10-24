@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Git Pre-Push Hook: Automatic Unit Tests, E2E Verification & Security Scan
+# ==============================================================================
+
+echo "🚀 [Git Hook] Running automated quality gates before push..."
+
+echo "1/3 Testing unit & store routing tests..."
+if ! npm test; then
+    echo "❌ Unit tests failed! Push aborted."
+    exit 1
+fi
+
+echo "2/3 Testing synthetic E2E checkout flow..."
+if ! npm run test:e2e; then
+    echo "❌ E2E synthetic tests failed! Push aborted."
+    exit 1
+fi
+
+echo "3/3 Running DevSecOps security audit..."
+if ! npm run security:scan; then
+    echo "❌ Security audit failed! Push aborted."
+    exit 1
+fi
+
+echo "🎉 [Git Hook] All automated checks passed cleanly! Proceeding with push."
+exit 0

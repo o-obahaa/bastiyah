@@ -1,7 +1,7 @@
 ---
 name: devops-ci-cd
 description: Enforces the use of Jenkins CI/CD, Traefik SSL reverse proxy, Sentry error observability, DevSecOps vulnerability scans, E2E synthetic testing, Uptime Kuma monitoring, automated backups, and Docker multi-stage builds when modifying, testing, containerizing, or deploying the Bastiyah platform.
-trigger: model_decision
+trigger: always_on
 ---
 
 # Bastiyah Enterprise DevOps Suite Rule (Jenkins, Docker, Traefik, Sentry, DevSecOps & Monitoring)

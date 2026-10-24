@@ -14,6 +14,12 @@ pipeline {
         disableConcurrentBuilds()
     }
 
+    // Automated Triggers: Fires on GitHub Push Webhooks and SCM Poll
+    triggers {
+        githubPush()
+        pollSCM('H/15 * * * *')
+    }
+
     parameters {
         choice(
             name: 'DEPLOY_ENV',

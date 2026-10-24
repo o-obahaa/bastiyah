@@ -14,6 +14,7 @@
     "health:check": "node scripts/health-monitor.js",
     "backup:create": "node scripts/backup-runner.js",
     "backup:restore": "bash scripts/restore-backup.sh",
+    "prepare": "git config core.hooksPath .githooks || true",
     "whatsapp:gateway": "node scripts/whatsapp-gateway/server.js"
   },
   "dependencies": {

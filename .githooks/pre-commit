@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Git Pre-Commit Hook: Automatic TypeScript Typecheck
+# ==============================================================================
+
+echo "🔍 [Git Hook] Running automatic TypeScript type integrity check..."
+if npm run typecheck; then
+    echo "✅ TypeScript check passed!"
+    exit 0
+else
+    echo "❌ [Git Hook] TypeScript errors detected. Commit aborted. Please fix errors before committing."
+    exit 1
+fi
