@@ -86,31 +86,31 @@ const CATEGORY_PRESETS = [
 const LAYOUT_OPTIONS: Array<{ id: StoreLayoutStyle; labelEn: string; labelAr: string; descEn: string; descAr: string }> = [
   { 
     id: 'modern-split', 
-    labelEn: 'Standard Modern Split', 
-    labelAr: 'الواجهة العصرية القياسية', 
-    descEn: 'Balanced commercial layout pairing high-converting hero messaging with featured product showcases.', 
-    descAr: 'تصميم تجاري متوازن يجمع بين واجهة العرض الرئيسية والمنتجات المميزة لتعزيز معدل التحويل والمبيعات.' 
+    labelEn: 'Standard Modern Layout', 
+    labelAr: 'التصميم القياسي الحديث', 
+    descEn: 'Balanced commercial layout combining hero presentation with featured product showcases.', 
+    descAr: 'تخطيط تجاري متوازن يجمع بين واجهة العرض الرئيسية وعرض المنتجات المميزة.' 
   },
   { 
     id: 'luxury-centered', 
-    labelEn: 'Classic Luxury Centered', 
-    labelAr: 'الهوية الكلاسيكية الفاخرة', 
-    descEn: 'Symmetrical high-end aesthetic with refined depth, ideal for premium brands, perfumery, and jewelry.', 
-    descAr: 'طابع متناظر بأناقة هادئة وتدرجات عميقة، مخصص للعلامات التجارية الراقية كالعطور، الساعات والمجوهرات.' 
+    labelEn: 'Classic Centered Layout', 
+    labelAr: 'التصميم الكلاسيكي المتمركز', 
+    descEn: 'Symmetrical centered layout optimized for specialized brands and premium categories.', 
+    descAr: 'تخطيط متناظر يركز على إبراز هوية العلامة التجارية والمنتجات التخصصية.' 
   },
   { 
     id: 'minimal-editorial', 
-    labelEn: 'Contemporary Editorial', 
-    labelAr: 'النمط التحريري المعاصر', 
-    descEn: 'Streamlined magazine-grade layout highlighting high-resolution product imagery and clear details.', 
-    descAr: 'تنسيق عصري انسيابي يركز بالكامل على فخامة صور المنتجات ووضوح التفاصيل بأسلوب المجلات العالمية.' 
+    labelEn: 'Editorial Minimal Layout', 
+    labelAr: 'التصميم التحريري المبسط', 
+    descEn: 'Streamlined editorial layout highlighting product specifications and visual presentation.', 
+    descAr: 'تنسيق انسيابي يركز على وضوح تفاصيل المنتجات والمحتوى البصري بدقة.' 
   },
   { 
     id: 'vibrant-banner', 
-    labelEn: 'Dynamic Campaign Banner', 
-    labelAr: 'الواجهة الترويجية التفاعلية', 
-    descEn: 'High-impact promotional interface with wide banners suited for high-volume stores and retail events.', 
-    descAr: 'واجهة إعلانية شاملة ببانر عريض وتدرجات لونية حيوية، مصممة للمتاجر سريعة الحركة والحملات الكبرى.' 
+    labelEn: 'Promotional Campaign Layout', 
+    labelAr: 'التصميم الترويجي الموسع', 
+    descEn: 'Expanded promotional interface structured for marketing campaigns and featured banners.', 
+    descAr: 'تخطيط مخصص لإبراز العروض والحملات التسويقية عبر بانرات عرض رئيسية.' 
   },
 ];
 
