@@ -56,7 +56,15 @@ import {
   dispatchOrderWhatsAppToManager,
   formatOrderWhatsAppMessage
 } from '../utils/notificationUtils';
-import { renderWhatsAppTemplate, logWhatsAppActivity } from '../utils/whatsappPlatformUtils';
+import {
+  WhatsAppTemplate,
+  getStoredWhatsAppTemplates,
+  saveStoredWhatsAppTemplate,
+  resetStoredWhatsAppTemplate,
+  toggleStoredWhatsAppTemplateStatus,
+  renderWhatsAppTemplate,
+  logWhatsAppActivity,
+} from '../utils/whatsappPlatformUtils';
 import { convexClient, isConvexConfigured } from '../convexClient';
 import { api } from '../convexApi';
 
@@ -230,6 +238,13 @@ interface StoreContextType {
   updateNotificationSettings: (settings: Partial<NotificationSettings>) => void;
   playNotificationSound: () => void;
   requestBrowserNotifications: () => Promise<boolean>;
+
+  // Platform WhatsApp Forms Synchronization
+  whatsappTemplates: WhatsAppTemplate[];
+  updateWhatsAppTemplate: (templateId: string, content: string, enabled?: boolean) => WhatsAppTemplate[];
+  resetWhatsAppTemplate: (templateId: string) => WhatsAppTemplate[];
+  toggleWhatsAppTemplate: (templateId: string, enabled: boolean) => WhatsAppTemplate[];
+  syncWhatsAppTemplates: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -517,6 +532,81 @@ export const broadcastPlatformSync = (data: any) => {
 };
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Platform WhatsApp Forms Synchronization (Reactive across Owner & Store Manager panels)
+  const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
+
+  useEffect(() => {
+    const handleTemplateChange = () => {
+      setWhatsappTemplates(getStoredWhatsAppTemplates());
+    };
+
+    window.addEventListener('bastiyah_whatsapp_templates_updated', handleTemplateChange);
+    window.addEventListener('storage', handleTemplateChange);
+
+    // Initial Convex sync if client is available
+    if (convexClient && typeof (convexClient as any).query === 'function') {
+      try {
+        (convexClient as any).query(api.whatsappTemplates.getTemplates, {}).then((remote: any[]) => {
+          if (Array.isArray(remote) && remote.length > 0) {
+            for (const item of remote) {
+              if (item?.templateId && item?.content) {
+                saveStoredWhatsAppTemplate(item.templateId, item.content, item.enabled);
+              }
+            }
+            setWhatsappTemplates(getStoredWhatsAppTemplates());
+          }
+        }).catch(() => {});
+      } catch {}
+    }
+
+    return () => {
+      window.removeEventListener('bastiyah_whatsapp_templates_updated', handleTemplateChange);
+      window.removeEventListener('storage', handleTemplateChange);
+    };
+  }, []);
+
+  const updateWhatsAppTemplate = (templateId: string, content: string, enabled?: boolean) => {
+    const updated = saveStoredWhatsAppTemplate(templateId, content, enabled);
+    setWhatsappTemplates(updated);
+
+    if (convexClient && typeof (convexClient as any).mutation === 'function') {
+      try {
+        (convexClient as any).mutation(api.whatsappTemplates.saveTemplate, {
+          templateId,
+          content,
+          enabled: enabled !== undefined ? enabled : true,
+        }).catch(() => {});
+      } catch {}
+    }
+
+    return updated;
+  };
+
+  const resetWhatsAppTemplate = (templateId: string) => {
+    const updated = resetStoredWhatsAppTemplate(templateId);
+    setWhatsappTemplates(updated);
+
+    if (convexClient && typeof (convexClient as any).mutation === 'function') {
+      try {
+        (convexClient as any).mutation(api.whatsappTemplates.resetTemplate, {
+          templateId,
+        }).catch(() => {});
+      } catch {}
+    }
+
+    return updated;
+  };
+
+  const toggleWhatsAppTemplate = (templateId: string, enabled: boolean) => {
+    const updated = toggleStoredWhatsAppTemplateStatus(templateId, enabled);
+    setWhatsappTemplates(updated);
+    return updated;
+  };
+
+  const syncWhatsAppTemplates = () => {
+    setWhatsappTemplates(getStoredWhatsAppTemplates());
+  };
+
   // Language State
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem('bastiyah_language') || localStorage.getItem('panda_language');
@@ -3206,6 +3296,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateNotificationSettings,
         playNotificationSound,
         requestBrowserNotifications,
+
+        // Platform WhatsApp Forms Synchronization
+        whatsappTemplates,
+        updateWhatsAppTemplate,
+        resetWhatsAppTemplate,
+        toggleWhatsAppTemplate,
+        syncWhatsAppTemplates,
       }}
     >
       {children}

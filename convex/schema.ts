@@ -147,4 +147,12 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_key", ["key"]),
+
+  whatsapp_templates: defineTable({
+    templateId: v.string(),
+    content: v.string(),
+    enabled: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_templateId", ["templateId"]),
 });

@@ -69,7 +69,11 @@ export const AdminSettings: React.FC = () => {
     setAdminTab,
     updateNotificationSettings,
     playNotificationSound,
-    requestBrowserNotifications
+    requestBrowserNotifications,
+    whatsappTemplates,
+    updateWhatsAppTemplate,
+    resetWhatsAppTemplate,
+    syncWhatsAppTemplates
   } = useStore();
 
   const [formSettings, setFormSettings] = useState({
@@ -160,21 +164,11 @@ export const AdminSettings: React.FC = () => {
     notes: 'يرجى الاتصال بالزبون قبل التوصيل'
   };
 
-  // Live Platform WhatsApp Templates synchronized to this store
-  const [storeWhatsAppTemplates, setStoreWhatsAppTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
+  // Live Platform WhatsApp Templates synchronized to this store (via StoreContext reactive state)
+  const storeWhatsAppTemplates = whatsappTemplates;
   const [selectedStoreTemplateId, setSelectedStoreTemplateId] = useState<string>('merchant_order_alert');
   const [isEditingStoreTemplate, setIsEditingStoreTemplate] = useState<boolean>(false);
   const [storeTemplateContent, setStoreTemplateContent] = useState<string>('');
-
-  useEffect(() => {
-    const refresh = () => setStoreWhatsAppTemplates(getStoredWhatsAppTemplates());
-    window.addEventListener('bastiyah_whatsapp_templates_updated', refresh);
-    window.addEventListener('storage', refresh);
-    return () => {
-      window.removeEventListener('bastiyah_whatsapp_templates_updated', refresh);
-      window.removeEventListener('storage', refresh);
-    };
-  }, []);
 
   const activeStoreTemplate = useMemo(() => {
     return storeWhatsAppTemplates.find((t) => t.id === selectedStoreTemplateId) || storeWhatsAppTemplates[0];
@@ -188,8 +182,7 @@ export const AdminSettings: React.FC = () => {
 
   const handleSaveStoreTemplate = () => {
     if (!activeStoreTemplate) return;
-    const updated = saveStoredWhatsAppTemplate(activeStoreTemplate.id, storeTemplateContent);
-    setStoreWhatsAppTemplates(updated);
+    updateWhatsAppTemplate(activeStoreTemplate.id, storeTemplateContent);
     setIsEditingStoreTemplate(false);
     addToast(
       language === 'ar'
@@ -201,8 +194,7 @@ export const AdminSettings: React.FC = () => {
 
   const handleResetStoreTemplate = () => {
     if (!activeStoreTemplate) return;
-    const updated = resetStoredWhatsAppTemplate(activeStoreTemplate.id);
-    setStoreWhatsAppTemplates(updated);
+    resetWhatsAppTemplate(activeStoreTemplate.id);
     setStoreTemplateContent(activeStoreTemplate.defaultContent);
     setIsEditingStoreTemplate(false);
     addToast(language === 'ar' ? 'تمت استعادة النص الافتراضي للنموذج بنجاح' : 'Reverted to default template', 'info');
@@ -1025,7 +1017,7 @@ export const AdminSettings: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                setStoreWhatsAppTemplates(getStoredWhatsAppTemplates());
+                                syncWhatsAppTemplates();
                                 addToast(language === 'ar' ? 'تمت مزامنة أحدث النماذج بنجاح!' : 'Templates synchronized successfully!', 'info');
                               }}
                               className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"

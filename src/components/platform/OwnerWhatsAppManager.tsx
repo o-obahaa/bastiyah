@@ -51,13 +51,22 @@ import {
 } from '../../utils/whatsappPlatformUtils';
 
 export const OwnerWhatsAppManager: React.FC = () => {
-  const { stores, language, addToast } = useStore();
+  const {
+    stores,
+    language,
+    addToast,
+    whatsappTemplates,
+    updateWhatsAppTemplate,
+    resetWhatsAppTemplate,
+    toggleWhatsAppTemplate,
+    syncWhatsAppTemplates,
+  } = useStore();
 
   // Sub-tabs: 'templates' vs 'activities'
   const [subTab, setSubTab] = useState<'templates' | 'activities'>('templates');
 
-  // Templates State
-  const [templates, setTemplates] = useState<WhatsAppTemplate[]>(() => getStoredWhatsAppTemplates());
+  // Shared synchronized templates
+  const templates = whatsappTemplates;
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('merchant_order_alert');
   const [activeContent, setActiveContent] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
@@ -75,7 +84,7 @@ export const OwnerWhatsAppManager: React.FC = () => {
       setActivities(getStoredWhatsAppActivities());
     };
     const handleTemplatesUpdate = () => {
-      setTemplates(getStoredWhatsAppTemplates());
+      syncWhatsAppTemplates();
     };
 
     // Live sync with gateway on render
@@ -146,13 +155,12 @@ export const OwnerWhatsAppManager: React.FC = () => {
   // Save active template
   const handleSaveTemplate = () => {
     if (!activeTemplate) return;
-    const updated = saveStoredWhatsAppTemplate(activeTemplate.id, activeContent);
-    setTemplates(updated);
+    updateWhatsAppTemplate(activeTemplate.id, activeContent);
     setHasUnsavedChanges(false);
     addToast(
       language === 'ar'
-        ? `✅ تم حفظ نموذج واتساب (${activeTemplate.nameAr}) بنجاح!`
-        : `✅ WhatsApp template (${activeTemplate.nameEn}) saved successfully!`,
+        ? `✅ تم حفظ نموذج واتساب (${activeTemplate.nameAr}) ومزامنته مع جميع المتاجر بنجاح!`
+        : `✅ WhatsApp template (${activeTemplate.nameEn}) saved and synced across all stores!`,
       'success'
     );
   };
@@ -162,13 +170,12 @@ export const OwnerWhatsAppManager: React.FC = () => {
     if (!activeTemplate) return;
     const confirmReset = window.confirm(
       language === 'ar'
-        ? 'هل أنت متأكد من استعادة النص الافتراضي لهذا النموذج؟'
+        ? 'هل أنت متأكد من استعادة النص الافتراضي لهذا النموذج ومزامنته مع المتاجر؟'
         : 'Are you sure you want to revert this template to default?'
     );
     if (!confirmReset) return;
 
-    const updated = resetStoredWhatsAppTemplate(activeTemplate.id);
-    setTemplates(updated);
+    resetWhatsAppTemplate(activeTemplate.id);
     setActiveContent(activeTemplate.defaultContent);
     setHasUnsavedChanges(false);
     addToast(
@@ -180,8 +187,7 @@ export const OwnerWhatsAppManager: React.FC = () => {
   // Toggle template enabled/disabled status
   const handleToggleTemplateStatus = (templateId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
-    const updated = toggleStoredWhatsAppTemplateStatus(templateId, newStatus);
-    setTemplates(updated);
+    toggleWhatsAppTemplate(templateId, newStatus);
     addToast(
       language === 'ar'
         ? newStatus
