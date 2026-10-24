@@ -47,6 +47,37 @@ export const saveSessionFile = mutation({
 });
 
 /**
+ * Upserts multiple WhatsApp auth session files in a single fast atomic mutation.
+ */
+export const saveBatchSessionFiles = mutation({
+  args: {
+    files: v.array(v.object({ key: v.string(), value: v.string() })),
+  },
+  handler: async (ctx, args) => {
+    for (const file of args.files) {
+      const existing = await ctx.db
+        .query("whatsapp_auth")
+        .withIndex("by_key", (q) => q.eq("key", file.key))
+        .first();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          value: file.value,
+          updatedAt: Date.now(),
+        });
+      } else {
+        await ctx.db.insert("whatsapp_auth", {
+          key: file.key,
+          value: file.value,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+    return { success: true, count: args.files.length };
+  },
+});
+
+/**
  * Removes a specific auth session file.
  */
 export const removeSessionFile = mutation({

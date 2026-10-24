@@ -149,28 +149,82 @@ async function restoreSessionFromConvex() {
   return false;
 }
 
+function normalizeIraqiPhone(phone) {
+  if (!phone) return '';
+  let clean = String(phone).replace(/\D/g, '');
+  if (clean.startsWith('00')) clean = clean.slice(2);
+  if (clean.startsWith('964')) clean = clean.slice(3);
+  if (clean.startsWith('0')) clean = clean.slice(1);
+  return `964${clean}`;
+}
+
 /**
- * 2. Backup session files from AUTH_DIR into Convex database.
+ * Sync a single auth file to Convex cloud persistence (e.g. creds.json).
+ */
+async function syncSingleFileToConvex(filename) {
+  try {
+    const fullPath = path.join(AUTH_DIR, filename);
+    if (!fs.existsSync(fullPath)) return;
+    const content = fs.readFileSync(fullPath, 'utf8');
+    await fetch(`${CONVEX_SITE_URL}/whatsapp-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: filename, value: content }),
+    }).catch(() => {});
+  } catch (err) {}
+}
+
+let syncBatchTimeout = null;
+
+/**
+ * 2. Backup session files from AUTH_DIR into Convex database via fast batch API.
+ * Uses 1.2s debounce to avoid overwhelming Node event loop or Convex during handshake.
  */
 async function syncAllAuthFilesToConvex() {
-  try {
-    if (!fs.existsSync(AUTH_DIR)) return;
-    const files = fs.readdirSync(AUTH_DIR);
-    for (const f of files) {
-      if (f.endsWith('.json')) {
+  if (syncBatchTimeout) clearTimeout(syncBatchTimeout);
+  syncBatchTimeout = setTimeout(async () => {
+    try {
+      if (!fs.existsSync(AUTH_DIR)) return;
+      const files = fs.readdirSync(AUTH_DIR).filter((f) => f.endsWith('.json'));
+      if (files.length === 0) return;
+
+      const batch = [];
+      for (const f of files) {
         const fullPath = path.join(AUTH_DIR, f);
         const content = fs.readFileSync(fullPath, 'utf8');
-        await fetch(`${CONVEX_SITE_URL}/whatsapp-session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: f, value: content }),
-        }).catch(() => {});
+        batch.push({ key: f, value: content });
       }
+
+      // Try batch endpoint first
+      const res = await fetch(`${CONVEX_SITE_URL}/whatsapp-session-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: batch }),
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        console.log(`[Bastiyah Gateway] 💾 Synced ${batch.length} session files to Convex cloud persistence (batch mode).`);
+        return;
+      }
+
+      // Fallback: chunked parallel sync (5 at a time)
+      for (let i = 0; i < batch.length; i += 5) {
+        const chunk = batch.slice(i, i + 5);
+        await Promise.all(
+          chunk.map((item) =>
+            fetch(`${CONVEX_SITE_URL}/whatsapp-session`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item),
+            }).catch(() => {})
+          )
+        );
+      }
+      console.log(`[Bastiyah Gateway] 💾 Synced ${batch.length} session files to Convex cloud persistence.`);
+    } catch (err) {
+      console.warn('[Bastiyah Gateway] Error syncing auth files to Convex:', err.message);
     }
-    console.log(`[Bastiyah Gateway] 💾 Synced ${files.length} session files to Convex cloud persistence.`);
-  } catch (err) {
-    console.warn('[Bastiyah Gateway] Error syncing auth files to Convex:', err.message);
-  }
+  }, 1200);
 }
 
 /**
@@ -229,7 +283,7 @@ async function connectToWhatsApp() {
 
   sock.ev.on('creds.update', async () => {
     await saveCreds();
-    syncAllAuthFilesToConvex();
+    syncSingleFileToConvex('creds.json');
   });
 
   sock.ev.on('connection.update', async (update) => {
@@ -255,27 +309,28 @@ async function connectToWhatsApp() {
       currentQrDataUrl = null;
       connectedPhone = sock?.user?.id ? sock.user.id.split(':')[0] : 'Unknown';
       console.log(`\n✅ [Bastiyah Gateway] Successfully connected to WhatsApp! Phone: +${connectedPhone}\n`);
-      // Sync keys and credentials to Convex cloud database immediately
+      // Sync keys and credentials to Convex cloud database in background
       syncAllAuthFilesToConvex();
     }
 
     if (connection === 'close') {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut;
       connectionStatus = 'DISCONNECTED';
       connectedPhone = null;
 
-      console.log(`[Bastiyah Gateway] Connection closed. Reason code: ${statusCode}. Reconnecting: ${shouldReconnect}`);
+      console.log(`[Bastiyah Gateway] Connection closed. Reason code: ${statusCode}. Logged out: ${isLoggedOut}`);
 
-      if (shouldReconnect) {
-        setTimeout(connectToWhatsApp, 3000);
-      } else {
-        console.log('[Bastiyah Gateway] Session logged out. Clearing auth credentials...');
+      // NEVER clear Convex session files on automatic disconnect!
+      // This protects the session during container deploys, restarts, or momentary network drops.
+      if (isLoggedOut) {
+        console.log('[Bastiyah Gateway] WhatsApp session logged out by server. Preparing local state for new QR...');
         try {
           fs.rmSync(AUTH_DIR, { recursive: true, force: true });
         } catch (e) {}
-        clearConvexSession();
-        setTimeout(connectToWhatsApp, 2000);
+        setTimeout(connectToWhatsApp, 2500);
+      } else {
+        setTimeout(connectToWhatsApp, 3000);
       }
     }
   });
@@ -525,27 +580,36 @@ app.post('/send-otp', async (req, res) => {
       });
     }
 
-    // Clean phone number
-    let cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
-    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
-    if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+    // Clean and strictly normalize phone number
+    const cleanPhone = normalizeIraqiPhone(phone);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return res.status(400).json({ success: false, error: 'Invalid recipient phone number' });
+    }
 
     const jid = `${cleanPhone}@s.whatsapp.net`;
-    const store = storeName || 'بسطية';
+    let targetJid = jid;
 
+    // Pre-check registration & resolve canonical JID
+    try {
+      const [onWa] = await sock.onWhatsApp(jid);
+      if (onWa && onWa.exists && onWa.jid) {
+        targetJid = onWa.jid;
+      }
+    } catch (e) {}
+
+    const store = storeName || 'بسطية';
     const messageText = `مرحباً بك في *${store}* 🛍️\n\nرمز تسجيل دخولك إلى حسابك هو:\n*${code}*\n\n(الرمز صالح لمدة 10 دقائق. لا تشارك الرمز مع أي شخص).`;
 
     // 1. Prime the recipient session & presence to prevent "Waiting for this message" delays
-    await sock.presenceSubscribe(jid).catch(() => {});
-    await sock.sendPresenceUpdate('composing', jid).catch(() => {});
+    await sock.presenceSubscribe(targetJid).catch(() => {});
+    await sock.sendPresenceUpdate('composing', targetJid).catch(() => {});
 
     // 2. Pre-generate and cache message ID before sending so instant retry finds it
     const messageId = generateMessageIDV2(sock?.user?.id);
     saveMessage(messageId, { conversation: messageText }, messageText);
 
     // 3. Send WhatsApp message with pre-registered messageId
-    const sent = await sock.sendMessage(jid, { text: messageText }, { messageId });
+    const sent = await sock.sendMessage(targetJid, { text: messageText }, { messageId });
     if (sent?.key?.id && sent.key.id !== messageId) {
       saveMessage(sent.key.id, sent.message, messageText);
     }
@@ -583,24 +647,33 @@ app.post('/send-message', async (req, res) => {
       });
     }
 
-    // Clean phone number
-    let cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
-    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
-    if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+    // Clean and strictly normalize phone number
+    const cleanPhone = normalizeIraqiPhone(phone);
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return res.status(400).json({ success: false, error: 'Invalid recipient phone number' });
+    }
 
     const jid = `${cleanPhone}@s.whatsapp.net`;
+    let targetJid = jid;
+
+    // Pre-check registration & resolve canonical JID
+    try {
+      const [onWa] = await sock.onWhatsApp(jid);
+      if (onWa && onWa.exists && onWa.jid) {
+        targetJid = onWa.jid;
+      }
+    } catch (e) {}
 
     // 1. Prime the recipient session & presence to prevent "Waiting for this message" delays
-    await sock.presenceSubscribe(jid).catch(() => {});
-    await sock.sendPresenceUpdate('composing', jid).catch(() => {});
+    await sock.presenceSubscribe(targetJid).catch(() => {});
+    await sock.sendPresenceUpdate('composing', targetJid).catch(() => {});
 
     // 2. Pre-generate and cache message ID before sending so instant retry finds it
     const messageId = generateMessageIDV2(sock?.user?.id);
     saveMessage(messageId, { conversation: message }, message);
 
     // 3. Send WhatsApp message with pre-registered messageId
-    const sent = await sock.sendMessage(jid, { text: message }, { messageId });
+    const sent = await sock.sendMessage(targetJid, { text: message }, { messageId });
     if (sent?.key?.id && sent.key.id !== messageId) {
       saveMessage(sent.key.id, sent.message, message);
     }

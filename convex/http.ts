@@ -109,6 +109,36 @@ http.route({
 });
 
 http.route({
+  path: "/whatsapp-session-batch",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const { files } = await request.json();
+      if (!Array.isArray(files)) {
+        return new Response(JSON.stringify({ error: "files array is required" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      await ctx.runMutation("whatsappAuth:saveBatchSessionFiles" as any, { files });
+      return new Response(JSON.stringify({ success: true, count: files.length }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
+http.route({
   path: "/whatsapp-session",
   method: "DELETE",
   handler: httpAction(async (ctx, request) => {
