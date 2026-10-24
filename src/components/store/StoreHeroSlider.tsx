@@ -139,13 +139,20 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
   const buttonRadiusClass =
     config.buttonStyle === 'pill' ? 'rounded-full' : config.buttonStyle === 'sharp' ? 'rounded-none' : 'rounded-xl';
 
-  // Heading sizes (mobile-first responsive scaling)
-  const headingSizeClasses = {
-    small: 'text-sm sm:text-2xl lg:text-3xl',
-    medium: 'text-base sm:text-3xl lg:text-4xl',
-    large: 'text-lg sm:text-4xl lg:text-5xl',
-    xl: 'text-xl sm:text-5xl lg:text-6xl',
-  };
+  // Heading sizes (mobile-first responsive scaling, scaled down proportionally in preview)
+  const headingSizeClasses = isPreview
+    ? {
+        small: 'text-xs sm:text-sm font-bold',
+        medium: 'text-sm sm:text-base font-extrabold',
+        large: 'text-base sm:text-xl font-black',
+        xl: 'text-lg sm:text-2xl font-black',
+      }
+    : {
+        small: 'text-sm sm:text-2xl lg:text-3xl',
+        medium: 'text-base sm:text-3xl lg:text-4xl',
+        large: 'text-lg sm:text-4xl lg:text-5xl',
+        xl: 'text-xl sm:text-5xl lg:text-6xl',
+      };
 
   // Arrow Styles
   const arrowStyleClasses = {
@@ -156,7 +163,7 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
   };
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2">
+    <div className={isPreview ? 'relative w-full' : 'relative w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2'}>
       <section
         role="region"
         aria-roledescription="carousel"
@@ -277,16 +284,20 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
 
                 {/* Slide Text & Actions Content Container */}
                 <div
-                  className={`relative z-10 w-full h-full flex flex-col ${justifyPositionClass} px-9 sm:px-14 lg:px-16 py-3 sm:py-6`}
+                  className={`relative z-10 w-full h-full flex flex-col ${justifyPositionClass} ${
+                    isPreview ? 'px-6 sm:px-10 py-3 sm:py-4' : 'px-9 sm:px-14 lg:px-16 py-3 sm:py-6'
+                  }`}
                 >
                   <div
                     className={`w-full mx-auto flex flex-col ${alignPositionClass} ${textAlignClass} ${
                       contentMaxWidthClasses[config.contentMaxWidth]
-                    } space-y-1.5 sm:space-y-4`}
+                    } ${isPreview ? 'space-y-1 sm:space-y-2' : 'space-y-1.5 sm:space-y-4'}`}
                   >
                     {/* Badge */}
                     {badgeText && (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold tracking-wider uppercase backdrop-blur-md shadow-sm border border-white/20 bg-white/10 text-white animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className={`inline-flex items-center gap-1.5 ${
+                        isPreview ? 'px-2.5 py-0.5 text-[9px] sm:text-[10px]' : 'px-3 py-0.5 sm:px-3.5 sm:py-1 text-[10px] sm:text-xs'
+                      } font-bold tracking-wider uppercase backdrop-blur-md shadow-sm border border-white/20 bg-white/10 text-white animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.hex }} />
                         <span>{badgeText}</span>
                       </div>
@@ -295,7 +306,7 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
                     {/* Heading */}
                     {titleText && (
                       <h2
-                        className={`font-black tracking-tight leading-[1.15] sm:leading-[1.1] text-white ${
+                        className={`font-black tracking-tight leading-[1.25] sm:leading-[1.2] text-white ${
                           headingSizeClasses[config.headingSize]
                         } drop-shadow-md animate-in fade-in slide-in-from-bottom-3 duration-500`}
                       >
@@ -305,7 +316,11 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
 
                     {/* Subtitle */}
                     {subtitleText && (
-                      <p className="text-xs sm:text-base lg:text-lg text-slate-100/90 font-medium leading-relaxed max-w-2xl drop-shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-600 line-clamp-2 sm:line-clamp-none">
+                      <p className={`${
+                        isPreview
+                          ? 'text-[11px] sm:text-xs text-slate-100/90 font-medium leading-relaxed max-w-xl drop-shadow-xs line-clamp-2'
+                          : 'text-xs sm:text-base lg:text-lg text-slate-100/90 font-medium leading-relaxed max-w-2xl drop-shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-600 line-clamp-2 sm:line-clamp-none'
+                      }`}>
                         {subtitleText}
                       </p>
                     )}
@@ -317,7 +332,9 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
                           <button
                             type="button"
                             onClick={(e) => handleCtaClick(e, slide.primaryCtaUrl)}
-                            className={`px-4 sm:px-8 py-2 sm:py-3.5 ${buttonRadiusClass} text-white font-bold text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 sm:gap-2 group`}
+                            className={`${
+                              isPreview ? 'px-3.5 sm:px-5 py-1.5 sm:py-2 text-[11px]' : 'px-4 sm:px-8 py-2 sm:py-3.5 text-xs sm:text-sm'
+                            } ${buttonRadiusClass} text-white font-bold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 sm:gap-2 group`}
                             style={{
                               backgroundColor: config.buttonThemeColor ? theme.hex : '#ffffff',
                               color: config.buttonThemeColor ? '#ffffff' : '#0f172a',
@@ -336,7 +353,9 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
                           <button
                             type="button"
                             onClick={(e) => handleCtaClick(e, slide.secondaryCtaUrl)}
-                            className={`px-4 sm:px-8 py-2 sm:py-3.5 ${buttonRadiusClass} bg-white/15 hover:bg-white/25 border border-white/30 text-white font-bold text-xs sm:text-sm backdrop-blur-md shadow-lg transition-all`}
+                            className={`${
+                              isPreview ? 'px-3.5 sm:px-5 py-1.5 sm:py-2 text-[11px]' : 'px-4 sm:px-8 py-2 sm:py-3.5 text-xs sm:text-sm'
+                            } ${buttonRadiusClass} bg-white/15 hover:bg-white/25 border border-white/30 text-white font-bold backdrop-blur-md shadow-lg transition-all`}
                           >
                             <span>{secondaryCtaText}</span>
                           </button>

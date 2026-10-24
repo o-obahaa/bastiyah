@@ -282,12 +282,12 @@ export const HeroSectionEditor: React.FC = () => {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900">
                     {isRtl ? 'بانر ترويجي فردي (Single Hero)' : 'Single Hero Banner'}
                   </span>
-                  {heroConfig.mode === 'single' && <Check className="w-4 h-4 text-indigo-600" />}
+                  {heroConfig.mode === 'single' && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
                 </div>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed">
                   {isRtl ? 'عرض صورة أو خلفية واحدة رئيسية مع عبارات وأزرار واضحة' : 'Displays one prominent promotional image with text and primary CTAs'}
                 </p>
               </div>
@@ -307,12 +307,12 @@ export const HeroSectionEditor: React.FC = () => {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900">
                     {isRtl ? 'سلايدر شرائح متحرك (Banner Slider)' : 'Multi-Slide Carousel'}
                   </span>
-                  {heroConfig.mode === 'slider' && <Check className="w-4 h-4 text-indigo-600" />}
+                  {heroConfig.mode === 'slider' && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
                 </div>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed">
                   {isRtl ? 'عدة شرائح متحركة تتنقل تلقائياً ويدوياً للحملات والعروض' : 'Multiple rotating slides with automatic rotation, arrows, and swipe support'}
                 </p>
               </div>
@@ -337,19 +337,19 @@ export const HeroSectionEditor: React.FC = () => {
           </div>
 
           {/* Editor Sub-Tabs Navigation */}
-          <div className="flex items-center gap-1.5 border-b border-slate-200 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1 sm:gap-1.5 border-b border-slate-200 overflow-x-auto pb-1 scrollbar-none">
             {[
-              { id: 'slides', labelAr: 'الشرائح والمحتوى', labelEn: 'Slides & Content', icon: <ImageIcon className="w-4 h-4" /> },
-              { id: 'layout', labelAr: 'التخطيط والأبعاد', labelEn: 'Layout & Height', icon: <Layout className="w-4 h-4" /> },
-              { id: 'navigation', labelAr: 'الأسهم والتنقل', labelEn: 'Navigation', icon: <ChevronRight className="w-4 h-4" /> },
-              { id: 'autoplay', labelAr: 'التشغيل التلقائي', labelEn: 'Autoplay & Motion', icon: <Play className="w-4 h-4" /> },
-              { id: 'style', labelAr: 'المظهر والشفافية', labelEn: 'Style & Overlay', icon: <Sliders className="w-4 h-4" /> },
+              { id: 'slides', labelAr: 'الشرائح والمحتوى', labelEn: 'Slides & Content', icon: <ImageIcon className="w-3.5 h-3.5" /> },
+              { id: 'layout', labelAr: 'التخطيط والأبعاد', labelEn: 'Layout & Height', icon: <Layout className="w-3.5 h-3.5" /> },
+              { id: 'navigation', labelAr: 'الأسهم والتنقل', labelEn: 'Navigation', icon: <ChevronRight className="w-3.5 h-3.5" /> },
+              { id: 'autoplay', labelAr: 'التشغيل التلقائي', labelEn: 'Autoplay & Motion', icon: <Play className="w-3.5 h-3.5" /> },
+              { id: 'style', labelAr: 'المظهر والشفافية', labelEn: 'Style & Overlay', icon: <Sliders className="w-3.5 h-3.5" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as EditorTab)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-[11px] sm:text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
                   activeTab === tab.id
                     ? 'bg-slate-900 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -358,7 +358,7 @@ export const HeroSectionEditor: React.FC = () => {
                 {tab.icon}
                 <span>{isRtl ? tab.labelAr : tab.labelEn}</span>
                 {tab.id === 'slides' && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                     activeTab === 'slides' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
                   }`}>
                     {heroConfig.slides.length}
@@ -392,7 +392,7 @@ export const HeroSectionEditor: React.FC = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
                   {heroConfig.slides.map((slide, idx) => {
                     const isSelected = selectedSlide?.id === slide.id;
                     return (
@@ -405,9 +405,9 @@ export const HeroSectionEditor: React.FC = () => {
                             : 'border-slate-200 hover:border-slate-300 bg-white'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2.5">
                           {/* Slide Thumbnail */}
-                          <div className="w-14 h-12 rounded-xl bg-slate-900/10 overflow-hidden relative shrink-0 border border-slate-200">
+                          <div className="w-12 h-11 rounded-xl bg-slate-900/10 overflow-hidden relative shrink-0 border border-slate-200">
                             {slide.desktopImage ? (
                               <img
                                 src={slide.desktopImage}
@@ -416,7 +416,7 @@ export const HeroSectionEditor: React.FC = () => {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                <ImageIcon className="w-5 h-5" />
+                                <ImageIcon className="w-4 h-4" />
                               </div>
                             )}
                             <span className="absolute bottom-0.5 start-0.5 bg-black/70 text-white text-[9px] font-mono px-1 rounded">
@@ -427,7 +427,10 @@ export const HeroSectionEditor: React.FC = () => {
                           {/* Slide Title & Status */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-xs text-slate-900 truncate">
+                              <span
+                                className="font-bold text-xs text-slate-900 line-clamp-1 leading-snug"
+                                title={isRtl ? slide.titleAr || slide.title : slide.title}
+                              >
                                 {isRtl ? slide.titleAr || slide.title : slide.title}
                               </span>
                             </div>
