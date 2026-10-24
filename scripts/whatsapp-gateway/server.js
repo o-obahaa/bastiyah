@@ -5,11 +5,17 @@ import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import NodeCache from 'node-cache';
 import makeWASocket, {
   DisconnectReason,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
+  makeCacheableSignalKeyStore,
+  generateMessageIDV2,
 } from '@whiskeysockets/baileys';
+
+// Global retry counter cache to resolve session drops and prevent retry loops
+const msgRetryCounterCache = new NodeCache({ stdTTL: 300, useClones: false });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -190,17 +196,23 @@ async function connectToWhatsApp() {
 
   console.log(`[Bastiyah Gateway] Initializing WhatsApp engine v${version.join('.')} (latest: ${isLatest})...`);
 
+  const logger = pino({ level: 'silent' });
+
   sock = makeWASocket({
     version,
-    auth: state,
-    logger: pino({ level: 'silent' }),
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(state.keys, logger),
+    },
+    msgRetryCounterCache,
+    logger,
     printQRInTerminal: true,
     browser: ['Bastiyah Store', 'Chrome', '124.0.0'],
     connectTimeoutMs: 60000,
     defaultQueryTimeoutMs: 60000,
     keepAliveIntervalMs: 25000,
     syncFullHistory: false,
-    markOnlineOnConnect: true,
+    markOnlineOnConnect: false, // Ensures mobile devices fire notifications and chimes without suppression
     retryRequestDelayMs: 250,
     maxMsgRetryCount: 5,
     getMessage: async (key) => {
@@ -524,16 +536,26 @@ app.post('/send-otp', async (req, res) => {
 
     const messageText = `مرحباً بك في *${store}* 🛍️\n\nرمز تسجيل دخولك إلى حسابك هو:\n*${code}*\n\n(الرمز صالح لمدة 10 دقائق. لا تشارك الرمز مع أي شخص).`;
 
-    const sent = await sock.sendMessage(jid, { text: messageText });
-    if (sent?.key?.id) {
+    // 1. Prime the recipient session & presence to prevent "Waiting for this message" delays
+    await sock.presenceSubscribe(jid).catch(() => {});
+    await sock.sendPresenceUpdate('composing', jid).catch(() => {});
+
+    // 2. Pre-generate and cache message ID before sending so instant retry finds it
+    const messageId = generateMessageIDV2(sock?.user?.id);
+    saveMessage(messageId, { conversation: messageText }, messageText);
+
+    // 3. Send WhatsApp message with pre-registered messageId
+    const sent = await sock.sendMessage(jid, { text: messageText }, { messageId });
+    if (sent?.key?.id && sent.key.id !== messageId) {
       saveMessage(sent.key.id, sent.message, messageText);
     }
 
-    console.log(`[Bastiyah Gateway] ✅ OTP [${code}] dispatched to ${cleanPhone} via WhatsApp! MsgId: ${sent?.key?.id}`);
+    const finalMsgId = sent?.key?.id || messageId;
+    console.log(`[Bastiyah Gateway] ✅ OTP [${code}] dispatched to ${cleanPhone} via WhatsApp! MsgId: ${finalMsgId}`);
 
     return res.json({
       success: true,
-      messageId: sent?.key?.id,
+      messageId: finalMsgId,
       recipient: cleanPhone,
     });
   } catch (err) {
@@ -548,7 +570,7 @@ app.post('/send-otp', async (req, res) => {
 // 4. Send Custom Message / Order Notification endpoint
 app.post('/send-message', async (req, res) => {
   try {
-    const { phone, message } = req.body;
+    const { phone, message, category, orderNumber, recipientName, storeName, storeSlug, storeId } = req.body;
 
     if (!phone || !message) {
       return res.status(400).json({ success: false, error: 'phone and message are required' });
@@ -569,38 +591,50 @@ app.post('/send-message', async (req, res) => {
 
     const jid = `${cleanPhone}@s.whatsapp.net`;
 
-    const sent = await sock.sendMessage(jid, { text: message });
+    // 1. Prime the recipient session & presence to prevent "Waiting for this message" delays
+    await sock.presenceSubscribe(jid).catch(() => {});
+    await sock.sendPresenceUpdate('composing', jid).catch(() => {});
 
-    if (sent?.key?.id) {
+    // 2. Pre-generate and cache message ID before sending so instant retry finds it
+    const messageId = generateMessageIDV2(sock?.user?.id);
+    saveMessage(messageId, { conversation: message }, message);
+
+    // 3. Send WhatsApp message with pre-registered messageId
+    const sent = await sock.sendMessage(jid, { text: message }, { messageId });
+    if (sent?.key?.id && sent.key.id !== messageId) {
       saveMessage(sent.key.id, sent.message, message);
     }
 
+    const resolvedMsgId = sent?.key?.id || messageId;
+
     // Map WhatsApp message ID to orderNumber for 100% exact reply matching
-    const orderMatch = message.match(/#([A-Za-z0-9]+-[0-9]+|[0-9]{4,6})/);
-    if (orderMatch && sent?.key?.id) {
-      sentOrderMessages.set(sent.key.id, orderMatch[1].toUpperCase());
+    const orderMatch = orderNumber ? [null, orderNumber] : message.match(/#([A-Za-z0-9]+-[0-9]+|[0-9]{4,6})/);
+    const finalOrderNumber = orderMatch ? orderMatch[1].toUpperCase() : undefined;
+    if (finalOrderNumber && resolvedMsgId) {
+      sentOrderMessages.set(resolvedMsgId, finalOrderNumber);
     }
 
     // Record outbound activity for Owner WhatsApp Inbox
+    const isCustomer = category === 'customer_confirmation' || category === 'customer_notification';
     recordGatewayActivity({
       direction: 'outbound',
-      storeId: 'store-1',
-      storeName: 'متجر بسطية',
-      storeSlug: 'panda',
-      recipientName: 'مدير المتجر',
+      storeId: storeId || 'store-1',
+      storeName: storeName || 'متجر بسطية',
+      storeSlug: storeSlug || 'panda',
+      recipientName: recipientName || (isCustomer ? 'زبون المتجر' : 'مدير المتجر'),
       recipientPhone: `+${cleanPhone}`,
-      categoryLabelAr: 'إشعار صادر لمدير المتجر',
-      categoryLabelEn: 'Outbound Store Alert',
+      categoryLabelAr: isCustomer ? 'تأكيد استلام الطلب للزبون' : 'إشعار صادر لمدير المتجر',
+      categoryLabelEn: isCustomer ? 'Customer Confirmation' : 'Outbound Store Alert',
       content: message,
       status: 'sent',
-      orderNumber: orderMatch ? orderMatch[1].toUpperCase() : undefined,
+      orderNumber: finalOrderNumber,
     });
 
-    console.log(`[Bastiyah Gateway] ✅ Message dispatched to manager [${cleanPhone}] via WhatsApp! MsgId: ${sent?.key?.id}`);
+    console.log(`[Bastiyah Gateway] ✅ Message dispatched to ${recipientName || (isCustomer ? 'customer' : 'manager')} [${cleanPhone}] via WhatsApp! MsgId: ${resolvedMsgId}`);
 
     return res.json({
       success: true,
-      messageId: sent?.key?.id,
+      messageId: resolvedMsgId,
       recipient: cleanPhone,
     });
   } catch (err) {

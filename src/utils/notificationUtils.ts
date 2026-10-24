@@ -416,3 +416,120 @@ export const dispatchOrderWhatsAppToManager = async (
   return { success: true, phone: cleanPhone, message };
 };
 
+/**
+ * Dispatches an automated WhatsApp order confirmation message to the customer
+ * via the live WhatsApp Gateway and/or direct API.
+ */
+export const dispatchOrderWhatsAppToCustomer = async (
+  order: Order,
+  store: HostedStore,
+  convexClient?: any
+): Promise<{ success: boolean; phone: string; message: string }> => {
+  const customer = order.customer;
+  const rawPhone = customer.phone || '';
+  if (!rawPhone) return { success: false, phone: '', message: 'No phone number provided' };
+
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
+  if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+  if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+
+  if (!isWhatsAppTemplateEnabled('customer_order_confirmation')) {
+    console.info('ℹ️ Customer order confirmation WhatsApp template is disabled in Owner panel; skipping auto-send.');
+    return { success: false, phone: cleanPhone, message: 'Feature disabled' };
+  }
+
+  const storeName = store.nameAr || store.name;
+  const currency = store.settings.currency || 'د.ع';
+
+  const rendered = renderWhatsAppTemplate('customer_order_confirmation', {
+    customerName: customer.fullName,
+    storeName,
+    orderNumber: order.orderNumber,
+    total: `${order.total.toLocaleString()}`,
+    currency,
+    customerAddress: [customer.state, customer.city, customer.address].filter(Boolean).join(' - ') || 'لم يُحدد',
+    orderUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://bastiyah.com'}/orders`,
+  });
+
+  const message = rendered.content;
+
+  // 1. Log in platform WhatsApp activities feed
+  try {
+    logWhatsAppActivity({
+      direction: 'outbound',
+      storeId: store.id,
+      storeName,
+      storeSlug: store.slug,
+      recipientName: customer.fullName,
+      recipientPhone: `+${cleanPhone}`,
+      categoryLabelAr: 'تأكيد استلام الطلب للزبون',
+      categoryLabelEn: 'Customer Confirmation',
+      content: message,
+      status: 'sent',
+      orderNumber: order.orderNumber,
+    });
+  } catch (e) {}
+
+  // 2. Dispatch through WhatsApp Gateway (Render)
+  const gatewayUrl = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_WHATSAPP_GATEWAY_URL) || 'https://bastiyah-whatsapp.onrender.com').trim();
+  try {
+    fetch(`${gatewayUrl}/send-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: cleanPhone,
+        message,
+        category: 'customer_confirmation',
+        orderNumber: order.orderNumber,
+        recipientName: customer.fullName,
+        storeName,
+        storeSlug: store.slug,
+        storeId: store.id,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`[WhatsApp Gateway] ✅ Customer confirmation sent to (+${cleanPhone}):`, data);
+        } else {
+          // Fallback to /send-otp
+          fetch(`${gatewayUrl}/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              code: `تأكيد طلبك #${order.orderNumber} بمبلغ ${currency}${order.total.toLocaleString()}`,
+              storeName,
+            }),
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {
+        fetch(`${gatewayUrl}/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: cleanPhone,
+            code: `تأكيد طلبك #${order.orderNumber} بمبلغ ${currency}${order.total.toLocaleString()}`,
+            storeName,
+          }),
+        }).catch(() => {});
+      });
+  } catch (e) {}
+
+  // 3. Dispatch via Convex action if configured
+  if (convexClient) {
+    try {
+      convexClient
+        .action('whatsapp:sendWhatsAppMessage' as any, {
+          phone: cleanPhone,
+          message,
+        })
+        .catch(() => {});
+    } catch (e) {}
+  }
+
+  return { success: true, phone: cleanPhone, message };
+};
+
