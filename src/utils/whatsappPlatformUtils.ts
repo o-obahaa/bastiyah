@@ -17,6 +17,7 @@ export interface WhatsAppTemplate {
   content: string;
   variables: WhatsAppVariable[];
   isDefaultModified?: boolean;
+  enabled: boolean;
 }
 
 export interface WhatsAppActivity {
@@ -85,6 +86,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 4️⃣ *إلغاء الطلب* (أرسل 4)
 5️⃣ *عرض التفاصيل كاملة* (أرسل 5)`,
     content: '',
+    enabled: true,
   },
   {
     id: 'customer_order_confirmation',
@@ -113,6 +115,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 🔗 لمتابعة حالة طلبك:
 {orderUrl}`,
     content: '',
+    enabled: true,
   },
   {
     id: 'order_dispatched_tracking',
@@ -140,6 +143,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 
 يرجى إبقاء هاتفك متاحاً للتواصل مع مندوب التوصيل لتسليم الشحنة بأسرع وقت. نتمنى لك يوماً سعيداً!`,
     content: '',
+    enabled: true,
   },
   {
     id: 'order_delivered_feedback',
@@ -164,6 +168,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 
 شكراً لثقتك بنا ونسعد دائماً بخدمتك! ❤️`,
     content: '',
+    enabled: true,
   },
   {
     id: 'merchant_welcome_onboarding',
@@ -191,6 +196,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 
 فريق بسطية يتمنى لك تجارة رابحة ومبيعات مباركة. نحن في خدمتك لأي استفسار: {supportPhone}`,
     content: '',
+    enabled: true,
   },
   {
     id: 'abandoned_cart_reminder',
@@ -214,6 +220,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
 اضغط هنا لإكمال طلبك قبل نفاد الكمية:
 {cartUrl}`,
     content: '',
+    enabled: true,
   },
 ];
 
@@ -350,7 +357,7 @@ export const getStoredWhatsAppTemplates = (): WhatsAppTemplate[] => {
   try {
     const raw = localStorage.getItem(TEMPLATES_STORAGE_KEY);
     if (!raw) {
-      return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t, content: t.defaultContent }));
+      return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t, content: t.defaultContent, enabled: t.enabled ?? true }));
     }
     const parsed = JSON.parse(raw);
     return DEFAULT_WHATSAPP_TEMPLATES.map((def) => {
@@ -358,24 +365,26 @@ export const getStoredWhatsAppTemplates = (): WhatsAppTemplate[] => {
       return {
         ...def,
         content: match?.content || def.defaultContent,
+        enabled: match?.enabled !== undefined ? match.enabled : (def.enabled ?? true),
         isDefaultModified: match ? match.content !== def.defaultContent : false,
       };
     });
   } catch (e) {
-    return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t, content: t.defaultContent }));
+    return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t, content: t.defaultContent, enabled: t.enabled ?? true }));
   }
 };
 
 /**
  * Saves an edited template to localStorage.
  */
-export const saveStoredWhatsAppTemplate = (templateId: string, newContent: string): WhatsAppTemplate[] => {
+export const saveStoredWhatsAppTemplate = (templateId: string, newContent: string, enabled?: boolean): WhatsAppTemplate[] => {
   const current = getStoredWhatsAppTemplates();
   const updated = current.map((t) =>
     t.id === templateId
       ? {
           ...t,
           content: newContent,
+          enabled: enabled !== undefined ? enabled : t.enabled,
           isDefaultModified: newContent.trim() !== t.defaultContent.trim(),
         }
       : t
@@ -386,6 +395,36 @@ export const saveStoredWhatsAppTemplate = (templateId: string, newContent: strin
     console.warn('Failed to save whatsapp template to localStorage:', e);
   }
   return updated;
+};
+
+/**
+ * Toggles a template's enabled/disabled status.
+ */
+export const toggleStoredWhatsAppTemplateStatus = (templateId: string, enabled: boolean): WhatsAppTemplate[] => {
+  const current = getStoredWhatsAppTemplates();
+  const updated = current.map((t) =>
+    t.id === templateId
+      ? {
+          ...t,
+          enabled,
+        }
+      : t
+  );
+  try {
+    localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Failed to toggle whatsapp template status in localStorage:', e);
+  }
+  return updated;
+};
+
+/**
+ * Checks if a specific WhatsApp template/feature is enabled.
+ */
+export const isWhatsAppTemplateEnabled = (templateId: string): boolean => {
+  const templates = getStoredWhatsAppTemplates();
+  const match = templates.find((t) => t.id === templateId);
+  return match ? match.enabled !== false : true;
 };
 
 /**

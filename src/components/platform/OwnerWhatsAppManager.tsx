@@ -32,7 +32,8 @@ import {
   FileText,
   Radio,
   Zap,
-  Truck
+  Truck,
+  Power
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import {
@@ -41,6 +42,7 @@ import {
   getStoredWhatsAppTemplates,
   saveStoredWhatsAppTemplate,
   resetStoredWhatsAppTemplate,
+  toggleStoredWhatsAppTemplateStatus,
   getStoredWhatsAppActivities,
   logWhatsAppActivity,
 } from '../../utils/whatsappPlatformUtils';
@@ -135,6 +137,23 @@ export const OwnerWhatsAppManager: React.FC = () => {
     addToast(
       language === 'ar' ? 'تمت استعادة النص الافتراضي للنموذج بنجاح' : 'Template reverted to factory default',
       'info'
+    );
+  };
+
+  // Toggle template enabled/disabled status
+  const handleToggleTemplateStatus = (templateId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    const updated = toggleStoredWhatsAppTemplateStatus(templateId, newStatus);
+    setTemplates(updated);
+    addToast(
+      language === 'ar'
+        ? newStatus
+          ? '✅ تم تفعيل الميزة والنموذج بنجاح'
+          : '🚫 تم تعطيل الميزة والنموذج بنجاح (لن تُرسل أي رسائل تلقائية)'
+        : newStatus
+        ? '✅ Feature enabled successfully'
+        : '🚫 Feature disabled successfully',
+      newStatus ? 'success' : 'info'
     );
   };
 
@@ -388,11 +407,25 @@ export const OwnerWhatsAppManager: React.FC = () => {
                         <span className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                           {language === 'ar' ? tpl.nameAr : tpl.nameEn}
                         </span>
-                        {tpl.isDefaultModified && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 shrink-0">
-                            {language === 'ar' ? 'مُعدّل' : 'Modified'}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {tpl.isDefaultModified && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                              {language === 'ar' ? 'مُعدّل' : 'Modified'}
+                            </span>
+                          )}
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 ${
+                              tpl.enabled !== false
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${tpl.enabled !== false ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                            {tpl.enabled !== false
+                              ? (language === 'ar' ? 'مفعّل' : 'Active')
+                              : (language === 'ar' ? 'معطّل' : 'Disabled')}
                           </span>
-                        )}
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 mt-1.5">
@@ -424,9 +457,9 @@ export const OwnerWhatsAppManager: React.FC = () => {
             {activeTemplate && (
               <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-sm space-y-6">
                 {/* Editor Header */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-base sm:text-lg font-black text-slate-900">
                         {language === 'ar' ? activeTemplate.nameAr : activeTemplate.nameEn}
                       </h3>
@@ -435,19 +468,54 @@ export const OwnerWhatsAppManager: React.FC = () => {
                           {language === 'ar' ? 'محتوى مخصص ومعدل' : 'Custom Modified Content'}
                         </span>
                       )}
+                      <span
+                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
+                          activeTemplate.enabled !== false
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${activeTemplate.enabled !== false ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                        {activeTemplate.enabled !== false
+                          ? (language === 'ar' ? 'الميزة مفعّلة ونشطة' : 'Feature Enabled')
+                          : (language === 'ar' ? 'الميزة معطّلة' : 'Feature Disabled')}
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500">
                       {language === 'ar' ? activeTemplate.triggerAr : activeTemplate.triggerEn}
                     </p>
                   </div>
 
-                  {/* Template Actions */}
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                  {/* Template Actions: Enable/Disable Toggle + Reset + Save */}
+                  <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
+                    {/* Toggle Switch Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleTemplateStatus(activeTemplate.id, activeTemplate.enabled !== false)}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                        activeTemplate.enabled !== false
+                          ? 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-800'
+                          : 'border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 text-rose-800'
+                      }`}
+                      title={
+                        activeTemplate.enabled !== false
+                          ? (language === 'ar' ? 'انقر لتعطيل هذه الميزة والنموذج' : 'Click to disable feature')
+                          : (language === 'ar' ? 'انقر لتفعيل هذه الميزة والنموذج' : 'Click to enable feature')
+                      }
+                    >
+                      <Power className={`w-3.5 h-3.5 ${activeTemplate.enabled !== false ? 'text-emerald-600' : 'text-rose-600'}`} />
+                      <span>
+                        {activeTemplate.enabled !== false
+                          ? (language === 'ar' ? 'تعطيل الميزة' : 'Disable Feature')
+                          : (language === 'ar' ? 'تفعيل الميزة' : 'Enable Feature')}
+                      </span>
+                    </button>
+
                     {activeTemplate.isDefaultModified && (
                       <button
                         type="button"
                         onClick={handleResetTemplate}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-all cursor-pointer"
                         title={language === 'ar' ? 'استعادة النص الافتراضي للمنصة' : 'Reset to default'}
                       >
                         <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
@@ -466,6 +534,31 @@ export const OwnerWhatsAppManager: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Disabled Feature Alert Banner */}
+                {activeTemplate.enabled === false && (
+                  <div className="p-4 rounded-2xl bg-rose-50/80 border border-rose-200 text-rose-900 flex items-start gap-3 transition-all animate-fadeIn">
+                    <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div className="flex-1 text-xs">
+                      <span className="font-black block text-sm mb-1 text-rose-900">
+                        {language === 'ar' ? '⚠️ هذه الميزة معطّلة حالياً' : '⚠️ This Feature is Currently Disabled'}
+                      </span>
+                      <p className="text-rose-700 leading-relaxed">
+                        {language === 'ar'
+                          ? `تم إيقاف تفعيل "${activeTemplate.nameAr}". النظام لن يقوم بإرسال أي رسائل إشعار أو تذكير لهذا النموذج تلقائياً حتى تقوم بإعادة تفعيله.`
+                          : `Automated messaging for "${activeTemplate.nameEn}" is currently paused. No messages will be dispatched until re-enabled.`}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTemplateStatus(activeTemplate.id, false)}
+                        className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer"
+                      >
+                        <Power className="w-3.5 h-3.5" />
+                        <span>{language === 'ar' ? 'إعادة تفعيل الميزة الآن' : 'Enable Feature Now'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Dynamic Variables Badge Legend */}
                 <div className="space-y-2">
