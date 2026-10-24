@@ -30,6 +30,7 @@ import {
   findIraqiCourier 
 } from '../../utils/iraqShipping';
 import { dispatchOrderWhatsAppToManager, formatOrderWhatsAppMessage } from '../../utils/notificationUtils';
+import { renderWhatsAppTemplate, logWhatsAppActivity } from '../../utils/whatsappPlatformUtils';
 
 export const AdminOrders: React.FC = () => {
   const { 
@@ -90,17 +91,39 @@ export const AdminOrders: React.FC = () => {
       return;
     }
     const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
-    const statusTextAr = {
-      pending: 'قيد المراجعة',
-      processing: 'جاري التجهيز والتغليف',
-      shipped: 'تم شحنه وبطريقه إليك',
-      delivered: 'تم التوصيل بنجاح',
-      cancelled: 'تم إلغاؤه',
-    }[order.status];
+    const addressText = [order.customer.state, order.customer.city, order.customer.address].filter(Boolean).join(' - ');
 
-    const msg = language === 'ar'
-      ? `مرحباً ${order.customer.fullName}، يسعدنا تواصلك مع متجر ${storeName}.\n\nبخصوص طلبك رقم #${order.orderNumber} بقيمة إجمالية ${order.total} ${currency}.\nحالة الطلب الحالية: ${statusTextAr}.\n\nعنوان التوصيل: ${order.customer.city} - ${order.customer.address}.\n\nهل تود تأكيد أي تفاصيل إضافية بخصوص الشحنة؟ نحن بخدمتك!`
-      : `Hello ${order.customer.fullName}, thank you for choosing ${storeName}.\n\nRegarding your order #${order.orderNumber} (Total: ${currency}${order.total}).\nStatus: ${order.status.toUpperCase()}.\nShipping to: ${order.customer.city}, ${order.customer.address}.\n\nPlease let us know if you have any questions!`;
+    // Render using owner's custom template
+    const rendered = renderWhatsAppTemplate('customer_order_confirmation', {
+      customerName: order.customer.fullName,
+      storeName,
+      orderNumber: order.orderNumber,
+      total: `${order.total.toLocaleString()}`,
+      currency,
+      customerAddress: addressText || 'لم يُحدد',
+      orderUrl: `${window.location.origin}/orders`,
+    });
+
+    const msg = rendered.content;
+
+    // Log this outbound message into Owner WhatsApp inbox
+    try {
+      logWhatsAppActivity({
+        direction: 'outbound',
+        storeId: activeStore.id,
+        storeName,
+        storeSlug: activeStore.slug,
+        recipientName: order.customer.fullName,
+        recipientPhone: `+${cleanPhone}`,
+        categoryLabelAr: 'تأكيد الطلب للزبون',
+        categoryLabelEn: 'Customer Confirmation',
+        content: msg,
+        status: 'sent',
+        orderNumber: order.orderNumber,
+      });
+    } catch (e) {
+      // ignore
+    }
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -134,6 +157,33 @@ export const AdminOrders: React.FC = () => {
           : `Order status advanced to ${nextStatus}`,
         'success'
       );
+
+      // If marked as delivered, log delivery confirmation using Owner custom template
+      if (nextStatus === 'delivered' && inspectingOrder) {
+        const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
+        const rendered = renderWhatsAppTemplate('order_delivered_feedback', {
+          customerName: inspectingOrder.customer.fullName,
+          storeName,
+          orderNumber: inspectingOrder.orderNumber,
+          reviewUrl: `${window.location.origin}/${activeStore.slug}`,
+        });
+        if (rendered.enabled && inspectingOrder.customer.phone) {
+          const cleanCustPhone = inspectingOrder.customer.phone.replace(/[^0-9]/g, '');
+          logWhatsAppActivity({
+            direction: 'outbound',
+            storeId: activeStore.id,
+            storeName,
+            storeSlug: activeStore.slug,
+            recipientName: inspectingOrder.customer.fullName,
+            recipientPhone: `+${cleanCustPhone}`,
+            categoryLabelAr: 'اكتمال التوصيل وطلب تقييم',
+            categoryLabelEn: 'Order Delivered & Review',
+            content: rendered.content,
+            status: 'sent',
+            orderNumber: inspectingOrder.orderNumber,
+          });
+        }
+      }
     }
   };
 
@@ -144,11 +194,38 @@ export const AdminOrders: React.FC = () => {
       return;
     }
     const storeName = language === 'ar' ? activeStore.nameAr || activeStore.name : activeStore.name;
-    const trackUrl = getIraqiTrackingUrl(tracking, courier);
-    const trackingLinkText = trackUrl ? `\nرابط تتبع الشحنة المباشر: ${trackUrl}` : '';
-    const msg = language === 'ar'
-      ? `مرحباً ${order.customer.fullName}، يسعدنا إبلاغك بأنه تم شحن وتجهيز طلبك رقم #${order.orderNumber} من متجر ${storeName} بنجاح!\n\nشركة التوصيل في العراق: ${courier}\nكود التتبع: ${tracking}${trackingLinkText}\n\nشكراً لتسوقك معنا، وسنكون سعداء بخدمتك دائماً.`
-      : `Hello ${order.customer.fullName}, your order #${order.orderNumber} from ${storeName} has been shipped!\n\nCourier in Iraq: ${courier}\nTracking Number: ${tracking}${trackUrl ? `\nTracking Link: ${trackUrl}` : ''}\n\nThank you for shopping with us!`;
+
+    // Render using owner's custom template
+    const rendered = renderWhatsAppTemplate('order_dispatched_tracking', {
+      customerName: order.customer.fullName,
+      storeName,
+      orderNumber: order.orderNumber,
+      courier,
+      trackingNumber: tracking,
+      total: `${order.total.toLocaleString()}`,
+      currency,
+    });
+
+    const msg = rendered.content;
+
+    // Log outbound message into Owner WhatsApp inbox
+    try {
+      logWhatsAppActivity({
+        direction: 'outbound',
+        storeId: activeStore.id,
+        storeName,
+        storeSlug: activeStore.slug,
+        recipientName: order.customer.fullName,
+        recipientPhone: `+${cleanPhone}`,
+        categoryLabelAr: 'إشعار شحن الطلب',
+        categoryLabelEn: 'Order Dispatched',
+        content: msg,
+        status: 'sent',
+        orderNumber: order.orderNumber,
+      });
+    } catch (e) {
+      // ignore
+    }
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };

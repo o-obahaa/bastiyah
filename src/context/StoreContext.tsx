@@ -56,6 +56,7 @@ import {
   dispatchOrderWhatsAppToManager,
   formatOrderWhatsAppMessage
 } from '../utils/notificationUtils';
+import { renderWhatsAppTemplate, logWhatsAppActivity } from '../utils/whatsappPlatformUtils';
 import { convexClient, isConvexConfigured } from '../convexClient';
 import { api } from '../convexApi';
 
@@ -2807,6 +2808,45 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .catch((err) => {
         console.warn('WhatsApp manager alert dispatch note:', err);
       });
+
+    // 📲 Outbound Customer Order Confirmation via Owner WhatsApp Template
+    try {
+      const targetCustomerPhone = shippingInfo.phone || currentCustomer?.phone || '';
+      if (targetCustomerPhone) {
+        let cleanCustPhone = targetCustomerPhone.replace(/\D/g, '');
+        if (cleanCustPhone.startsWith('00')) cleanCustPhone = cleanCustPhone.slice(2);
+        if (cleanCustPhone.startsWith('0')) cleanCustPhone = cleanCustPhone.slice(1);
+        if (!cleanCustPhone.startsWith('964')) cleanCustPhone = `964${cleanCustPhone}`;
+
+        const renderedCustomer = renderWhatsAppTemplate('customer_order_confirmation', {
+          customerName: shippingInfo.fullName,
+          storeName: activeStore.nameAr || activeStore.name,
+          orderNumber,
+          total: `${newOrder.total.toLocaleString()}`,
+          currency: activeStore.settings.currency || 'د.ع',
+          customerAddress: [shippingInfo.state, shippingInfo.city, shippingInfo.address].filter(Boolean).join(' - ') || 'لم يُحدد',
+          orderUrl: `${window.location.origin}/orders`,
+        });
+
+        if (renderedCustomer.enabled) {
+          logWhatsAppActivity({
+            direction: 'outbound',
+            storeId: activeStore.id,
+            storeName: activeStore.nameAr || activeStore.name,
+            storeSlug: activeStore.slug,
+            recipientName: shippingInfo.fullName,
+            recipientPhone: `+${cleanCustPhone}`,
+            categoryLabelAr: 'تأكيد استلام الطلب للزبون',
+            categoryLabelEn: 'Customer Confirmation',
+            content: renderedCustomer.content,
+            status: 'sent',
+            orderNumber,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Customer whatsapp confirmation log note:', e);
+    }
 
     // Persist and synchronize customer profile universally across all hosted stores
     const customerPhone = shippingInfo.phone || currentCustomer?.phone || '';

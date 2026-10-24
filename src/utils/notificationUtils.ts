@@ -1,5 +1,5 @@
 import { Order, HostedStore } from '../types';
-import { logWhatsAppActivity } from './whatsappPlatformUtils';
+import { logWhatsAppActivity, renderWhatsAppTemplate, isWhatsAppTemplateEnabled } from './whatsappPlatformUtils';
 
 /**
  * Utility functions for Order Notifications, Audio Chimes, and Browser Web Notifications.
@@ -243,7 +243,8 @@ export const generateWhatsAppAlertUrl = (
 };
 
 /**
- * Formats a comprehensive Arabic WhatsApp order notification for the store manager.
+ * Formats an automated WhatsApp order notification for the store manager
+ * using the platform owner's configured template from the Owner Admin Panel.
  */
 export const formatOrderWhatsAppMessage = (
   order: Order,
@@ -265,39 +266,29 @@ export const formatOrderWhatsAppMessage = (
   const customer = order.customer;
   const addressText = [customer.state, customer.city, customer.address].filter(Boolean).join(' - ');
 
-  return (
-    `🛍️ *طلب جديد وارد إلى متجرك:* ${storeName}\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n` +
-    `📋 *رقم الطلب:* #${order.orderNumber}\n` +
-    `📅 *التاريخ:* ${new Date(order.date).toLocaleString('ar-IQ')}\n\n` +
-    `👤 *معلومات الزبون:*\n` +
-    `• الاسم: *${customer.fullName}*\n` +
-    `• رقم الهاتف: ${customer.phone}\n` +
-    `• العنوان: ${addressText || 'لم يُحدد'}\n\n` +
-    `📦 *المنتجات المطلوبة:*\n` +
-    `${itemsText}\n\n` +
-    `💰 *تفاصيل الحساب:*\n` +
-    `• المجموع الفرعي: ${currency}${order.subtotal.toLocaleString()}\n` +
-    (order.discount > 0 ? `• الخصم: -${currency}${order.discount.toLocaleString()}\n` : '') +
-    `• رسوم التوصيل: ${order.shipping > 0 ? `${currency}${order.shipping.toLocaleString()}` : 'مجاني'}\n` +
-    `💵 *المبلغ الإجمالي المطلوب تحصيله:* *${currency}${order.total.toLocaleString()}*\n\n` +
-    `💳 *طريقة الدفع:* ${order.paymentMethod === 'Cash on Delivery' ? 'الدفع نقداً عند الاستلام (COD)' : order.paymentMethod}\n` +
-    (order.courier ? `🚚 *شركة التوصيل:* ${order.courier}\n` : '') +
-    (order.trackingNumber ? `📍 *رقم التتبع:* \`${order.trackingNumber}\`\n` : '') +
-    (order.notes ? `📝 *ملاحظات الزبون:* ${order.notes}\n` : '') +
-    `━━━━━━━━━━━━━━━━━━━━\n` +
-    `⚡ *خيارات البوت للتحكم السريع (أرسل الرقم بالرد):*\n` +
-    `1️⃣ *تأكيد وقبول الطلب* (أرسل 1)\n` +
-    `2️⃣ *شحن الطلب للمندوب* (أرسل 2 أو شحن [كود التتبع])\n` +
-    `3️⃣ *تم التوصيل واستلام المبلغ* (أرسل 3)\n` +
-    `4️⃣ *إلغاء الطلب* (أرسل 4)\n` +
-    `5️⃣ *عرض تفاصيل الطلب بالكامل* (أرسل 5)`
-  );
+  // Dynamically render using the owner's customized 'merchant_order_alert' template
+  const rendered = renderWhatsAppTemplate('merchant_order_alert', {
+    storeName,
+    orderNumber: order.orderNumber,
+    date: new Date(order.date).toLocaleString('ar-IQ'),
+    customerName: customer.fullName,
+    customerPhone: customer.phone,
+    customerAddress: addressText || 'لم يُحدد',
+    itemsList: itemsText,
+    subtotal: `${order.subtotal.toLocaleString()}`,
+    shipping: order.shipping > 0 ? `${order.shipping.toLocaleString()}` : 'مجاني',
+    total: `${order.total.toLocaleString()}`,
+    currency,
+    paymentMethod: order.paymentMethod === 'Cash on Delivery' ? 'الدفع نقداً عند الاستلام' : order.paymentMethod,
+  });
+
+  return rendered.content;
 };
 
 /**
  * Dispatches an automated WhatsApp notification to the store manager
  * via the live Render WhatsApp Gateway and/or direct API.
+ * Adheres to the enabled/disabled state set in the Owner Admin Panel.
  */
 export const dispatchOrderWhatsAppToManager = async (
   order: Order,
@@ -312,6 +303,12 @@ export const dispatchOrderWhatsAppToManager = async (
   if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.slice(2);
   if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
   if (!cleanPhone.startsWith('964')) cleanPhone = `964${cleanPhone}`;
+
+  // Check if owner disabled this template/feature
+  if (!isWhatsAppTemplateEnabled('merchant_order_alert')) {
+    console.info('ℹ️ Merchant order alert WhatsApp template is disabled in Owner panel; skipping auto-send.');
+    return { success: false, phone: cleanPhone, message: 'Feature disabled' };
+  }
 
   const message = formatOrderWhatsAppMessage(order, storeName, currency);
 
