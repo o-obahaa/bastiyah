@@ -5,7 +5,7 @@
  */
 
 export const DEFAULT_STORE_LOGOS: Record<string, string> = {
-  panda: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none"><rect width="120" height="120" rx="28" fill="%23059669"/><rect x="8" y="8" width="104" height="104" rx="22" stroke="%2334d399" stroke-width="2" stroke-opacity="0.35"/><path d="M42 32h24c13.255 0 22 8.745 22 20s-8.745 20-22 20H56v20H42V32zm14 28h10c6.627 0 10-3.373 10-8s-3.373-8-10-8H56v16z" fill="%23ffffff"/><circle cx="88" cy="36" r="5" fill="%2334d399"/></svg>`,
+  panda: '/stores/panda-logo.png',
 
   'royal-oud': `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none"><rect width="120" height="120" rx="26" fill="%23fffbeb"/><path d="M34 76l6-36 20 16 20-16 6 36H34z" fill="%23f59e0b" stroke="%23b45309" stroke-width="3" stroke-linejoin="round"/><circle cx="34" cy="38" r="5" fill="%23d97706"/><circle cx="60" cy="52" r="5" fill="%23d97706"/><circle cx="86" cy="38" r="5" fill="%23d97706"/><rect x="42" y="76" width="36" height="10" rx="4" fill="%23b45309"/></svg>`,
 
@@ -22,14 +22,26 @@ export const BLANK_STORE_LOGO_URL = `data:image/svg+xml;utf8,<svg xmlns="http://
 export function getStoreLogo(store?: { slug?: string; logo?: string; design?: { customLogoUrl?: string } } | null): string {
   if (!store) return BLANK_STORE_LOGO_URL;
   
+  const slug = (store.slug || '').toLowerCase();
+
   // 1. Highest priority: User's custom uploaded logo (via design or direct property)
   const custom = store.design?.customLogoUrl?.trim();
-  if (custom) return custom;
+  if (custom) {
+    // If Panda still has legacy SVG emoji placeholder cached, redirect to the authentic mascot logo
+    if (slug.includes('panda') && custom.startsWith('data:image/svg+xml')) {
+      return DEFAULT_STORE_LOGOS.panda;
+    }
+    return custom;
+  }
   const legacy = store.logo?.trim();
-  if (legacy) return legacy;
+  if (legacy) {
+    if (slug.includes('panda') && legacy.startsWith('data:image/svg+xml')) {
+      return DEFAULT_STORE_LOGOS.panda;
+    }
+    return legacy;
+  }
 
   // 2. Default branded emblem for pre-configured stores
-  const slug = (store.slug || '').toLowerCase();
   if (DEFAULT_STORE_LOGOS[slug]) return DEFAULT_STORE_LOGOS[slug];
   for (const [key, val] of Object.entries(DEFAULT_STORE_LOGOS)) {
     if (slug.includes(key)) return val;

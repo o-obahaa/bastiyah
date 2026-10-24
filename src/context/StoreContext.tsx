@@ -730,16 +730,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const defaultOwnerPhone = s.slug === 'panda' ? '+964 771 483 4776' : (initMatch?.ownerPhone || '+964 770 123 4567');
             const resolvedOwnerPhone = needsIraqiPhone ? defaultOwnerPhone : s.ownerPhone;
             const resolvedWhatsappPhone = s.settings?.notificationSettings?.whatsappAlertPhone || (s.slug === 'panda' ? '9647714834776' : resolvedOwnerPhone.replace(/\D/g, ''));
+            const isLegacyPandaSvg = (s.slug === 'panda' || s.id === 'store-panda') && (
+              (typeof s.logo === 'string' && s.logo.startsWith('data:image/svg+xml')) ||
+              (typeof s.design?.customLogoUrl === 'string' && s.design.customLogoUrl.startsWith('data:image/svg+xml'))
+            );
+            const resolvedLogo = isLegacyPandaSvg ? '/stores/panda-logo.png' : (s.logo || s.design?.customLogoUrl || initMatch?.logo || '');
+            const resolvedCustomLogo = isLegacyPandaSvg ? '/stores/panda-logo.png' : (s.design?.customLogoUrl || s.logo || initMatch?.design?.customLogoUrl || '');
             return {
               ...s,
               orders: finalOrders,
               customers: finalCustomers,
               products: updatedProducts,
               ownerPhone: resolvedOwnerPhone,
-              logo: s.logo || s.design?.customLogoUrl || initMatch?.logo || '',
+              logo: resolvedLogo,
               design: {
                 ...s.design,
-                customLogoUrl: s.design?.customLogoUrl || s.logo || initMatch?.design?.customLogoUrl || '',
+                customLogoUrl: resolvedCustomLogo,
                 heroConfig: s.design?.heroConfig ? {
                   ...s.design.heroConfig,
                   fullWidth: false,
@@ -1968,7 +1974,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const existingNotInRemote = prev.filter((p) => !remoteSlugs.has(p.slug));
           const formattedRemote: HostedStore[] = remoteStores.map((rs) => {
             const localMatch = prev.find((p) => p.slug === rs.slug);
-            const resolvedLogo = rs.design?.customLogoUrl || rs.logo || localMatch?.design?.customLogoUrl || localMatch?.logo;
+            const isLegacyPandaSvg = (rs.slug === 'panda') && (
+              (typeof rs.logo === 'string' && rs.logo.startsWith('data:image/svg+xml')) ||
+              (typeof rs.design?.customLogoUrl === 'string' && rs.design.customLogoUrl.startsWith('data:image/svg+xml'))
+            );
+            const rawRemoteLogo = isLegacyPandaSvg ? '/stores/panda-logo.png' : (rs.design?.customLogoUrl || rs.logo);
+            const isLocalPandaSvg = (localMatch?.slug === 'panda') && (
+              (typeof localMatch.logo === 'string' && localMatch.logo.startsWith('data:image/svg+xml')) ||
+              (typeof localMatch.design?.customLogoUrl === 'string' && localMatch.design.customLogoUrl.startsWith('data:image/svg+xml'))
+            );
+            const rawLocalLogo = isLocalPandaSvg ? '/stores/panda-logo.png' : (localMatch?.design?.customLogoUrl || localMatch?.logo);
+            const resolvedLogo = rawRemoteLogo || rawLocalLogo || DEFAULT_STORE_LOGOS[rs.slug] || '';
             return {
               id: rs._id || rs.id || `store-${rs.slug}`,
               slug: rs.slug,
