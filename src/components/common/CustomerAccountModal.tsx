@@ -529,13 +529,9 @@ export const CustomerAccountModal: React.FC = () => {
             </form>
           </div>
 
-          {/* Account Footer Options: Log Out or Switch */}
+          {/* Account Footer Options: Log Out */}
           {currentCustomer && (
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5" dir="ltr">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>{language === 'ar' ? `مسجل كـ: ${currentCustomer.phone}` : `Signed in as: ${currentCustomer.phone}`}</span>
-              </span>
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end text-xs">
               <button
                 type="button"
                 onClick={() => {
