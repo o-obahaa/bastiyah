@@ -5,7 +5,11 @@ import { StoreProvider } from './context/StoreContext';
 import { ConvexProvider } from 'convex/react';
 import { convexClient } from './convexClient';
 import { registerServiceWorker } from './utils/notificationUtils';
+import { sentry, SentryErrorBoundary } from './lib/sentry';
 import './index.css';
+
+// Initialize Sentry error observability & performance telemetry
+sentry.init();
 
 // Automatically register background service worker for offline & closed-browser push notifications
 if (typeof window !== 'undefined') {
@@ -20,10 +24,14 @@ const RootApp: React.FC = () => {
   );
 
   if (convexClient) {
-    return <ConvexProvider client={convexClient}>{content}</ConvexProvider>;
+    return (
+      <SentryErrorBoundary>
+        <ConvexProvider client={convexClient}>{content}</ConvexProvider>
+      </SentryErrorBoundary>
+    );
   }
 
-  return content;
+  return <SentryErrorBoundary>{content}</SentryErrorBoundary>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -31,3 +39,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <RootApp />
   </React.StrictMode>
 );
+

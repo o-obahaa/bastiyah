@@ -9,6 +9,11 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/test-store-routing.js && node scripts/test-universal-customers.js",
+    "test:e2e": "node scripts/e2e-runner.js",
+    "security:scan": "bash scripts/security-scan.sh",
+    "health:check": "node scripts/health-monitor.js",
+    "backup:create": "node scripts/backup-runner.js",
+    "backup:restore": "bash scripts/restore-backup.sh",
     "whatsapp:gateway": "node scripts/whatsapp-gateway/server.js"
   },
   "dependencies": {

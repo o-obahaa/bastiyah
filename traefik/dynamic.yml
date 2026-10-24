@@ -1,0 +1,59 @@
+# ==============================================================================
+# Traefik v3 Dynamic Configuration - Middlewares & Custom Routers
+# ==============================================================================
+
+http:
+  middlewares:
+    # 1. Enterprise Security Headers
+    security-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - OPTIONS
+          - PUT
+          - POST
+          - DELETE
+        accessControlMaxAge: 100
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+        sslRedirect: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+
+    # 2. Rate Limiting (Prevents abuse on checkout / WhatsApp forms)
+    rate-limit:
+      rateLimit:
+        average: 120
+        burst: 200
+        period: "1m"
+
+    # 3. Gzip & Brotli Compression
+    compress-middleware:
+      compress:
+        excludedContentTypes:
+          - "image/png"
+          - "image/jpeg"
+          - "image/webp"
+
+    # 4. Traefik Dashboard Basic Auth (admin / bastiyah2026! by default)
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "admin:$$apr1$$XQZ26aT1$$rXhUj263n8wXb4.V8F3Hk0"
+
+  routers:
+    # Traefik Dashboard Router (accessed via dashboard.bastiyah.com or local port)
+    traefik-dashboard:
+      rule: "Host(`traefik.bastiyah.local`)"
+      service: "api@internal"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "dashboard-auth"
+        - "security-headers"

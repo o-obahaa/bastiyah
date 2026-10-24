@@ -1,59 +1,65 @@
 ---
 name: devops-ci-cd
-description: Enforces the use of Jenkins CI/CD, Docker multi-stage builds, automated tests, and DevOps deployment practices when modifying, testing, containerizing, or deploying the Bastiyah platform.
+description: Enforces the use of Jenkins CI/CD, Traefik SSL reverse proxy, Sentry error observability, DevSecOps vulnerability scans, E2E synthetic testing, Uptime Kuma monitoring, automated backups, and Docker multi-stage builds when modifying, testing, containerizing, or deploying the Bastiyah platform.
 trigger: model_decision
 ---
 
-# Bastiyah DevOps & CI/CD Pipeline Rule (Jenkins & Docker)
+# Bastiyah Enterprise DevOps Suite Rule (Jenkins, Docker, Traefik, Sentry, DevSecOps & Monitoring)
 
-This rule establishes mandatory DevOps standards for the **Bastiyah (بسطية)** platform. It activates whenever working on builds, automated testing, containerization, Docker, CI/CD pipelines, releases, or deployments.
+This rule establishes mandatory DevOps standards for the **Bastiyah (بسطية)** multi-tenant platform. It activates whenever working on builds, automated testing, containerization, Docker, CI/CD pipelines, releases, observability, security audits, or deployments.
 
 ---
 
 ## 1. Quality Gates & Pre-Flight Verification
-Before pushing changes intended for deployment or committing CI/CD configurations:
+Before pushing changes or finalizing deployments:
 - **TypeScript Static Verification**: Always execute `npm run typecheck` (`tsc --noEmit`) and ensure 0 errors.
-- **Automated Testing**: Ensure `npm test` passes.
-- **Production Build Check**: Verify that `npm run build` succeeds without bundle or chunk generation failures.
+- **Unit & Cross-Store Integration Tests**: Ensure `npm test` passes.
+- **End-to-End Synthetic Verification**: Run `npm run test:e2e` (validating checkout calculation and WhatsApp message encoding).
+- **Security Audit**: Run `npm run security:scan` to verify zero critical package/container vulnerabilities.
+- **Production Build Check**: Verify that `npm run build` succeeds cleanly.
 
 ---
 
 ## 2. Jenkins CI/CD Pipeline Standards (`Jenkinsfile`)
-- **Declarative Pipeline**: Always preserve and adhere to the declarative structure in `Jenkinsfile`.
+- **Declarative Pipeline**: Maintain and preserve the 12-stage declarative structure in `Jenkinsfile`.
 - **Pipeline Stages**:
-  1. `Checkout`: Clean workspace checkout from git repository.
-  2. `Setup & Cache`: Safe package restoration with `npm ci`.
-  3. `Lint & Typecheck`: Static analysis and strict type checking.
-  4. `Automated Tests`: Component and API integration validation.
-  5. `Vite Production Build`: Optimized asset bundling with production environment injection.
-  6. `Docker Build`: Building multi-stage container image tagged with `GIT_COMMIT` and `latest`.
-  7. `Security & Smoke Test`: Verifying image integrity and container health response.
-  8. `Deploy / Push`: Staging or production deployment with zero-downtime container replacement.
-  9. `Health Check`: Polling `/healthz` or endpoint verification before completing stage.
-- **Secret Management**: Never hardcode credentials, API tokens, or secrets. Always bind secrets via Jenkins Credentials Store (`withCredentials` block) for `VITE_CONVEX_URL`, `CONVEX_DEPLOY_KEY`, Docker registry auth, or webhook secrets.
+  1. `Checkout & Env`: Workspace verification and tool version logging.
+  2. `Install Dependencies`: `npm ci --prefer-offline`.
+  3. `Type Checking`: `npm run typecheck`.
+  4. `Automated Tests`: Store routing & universal customer synchronization tests.
+  5. `E2E Synthetic Testing`: `npm run test:e2e`.
+  6. `DevSecOps Security Audit`: `npm run security:scan` (npm audit & Trivy).
+  7. `Build Production Bundle`: `npm run build`.
+  8. `Archive Artifacts`: Archiving `dist/**`.
+  9. `Disaster Recovery Snapshot`: `npm run backup:create`.
+  10. `Docker Build & Package`: Multi-stage container build tagged with build number and latest.
+  11. `Push Docker Registry`: Secure credentials-bound registry upload.
+  12. `Deploy & Health Check`: Deployment execution followed by `npm run health:check`.
 
 ---
 
-## 3. Docker Containerization & Nginx Standards
-- **Multi-Stage Build**:
-  - Maintain the multi-stage architecture in `Dockerfile`:
-    - **Stage 1 (Builder)**: `node:20-alpine` runs `npm ci` and `npm run build`.
-    - **Stage 2 (Runner)**: `nginx:1.27-alpine-slim` serves compiled static assets with minimal footprint (< 35MB).
-- **Nginx Configuration (`nginx.conf`)**:
-  - Single-Page-App (SPA) fallback: `try_files $uri $uri/ /index.html;`.
-  - Security headers: `X-Frame-Options SAMEORIGIN`, `X-Content-Type-Options nosniff`, `X-XSS-Protection "1; mode=block"`, `Referrer-Policy strict-origin-when-cross-origin`.
-  - Compression: Gzip enabled for HTML, CSS, JS, SVG, and JSON.
-  - Caching: Long-lived immutable cache for hashed assets (`/assets/`), short cache for `index.html`.
-  - Health check endpoint: `/healthz` returning HTTP 200 `OK`.
-- **Docker Ignore**: Keep `.dockerignore` up to date to prevent leaking node_modules, `.git`, `.env.local`, and build caches into image layers.
+## 3. Reverse Proxy & Wildcard SSL Gateway (Traefik v3)
+- **Traefik Configuration**: Maintain `traefik/traefik.yml` and `traefik/dynamic.yml`.
+- **Automatic SSL**: Let's Encrypt automated certificate resolver for `*.bastiyah.com` and custom domains.
+- **Security Middlewares**: Enforce HSTS, frame denial (`SAMEORIGIN`), MIME sniffing block, rate limiting (120 req/min burst 200), and Gzip/Brotli compression.
 
 ---
 
-## 4. Orchestration & Local Environment
-- **Platform Production**: Maintain `docker-compose.yml` configured with proper port mappings (`8080:80`), restart policies (`unless-stopped`), healthchecks, and environment variables.
-- **Local Jenkins Environment**: Maintain `jenkins/docker-compose.jenkins.yml` allowing developers to spin up a fully isolated local Jenkins controller with Docker-in-Docker socket mounting (`/var/run/docker.sock`).
+## 4. Observability & Real-Time Error Tracking (Sentry)
+- **Module**: `src/lib/sentry.tsx` wrapped in `src/main.tsx`.
+- **Telemetry**: Capture unhandled promises, window errors, checkout funnel dropouts, and WhatsApp message state.
+- **Safe Fallback**: Always maintain non-blocking silent behavior when `VITE_SENTRY_DSN` is omitted.
 
 ---
 
-## 5. Reference Documentation
-- Consult `JENKINS.md` for complete step-by-step guidance on pipeline setup, Jenkins plugins, webhook automation, Docker deployment commands, and troubleshooting in Arabic and English.
+## 5. Uptime Monitoring & Synthetic Health Checks
+- **Uptime Kuma**: Integrated in `docker-compose.yml` on port 3001 with persistent volume storage.
+- **Health Verification**: Point synthetic monitor to `/healthz` via `npm run health:check`.
+
+---
+
+## 6. Disaster Recovery & Automated Backups
+- **Backup Engine**: `scripts/backup-runner.js` creates timestamped gzip archives of schemas, configurations, and Convex exports.
+- **Retention**: Auto-prunes archives older than 14 days.
+- **Cloud S3/R2**: Uploads to S3/Cloudflare R2 when `BACKUP_S3_BUCKET` is configured.
+- **Restore**: Instant restoration via `scripts/restore-backup.sh`.

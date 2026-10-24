@@ -36,3 +36,9 @@ convex/_generated
 
 .vercel
 .env*
+
+# DevOps, Monitoring & Disaster Recovery Backups
+backups/*.tar.gz
+reports/
+traefik/acme.json
+

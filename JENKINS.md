@@ -1,129 +1,135 @@
-# دليل أتمتة DevOps باستخدام جنكينز (Jenkins CI/CD Pipeline Guide)
+# دليل منظومة DevOps المتكاملة لمنصة بسطية (Bastiyah Enterprise DevOps Suite)
 
-دليل شامل لكيفية إعداد وتشغيل مسار الأتمتة والتكامل المستمر والنشر المستمر (**CI/CD DevOps Pipeline**) لمنصة **بسطية (Bastiyah / Nexus Store)** باستخدام **Jenkins** و **Docker**.
+دليل شامل لكيفية استخدام وإدارة منظومة **DevOps** المتكاملة لمنصة **بسطية (Bastiyah)**، والتي تشمل أتمتة خط الأنابيب (CI/CD)، الحماية من الثغرات، إدارة النطاقات والشهادات، رصد الأخطاء المباشر، الاختبارات الشاملة، المراقبة المستمرة، والنسخ الاحتياطي السحابي.
 
 ---
 
-## 🏗️ نظرة عامة على معمارية خط الأنابيب (Pipeline Overview)
+## 🏗️ معمارية خط الأنابيب الموسّع (Enterprise Pipeline Architecture)
 
-تم إعداد خط أنابيب تصريحي احترافي معتمد على معايير DevOps العالمية عبر ملف [`Jenkinsfile`](./Jenkinsfile) في جذر المشروع:
+يعتمد خط أنابيب [`Jenkinsfile`](./Jenkinsfile) التصريحي على 12 مرحلة متسلسلة لضمان استقرار وأمان المنصة:
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["1. Git Push / Webhook"] --> B["2. Checkout & Env"]
     B --> C["3. npm ci (Dependencies)"]
     C --> D["4. TypeScript TypeCheck"]
-    D --> E["5. Automated Tests"]
-    E --> F["6. Production Build (Vite)"]
-    F --> G["7. Archive Artifacts"]
-    G --> H["8. Docker Build (Nginx)"]
-    H --> I["9. Deployment (Staging/Prod)"]
+    D --> E["5. Unit & Integration Tests"]
+    E --> F["6. E2E Synthetic Tests"]
+    F --> G["7. DevSecOps Security Scan"]
+    G --> H["8. Production Vite Build"]
+    H --> I["9. Archive Artifacts"]
+    I --> J["10. Disaster Recovery Backup"]
+    J --> K["11. Docker Package (Nginx)"]
+    K --> L["12. Deploy & Health Check"]
 ```
 
 ---
 
-## 📋 مراحل خط الأنابيب (Pipeline Stages)
+## 🌟 الميزات الست المضافة (The 6 Enterprise DevOps Features)
 
-| المرحلة | الوصف | الأمر المنفذ |
-| :--- | :--- | :--- |
-| **1. Checkout & Env** | استنساخ أحدث كود وفحص بيئة العمل وإصدارات الأدوات | `git log`, `node -v`, `npm -v` |
-| **2. Install Dependencies** | تثبيت الاعتماديات بسرعة وبشكل نظيف عبر التخزين المؤقت | `npm ci --prefer-offline` |
-| **3. Type Checking** | التحقق الصارم من صحة أنواع TypeScript وعدم وجود أي أخطاء | `npm run typecheck` (`tsc --noEmit`) |
-| **4. Automated Tests** | تشغيل اختبارات توجيه روابط المتاجر واختبارات مزامنة العملاء الموحدة | `npm test` |
-| **5. Security Audit** | (اختياري) فحص الثغرات الأمنية في حزم npm | `npm audit --audit-level=critical` |
-| **6. Build Bundle** | بناء حزم الإنتاج المصغرة والمحسنة عبر Vite و Tailwind | `npm run build` |
-| **7. Archive Artifacts** | أرشفة مجلد `dist/` داخل Jenkins لإمكانية تحميله مباشرة | `archiveArtifacts 'dist/**'` |
-| **8. Docker Package** | بناء صورة Docker متعددة المراحل مبنية على Nginx خفيف وسريع | `docker build -t bastiyah/nexus-store .` |
-| **9. Deployment** | النشر التلقائي للبيئة المحددة (`staging` أو `production`) | نصوص النشر المخصصة |
-
----
-
-## 🚀 تشغيل Jenkins محلياً بواسطة Docker Compose
-
-إذا لم يكن لديك خادم Jenkins جاهز، يمكنك تشغيل Jenkins محلياً في ثوانٍ عبر Docker:
-
-```bash
-# تشغيل خادم جنكينز في الخلفية
-docker compose -f jenkins/docker-compose.jenkins.yml up -d
-
-# متابعة السجلات للحصول على كلمة المرور الأولية (Initial Admin Password)
-docker logs -f bastiyah_jenkins
-```
-
-ثم افتح المتصفح على: **`http://localhost:8080`**
-
-للحصول على كلمة المرور الأولية لفك قفل جنكينز:
-```bash
-docker exec -it bastiyah_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
-```
+### 1. بوابة النطاقات والشهادات التلقائية (Traefik Gateway & Wildcard SSL)
+- **الموقع**: [`traefik/traefik.yml`](./traefik/traefik.yml) و [`traefik/dynamic.yml`](./traefik/dynamic.yml) و [`docker-compose.yml`](./docker-compose.yml)
+- **الوظيفة**:
+  - استقبال الزيارات على المنفذين `80` و `443` مع التحويل التلقائي الإجباري إلى HTTPS.
+  - إصدار شهادات **Let's Encrypt SSL** تلقائياً لجميع نطاقات المتاجر الفرعية (`*.bastiyah.com`) والنطاق الرئيسي.
+  - تطبيق رؤوس الحماية (HSTS، X-Frame-Options SAMEORIGIN، NoSniff) والحد من استهلاك الموارد (Rate Limiting) وضغط البيانات (Gzip/Brotli).
+- **التشغيل**:
+  ```bash
+  docker compose up -d
+  ```
 
 ---
 
-## ⚙️ خطوات ربط المشروع في جنكينز (Setup Steps in Jenkins)
-
-### 1. تثبيت الإضافات المقترحة (Suggested Plugins)
-عند فتح جنكينز لأول مرة، اختر **"Install suggested plugins"**، وتأكد من تثبيت:
-- **Pipeline**
-- **Git Plugin**
-- **Docker Pipeline**
-- **AnsiColor** (لتلوين مخرجات التيرمنال)
-
-### 2. إنشاء مهمة مسار الأنابيب (Create Pipeline Job)
-1. من لوحة جنكينز الرئيسية، اضغط على **"New Item"**.
-2. أدخل اسم المهمة: `bastiyah-cicd`.
-3. اختر نوع: **"Pipeline"** (أو **"Multibranch Pipeline"** لدعم عدة فروع تلقائياً)، ثم اضغط **OK**.
-
-### 3. إعداد مصدر الكود (Pipeline Configuration)
-1. في قسم **Pipeline**:
-   - اختر **Definition**: `Pipeline script from SCM`.
-   - اختر **SCM**: `Git`.
-   - أدخل **Repository URL**: `https://github.com/o-obahaa/bastiyah.git`.
-   - في خانة **Branch Specifier**: اكتب `*/main` (أو دعها فارغة للمتعدد).
-   - في خانة **Script Path**: تأكد من أنها `Jenkinsfile`.
-2. اضغط **Save**.
-
-### 4. إعداد الويب هوك للتشغيل التلقائي (GitHub Webhook Trigger)
-لتشغيل الـ Pipeline تلقائياً مع كل `git push`:
-1. في إعدادات المهمة بجنكينز، فعّل خيار: **"GitHub hook trigger for GITScm polling"**.
-2. في مستودع GitHub (`Settings` -> `Webhooks` -> `Add webhook`):
-   - **Payload URL**: `http://YOUR-JENKINS-SERVER:8080/github-webhook/`
-   - **Content type**: `application/json`
-   - **Events**: اختر `Just the push event`.
+### 2. رصد الأخطاء وتتبع العمليات المباشر (Sentry & Runtime Observability)
+- **الموقع**: [`src/lib/sentry.tsx`](./src/lib/sentry.tsx) مدمج في [`src/main.tsx`](./src/main.tsx)
+- **الوظيفة**:
+  - التقاط الاستثناءات غير المعالجة وأخطاء الـ Promises في المتصفح تلقائياً.
+  - تتبع مسار الزبون في سلة الشراء (`trackCheckoutEvent`) وأحداث إرسال رسائل الواتساب (`trackWhatsAppEvent`).
+  - توفير واجهة بديلة ودية ثنائية اللغة (`SentryErrorBoundary`) عند حدوث أي خطأ مفاجئ.
+- **التفعيل**:
+  أضف معرف مشروع Sentry في ملف `.env.local`:
+  ```bash
+  VITE_SENTRY_DSN=https://publicKey@sentry.io/projectId
+  ```
 
 ---
 
-## 🐳 تشغيل المشروع كحاوية Docker مباشرة
-
-تم إعداد [`Dockerfile`](./Dockerfile) متعدد المراحل فائق السرعة وخفيف الحجم مبني على Nginx:
-
-```bash
-# بناء صورة الدوكر
-docker build -t bastiyah-store:latest .
-
-# تشغيل الحاوية على المنفذ 80 (أو أي منفذ تختاره)
-docker run -d -p 80:80 --name bastiyah-container bastiyah-store:latest
-```
-
-أو تشغيله بواسطة Docker Compose:
-```bash
-docker compose up -d --build
-```
-ثم افتح: **`http://localhost`**
+### 3. الفحص الأمني وفحص الثغرات التلقائي (DevSecOps - Trivy & NPM Audit)
+- **الموقع**: [`scripts/security-scan.sh`](./scripts/security-scan.sh) مدمج في مرحلة البايبلاين رقم 6.
+- **الوظيفة**:
+  - فحص حزم الـ `npm` بحثاً عن أي ثغرات إنتاجية (`npm audit --production`).
+  - فحص صورة حاوية Docker عبر أداة **Aquasec Trivy** للتحقق من خلو نظام التشغيل ومكتبات Nginx من أي ثغرات CVE ذات خطورة عالية أو حرجة.
+  - حفظ التقارير في مجلد `reports/security-audit.json`.
+- **التشغيل يدوياً**:
+  ```bash
+  npm run security:scan
+  ```
 
 ---
 
-## 🛠️ الأوامر المتاحة في المشروع
+### 4. اختبارات تجربة الشراء الشاملة (E2E Synthetic Testing Suite)
+- **الموقع**: [`playwright.config.ts`](./playwright.config.ts) و [`e2e/checkout-flow.spec.ts`](./e2e/checkout-flow.spec.ts) ومحاكي [`scripts/e2e-runner.js`](./scripts/e2e-runner.js)
+- **الوظيفة**:
+  - محاكاة تصفح الزبون للمتجر، إضافة المنتجات للسلة، حساب تكلفة التوصيل، ملء بيانات الهاتف العراقي، وتوليد رابط طلب الواتساب المشفر تلقائياً والتأكد من دقته 100%.
+- **التشغيل يدوياً**:
+  ```bash
+  npm run test:e2e
+  ```
+
+---
+
+### 5. مراقبة التوفر والأداء 24/7 (Uptime Kuma & Latency Health Check)
+- **الموقع**: خدمة `monitoring` في [`docker-compose.yml`](./docker-compose.yml) و [`scripts/health-monitor.js`](./scripts/health-monitor.js) و [`monitoring/uptime-kuma-monitors.json`](./monitoring/uptime-kuma-monitors.json)
+- **الوظيفة**:
+  - فحص مستمر لنقطة الجاهزية `/healthz` للمتجر، وخادم بوابة الواتساب، والاتصال السحابي بقاعدة بيانات Convex.
+  - قياس زمن الاستجابة (Latency بالملي ثانية) وإطلاق إنذار عند تجاوز 2000ms.
+  - إرسال إشعارات فورية عبر Telegram / Discord / Webhook عند حدوث أي انقطاع.
+- **الوصول للوحة المراقبة**:
+  افتح المتصفح على: `http://localhost:3001` أو `https://status.bastiyah.com`
+- **فحص الصحة يدوياً**:
+  ```bash
+  npm run health:check
+  ```
+
+---
+
+### 6. النسخ الاحتياطي الآلي والتعافي من الكوارث (Automated Disaster Recovery)
+- **الموقع**: [`scripts/backup-runner.js`](./scripts/backup-runner.js) و [`scripts/restore-backup.sh`](./scripts/restore-backup.sh)
+- **الوظيفة**:
+  - أخذ لقطة فورية (Snapshot) لمخططات وجداول Convex وملفات الإعدادات ومسارات النشر.
+  - تجميع وأرشفة البيانات في ملفات مضغوطة مشفرة بتوقيت زمني (`bastiyah-snapshot-YYYY-MM-DD.tar.gz`).
+  - تطبيق سياسة الاحتفاظ (Retention Policy) وحذف النسخ الأقدم من 14 يوماً تلقائياً.
+  - دعم الرفع التلقائي للنسخ إلى **Cloudflare R2** أو **AWS S3** عبر `@aws-sdk/client-s3`.
+  - استرجاع كامل النظام بضغطة زر عبر سكربت الاستعادة.
+- **أخذ نسخة احتياطية فورية**:
+  ```bash
+  npm run backup:create
+  ```
+- **استرجاع نسخة سابقة**:
+  ```bash
+  npm run backup:restore backups/bastiyah-snapshot-2026-10-24.tar.gz
+  ```
+
+---
+
+## ⚡ ملخص أوامر التشغيل السريع (Quick Reference)
 
 ```bash
-# فحص سلامة الأنواع
+# 1. التحقق من كود TypeScript
 npm run typecheck
 
-# تشغيل حزمة الاختبارات
-npm test
+# 2. تشغيل كافة الاختبارات (الوحدات + المزامنة + E2E)
+npm test && npm run test:e2e
 
-# بناء حزمة الإنتاج
-npm run build
+# 3. فحص الأمان والثغرات
+npm run security:scan
 
-# تشغيل سيرفر المعاينة
-npm run preview
+# 4. فحص صحة وجاهزية الخوادم
+npm run health:check
+
+# 5. أخذ نسخة احتياطية آمنة
+npm run backup:create
+
+# 6. تشغيل المنظومة الكاملة محلياً (Web + Traefik Gateway + Uptime Kuma)
+docker compose up -d --build
 ```

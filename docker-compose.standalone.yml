@@ -1,0 +1,22 @@
+version: '3.8'
+
+# ==============================================================================
+# Bastiyah Standalone Web Service (Direct Port 80 / 8080 without Reverse Proxy)
+# ==============================================================================
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bastiyah_store_standalone
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3

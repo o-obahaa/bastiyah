@@ -1,31 +1,92 @@
 version: '3.8'
 
 # ==============================================================================
-# Bastiyah E-Commerce Multi-Store Platform - Application Docker Compose
-# Run with: docker compose up -d --build
-# Access at: http://localhost:80
+# Bastiyah E-Commerce Multi-Store Platform - Production Docker Stack
+# Includes:
+#   1. Traefik Reverse Proxy & Wildcard SSL Gateway
+#   2. Bastiyah Multi-Stage Nginx Application
+#   3. Uptime Kuma 24/7 Health Monitoring
 # ==============================================================================
 
 services:
+  # ----------------------------------------------------------------------------
+  # 1. Traefik Reverse Proxy with Automatic Let's Encrypt SSL
+  # ----------------------------------------------------------------------------
+  traefik:
+    image: traefik:v3.1
+    container_name: bastiyah_gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Optional Dashboard direct access in dev
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - traefik_acme:/acme.json
+    networks:
+      - gateway_net
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # 2. Bastiyah Multi-Tenant E-Commerce Web Service
+  # ----------------------------------------------------------------------------
   web:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: bastiyah_store_web
     restart: unless-stopped
-    ports:
-      - "80:80"
     environment:
       - NODE_ENV=production
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/"]
-      interval: 30s
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:80/healthz"]
+      interval: 15s
       timeout: 5s
       retries: 3
       start_period: 5s
+    labels:
+      - "traefik.enable=true"
+      # Match primary domain, multi-tenant subdomains, or localhost
+      - "traefik.http.routers.bastiyah.rule=Host(`bastiyah.com`) || HostRegexp(`{subdomain:[a-z0-9-]+}.bastiyah.com`) || Host(`localhost`)"
+      - "traefik.http.routers.bastiyah.entrypoints=websecure,web"
+      - "traefik.http.routers.bastiyah.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bastiyah.middlewares=security-headers@file,compress-middleware@file,rate-limit@file"
+      - "traefik.http.services.bastiyah.loadbalancer.server.port=80"
     networks:
-      - store_net
+      - gateway_net
+
+  # ----------------------------------------------------------------------------
+  # 3. Uptime Kuma 24/7 Availability & Synthetic Monitoring
+  # ----------------------------------------------------------------------------
+  monitoring:
+    image: louislam/uptime-kuma:1
+    container_name: bastiyah_uptime_kuma
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    ports:
+      - "3001:3001"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.monitoring.rule=Host(`status.bastiyah.com`) || Host(`status.bastiyah.local`)"
+      - "traefik.http.routers.monitoring.entrypoints=websecure"
+      - "traefik.http.routers.monitoring.tls.certresolver=letsencrypt"
+      - "traefik.http.services.monitoring.loadbalancer.server.port=3001"
+    networks:
+      - gateway_net
+
+volumes:
+  traefik_acme:
+    name: bastiyah_traefik_acme
+  uptime_kuma_data:
+    name: bastiyah_uptime_kuma_data
 
 networks:
-  store_net:
-    name: bastiyah_store_net
+  gateway_net:
+    name: bastiyah_gateway_net
