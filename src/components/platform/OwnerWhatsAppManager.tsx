@@ -45,6 +45,8 @@ import {
   toggleStoredWhatsAppTemplateStatus,
   getStoredWhatsAppActivities,
   logWhatsAppActivity,
+  deleteStoredWhatsAppActivity,
+  clearStoredWhatsAppActivities,
 } from '../../utils/whatsappPlatformUtils';
 
 export const OwnerWhatsAppManager: React.FC = () => {
@@ -238,6 +240,26 @@ export const OwnerWhatsAppManager: React.FC = () => {
     const clean = phone.replace(/\D/g, '');
     const url = `https://wa.me/${clean}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
     window.open(url, '_blank');
+  };
+
+  // Delete individual activity
+  const handleDeleteActivity = (id: string) => {
+    const updated = deleteStoredWhatsAppActivity(id);
+    setActivities(updated);
+    addToast(language === 'ar' ? 'تم حذف الرسالة من السجل' : 'Message deleted from log', 'info');
+  };
+
+  // Clear all activities from inbox
+  const handleClearAllActivities = () => {
+    const confirmClear = window.confirm(
+      language === 'ar'
+        ? 'هل أنت متأكد من مسح كافة الرسائل المسجلة في صندوق الواتساب؟'
+        : 'Are you sure you want to clear all recorded messages in the WhatsApp inbox?'
+    );
+    if (!confirmClear) return;
+    const updated = clearStoredWhatsAppActivities();
+    setActivities(updated);
+    addToast(language === 'ar' ? 'تم إفراغ صندوق الرسائل بالكامل' : 'WhatsApp inbox cleared', 'info');
   };
 
   return (
@@ -750,27 +772,54 @@ export const OwnerWhatsAppManager: React.FC = () => {
 
           {/* Activities List */}
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Inbox className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-bold text-sm text-slate-900">
                   {language === 'ar' ? `الرسائل المسجلة (${filteredActivities.length})` : `Recorded Messages (${filteredActivities.length})`}
                 </h3>
               </div>
-              <span className="text-[11px] text-slate-400">
-                {language === 'ar' ? 'تحديث تلقائي مع كل طلب جديد' : 'Real-time sync on new orders'}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  {language === 'ar' ? 'تحديث تلقائي مع كل طلب حقيقي' : 'Real-time sync on real orders'}
+                </span>
+                {activities.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAllActivities}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                    title={language === 'ar' ? 'مسح كافة الرسائل من السجل' : 'Clear all messages'}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'مسح السجل' : 'Clear Inbox'}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {filteredActivities.length === 0 ? (
-              <div className="text-center py-12 px-4 space-y-2">
-                <MessageCircle className="w-10 h-10 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-slate-700 text-sm">
-                  {language === 'ar' ? 'لا توجد رسائل مطابقة لخيارات البحث' : 'No matching WhatsApp activities'}
+              <div className="text-center py-16 px-4 space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto shadow-2xs">
+                  <Inbox className="w-6 h-6" />
+                </div>
+                <h4 className="font-black text-slate-800 text-sm sm:text-base">
+                  {language === 'ar' ? 'صندوق رسائل واتساب نظيف وفارغ' : 'WhatsApp Inbox is Clean & Empty'}
                 </h4>
-                <p className="text-xs text-slate-400">
-                  {language === 'ar' ? 'جرب تغيير فلاتر البحث أو اضغط على إرسال رسالة لتسجيل نشاط جديد' : 'Try adjusting filters or log a test message'}
+                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                  {language === 'ar'
+                    ? 'تم تنظيف كافة الرسائل العشوائية والافتراضية. ستظهر هنا الرسائل والإشعارات الحقيقية تلقائياً فور قيام الزبائن بإتمام طلبات جديدة في المتاجر.'
+                    : 'All random/placeholder messages have been cleared. Real customer and order WhatsApp notifications will appear here automatically.'}
                 </p>
+                <div className="pt-2 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowSimulateModal(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xs hover:bg-slate-800 transition-all cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{language === 'ar' ? 'إرسال رسالة تجريبية مخصصة' : 'Send Test Message'}</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -877,6 +926,15 @@ export const OwnerWhatsAppManager: React.FC = () => {
                         >
                           <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                           <span>WhatsApp</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteActivity(act.id)}
+                          className="p-2 rounded-xl border border-slate-200 hover:border-rose-200 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-all shadow-2xs cursor-pointer"
+                          title={language === 'ar' ? 'حذف هذه الرسالة من السجل' : 'Delete message'}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

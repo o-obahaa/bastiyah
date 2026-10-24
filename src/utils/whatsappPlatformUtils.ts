@@ -224,127 +224,7 @@ export const DEFAULT_WHATSAPP_TEMPLATES: WhatsAppTemplate[] = [
   },
 ];
 
-export const INITIAL_WHATSAPP_ACTIVITIES: WhatsAppActivity[] = [
-  {
-    id: 'act-101',
-    direction: 'outbound',
-    storeId: 'store-1',
-    storeName: 'متجر باندا',
-    storeSlug: 'panda',
-    recipientName: 'طارق المنصور (مدير المتجر)',
-    recipientPhone: '+964 771 483 4776',
-    categoryLabelAr: 'تنبيه طلب جديد',
-    categoryLabelEn: 'New Order Alert',
-    content: '🛍️ طلب جديد وارد إلى متجرك: متجر باندا\nرقم الطلب: #PA-89042\nالعميل: ليث العبيدي (07705412980)\nالمبلغ الإجمالي: 249,000 د.ع\nالعنوان: بغداد - المنصور',
-    status: 'read',
-    timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-    orderNumber: 'PA-89042',
-  },
-  {
-    id: 'act-102',
-    direction: 'inbound',
-    storeId: 'store-1',
-    storeName: 'متجر باندا',
-    storeSlug: 'panda',
-    recipientName: 'طارق المنصور (مدير المتجر)',
-    recipientPhone: '+964 771 483 4776',
-    categoryLabelAr: 'أمر تحكم بالبوت (قبول)',
-    categoryLabelEn: 'Bot Command (Accept)',
-    content: '1',
-    status: 'received',
-    timestamp: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-    orderNumber: 'PA-89042',
-  },
-  {
-    id: 'act-103',
-    direction: 'outbound',
-    storeId: 'store-1',
-    storeName: 'متجر باندا',
-    storeSlug: 'panda',
-    recipientName: 'ليث العبيدي',
-    recipientPhone: '+964 770 541 2980',
-    categoryLabelAr: 'تأكيد الطلب للزبون',
-    categoryLabelEn: 'Customer Confirmation',
-    content: 'مرحباً ليث ✨ تم تأكيد طلبك رقم #PA-89042 من متجر باندا بنجاح! المبلغ المطلوب: 249,000 د.ع.',
-    status: 'delivered',
-    timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    orderNumber: 'PA-89042',
-  },
-  {
-    id: 'act-104',
-    direction: 'inbound',
-    storeId: 'store-1',
-    storeName: 'متجر باندا',
-    storeSlug: 'panda',
-    recipientName: 'ليث العبيدي',
-    recipientPhone: '+964 770 541 2980',
-    categoryLabelAr: 'استفسار زبون',
-    categoryLabelEn: 'Customer Inquiry',
-    content: 'مرحباً، هل يمكن أن يكون موعد التوصيل غداً بعد الساعة 4 عصراً؟',
-    status: 'received',
-    timestamp: new Date(Date.now() - 45 * 1000).toISOString(),
-    orderNumber: 'PA-89042',
-  },
-  {
-    id: 'act-105',
-    direction: 'outbound',
-    storeId: 'store-2',
-    storeName: 'رويال عود للعطور',
-    storeSlug: 'royal-oud',
-    recipientName: 'سارة الجبوري',
-    recipientPhone: '+964 780 234 5678',
-    categoryLabelAr: 'إشعار شحن الطلب',
-    categoryLabelEn: 'Order Dispatched',
-    content: 'أهلاً سارة 🚚 طلبك رقم #RO-55120 من رويال عود في طريقه إليك الآن مع شركة النسر السريع (بوليصة: IQ-RO-3021).',
-    status: 'read',
-    timestamp: new Date(Date.now() - 28 * 60 * 1000).toISOString(),
-    orderNumber: 'RO-55120',
-  },
-  {
-    id: 'act-106',
-    direction: 'inbound',
-    storeId: 'store-2',
-    storeName: 'رويال عود للعطور',
-    storeSlug: 'royal-oud',
-    recipientName: 'سارة الجبوري',
-    recipientPhone: '+964 780 234 5678',
-    categoryLabelAr: 'شكر ورأي الزبون',
-    categoryLabelEn: 'Customer Review',
-    content: 'شكراً جزيلاً! وصلني العطر وريحته تجنن وثبات عالي جداً ❤️',
-    status: 'received',
-    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    orderNumber: 'RO-55120',
-  },
-  {
-    id: 'act-107',
-    direction: 'outbound',
-    storeId: 'store-3',
-    storeName: 'فولت للإلكترونيات',
-    storeSlug: 'volt-tech',
-    recipientName: 'أحمد كمال',
-    recipientPhone: '+964 750 112 3344',
-    categoryLabelAr: 'تأكيد تسليم الطلب',
-    categoryLabelEn: 'Order Delivered',
-    content: 'مرحباً أحمد 🌟 تم تسليم طلبك رقم #VT-1092 بنجاح! نأمل أن تكون تجربتك مع فولت للإلكترونيات ممتازة.',
-    status: 'delivered',
-    timestamp: new Date(Date.now() - 65 * 60 * 1000).toISOString(),
-    orderNumber: 'VT-1092',
-  },
-  {
-    id: 'act-108',
-    direction: 'outbound',
-    storeId: 'store-4',
-    storeName: 'بوتيك فيلفيت للأزياء',
-    storeSlug: 'velvet-boutique',
-    recipientName: 'نوران البغدادي (مديرة المتجر)',
-    recipientPhone: '+964 750 456 7890',
-    categoryLabelAr: 'ترحيب بمتجر جديد',
-    categoryLabelEn: 'Merchant Welcome',
-    content: 'أهلاً بك يا نوران في منصة بسطية 🚀 تم تفعيل متجرك "بوتيك فيلفيت" بنجاح وهو متاح للمشترين الآن.',
-    status: 'read',
-    timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-  },
-];
+export const INITIAL_WHATSAPP_ACTIVITIES: WhatsAppActivity[] = [];
 
 const TEMPLATES_STORAGE_KEY = 'bastiyah_whatsapp_templates';
 const ACTIVITIES_STORAGE_KEY = 'bastiyah_whatsapp_activities';
@@ -436,21 +316,59 @@ export const resetStoredWhatsAppTemplate = (templateId: string): WhatsAppTemplat
   return saveStoredWhatsAppTemplate(templateId, def.defaultContent);
 };
 
+// Known legacy mock IDs to filter out permanently
+const MOCK_ACTIVITY_IDS = new Set([
+  'act-101', 'act-102', 'act-103', 'act-104',
+  'act-105', 'act-106', 'act-107', 'act-108'
+]);
+
 /**
- * Loads WhatsApp activities (sent & received messages) from localStorage or seed with initials.
+ * Loads WhatsApp activities (sent & received messages) from localStorage.
+ * Automatically cleanses any legacy random/mock activity items.
  */
 export const getStoredWhatsAppActivities = (): WhatsAppActivity[] => {
-  if (typeof window === 'undefined') return INITIAL_WHATSAPP_ACTIVITIES;
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(ACTIVITIES_STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(INITIAL_WHATSAPP_ACTIVITIES));
-      return INITIAL_WHATSAPP_ACTIVITIES;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    
+    // Cleanse out any mock placeholder entries
+    const cleaned = parsed.filter((a: any) => !MOCK_ACTIVITY_IDS.has(a?.id));
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(cleaned));
     }
-    return JSON.parse(raw);
+    return cleaned;
   } catch (e) {
-    return INITIAL_WHATSAPP_ACTIVITIES;
+    return [];
   }
+};
+
+/**
+ * Deletes a single activity from the log.
+ */
+export const deleteStoredWhatsAppActivity = (activityId: string): WhatsAppActivity[] => {
+  const current = getStoredWhatsAppActivities();
+  const updated = current.filter((a) => a.id !== activityId);
+  try {
+    localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Failed to delete whatsapp activity:', e);
+  }
+  return updated;
+};
+
+/**
+ * Clears all activities from the log.
+ */
+export const clearStoredWhatsAppActivities = (): WhatsAppActivity[] => {
+  try {
+    localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify([]));
+  } catch (e) {
+    console.warn('Failed to clear whatsapp activities:', e);
+  }
+  return [];
 };
 
 /**
