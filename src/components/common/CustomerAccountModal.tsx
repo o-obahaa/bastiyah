@@ -491,10 +491,7 @@ export const CustomerAccountModal: React.FC = () => {
                     <Truck className="w-3.5 h-3.5" style={{ color: theme.hex }} />
                     {language === 'ar' ? 'معاينة عنوان الشحن' : 'Shipping Preview'}
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    {language === 'ar' ? 'جاهز' : 'Ready'}
-                  </span>
+
                 </div>
                 <div className="px-4 py-3 space-y-2">
                   <p className="text-sm font-semibold text-slate-800 leading-relaxed">
