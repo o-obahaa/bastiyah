@@ -57,6 +57,7 @@ export const AdminDashboard: React.FC = () => {
   const [period, setPeriod] = useState<'today' | '7days' | 'month' | 'all'>('7days');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number | null>(null);
 
   const currency = activeStore.settings.currency || 'د.ع';
 
@@ -90,38 +91,57 @@ export const AdminDashboard: React.FC = () => {
     addToast(language === 'ar' ? 'تمت إضافة +20 وحدة للمخزون' : 'Restocked +20 units', 'success');
   };
 
-  // Build daily sales series for the last 7 days
-  const chartDays = useMemo(() => {
+  // Build daily sales series for the last 7 days with adaptive power scaling for high-range values
+  const { chartDays, peakSalesAmount } = useMemo(() => {
     const dayNamesAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
     const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const results = [];
-
-    const maxAmount = Math.max(
-      ...orders.map((o) => o.total),
-      800
-    );
-
+    
+    // 1. Gather 7-day daily sales totals
+    const daysRaw = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
       const dayName = language === 'ar' ? dayNamesAr[d.getDay()] : dayNamesEn[d.getDay()];
 
-      const dayOrders = orders.filter((o) => o.date.startsWith(dateStr));
-      const amount = dayOrders.reduce((s, o) => s + o.total, 0);
+      const dayOrders = orders.filter((o) => o.date && o.date.startsWith(dateStr));
+      const amount = dayOrders.reduce((s, o) => s + (Number(o.total) || 0), 0);
 
-      const heightPercent = maxAmount > 0 ? Math.min(100, Math.max(16, Math.round((amount / maxAmount) * 100))) : 20;
-
-      results.push({
+      daysRaw.push({
         day: dayName,
         date: dateStr,
         amount,
-        height: `${heightPercent}%`,
         count: dayOrders.length
       });
     }
 
-    return results;
+    // 2. Find peak daily sales across the 7-day period
+    const peak = Math.max(...daysRaw.map((d) => d.amount), 0);
+
+    // 3. Compute scaled column heights
+    // Using a calibrated sub-linear power scale (gamma = 0.72)
+    // Ensures:
+    // - Days with 0 sales have height 0% (baseline indicator)
+    // - Highest day reaches ~86% (leaving clean headroom for the floating tooltip box)
+    // - High values (even into millions of IQD) scale gracefully without clipping
+    // - Smaller non-zero amounts remain visible and proportional, not flattened to invisible lines
+    const results = daysRaw.map((d) => {
+      let heightPercent = 0;
+      if (peak > 0 && d.amount > 0) {
+        const ratio = d.amount / peak;
+        const scaledRatio = Math.pow(ratio, 0.72);
+        // Map from 10% (min visible active bar) to 86% (peak height with tooltip breathing room)
+        heightPercent = Math.round(10 + scaledRatio * (86 - 10));
+      }
+
+      return {
+        ...d,
+        height: `${heightPercent}%`,
+        hasSales: d.amount > 0,
+      };
+    });
+
+    return { chartDays: results, peakSalesAmount: peak };
   }, [orders, language]);
 
   const openWhatsApp = (customerPhone: string, customerName: string, orderNumber: string, orderTotal: number) => {
@@ -498,45 +518,86 @@ export const AdminDashboard: React.FC = () => {
       {/* Main Grid: Revenue Trend Chart & Low Stock Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7 items-stretch">
         {/* Sales Chart (8 Cols) */}
-        <div className="lg:col-span-8 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs space-y-6 overflow-hidden flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/90 shadow-xs space-y-6 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base sm:text-lg text-slate-900">
                 {language === 'ar' ? 'مؤشر المبيعات اليومية (آخر 7 أيام)' : 'Daily Sales Velocity'}
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {language === 'ar' ? 'حجم المبيعات وقيمة الطلبات المستلمة يومياً' : 'Revenue generated per day'}
+              <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                <span>{language === 'ar' ? 'حجم المبيعات وقيمة الطلبات المستلمة يومياً' : 'Revenue generated per day'}</span>
+                {peakSalesAmount > 0 && (
+                  <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md text-[11px]">
+                    {language === 'ar' ? `أعلى مبيعات: ${peakSalesAmount.toLocaleString()} ${currency}` : `Peak: ${peakSalesAmount.toLocaleString()} ${currency}`}
+                  </span>
+                )}
               </p>
             </div>
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1">
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1 shrink-0">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{language === 'ar' ? 'تحديث لحظي' : 'Live synced'}</span>
             </span>
           </div>
 
-          {/* Bar Chart Visualization */}
-          <div className="h-56 flex items-end justify-between gap-2 sm:gap-3 pt-6 border-b border-slate-100 pb-4 w-full">
-            {chartDays.map((d, idx) => (
-              <div key={idx} className="flex-1 min-w-0 flex flex-col items-center gap-2 h-full justify-end group relative">
-                {/* Floating Tooltip on hover - positioned absolutely so it never forces column width */}
-                <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2 rounded-lg whitespace-nowrap shadow-md pointer-events-none z-20 font-mono font-bold start-1/2 -translate-x-1/2">
-                  {d.amount.toLocaleString()} {currency} ({d.count} {language === 'ar' ? 'طلب' : 'orders'})
-                </div>
+          {/* Bar Chart Visualization with proportional scale & centered tooltip */}
+          <div className="relative h-56 flex items-end justify-between gap-2 sm:gap-3 pt-10 border-b border-slate-100 pb-4 w-full px-1">
+            {/* Background reference scale guide lines */}
+            <div className="absolute inset-x-0 top-10 bottom-4 pointer-events-none flex flex-col justify-between opacity-35 -z-0">
+              <div className="border-b border-dashed border-slate-200 w-full" />
+              <div className="border-b border-dashed border-slate-200 w-full" />
+              <div className="border-b border-dashed border-slate-200 w-full" />
+            </div>
 
-                <div className="w-full max-w-[42px] bg-slate-100 rounded-t-xl overflow-hidden flex items-end h-full">
+            {chartDays.map((d, idx) => {
+              // Edge columns protection against screen boundary clipping
+              const edgeClass = idx === 0 
+                ? 'start-0 sm:left-1/2 sm:-translate-x-1/2' 
+                : (idx === chartDays.length - 1 ? 'end-0 sm:left-1/2 sm:-translate-x-1/2' : 'left-1/2 -translate-x-1/2');
+
+              const isPinned = selectedDayIdx === idx;
+
+              return (
+                <div 
+                  key={idx} 
+                  onClick={() => setSelectedDayIdx(selectedDayIdx === idx ? null : idx)}
+                  className="flex-1 min-w-0 flex flex-col items-center gap-2 h-full justify-end group relative cursor-pointer z-10 select-none"
+                >
+                  {/* Floating Tooltip - mathematically centered above the column in both RTL and LTR */}
                   <div 
-                    className="w-full rounded-t-xl transition-all duration-500 group-hover:opacity-90"
-                    style={{ 
-                      height: d.height,
-                      backgroundColor: theme.hex
-                    }}
-                  />
+                    className={`absolute -top-8.5 ${edgeClass} ${
+                      isPinned 
+                        ? 'opacity-100 scale-100 pointer-events-auto' 
+                        : 'opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 pointer-events-none'
+                    } transition-all duration-200 bg-slate-900 text-white text-[10px] py-1 px-2.5 rounded-lg whitespace-nowrap shadow-xl z-30 font-mono font-bold flex flex-col items-center`}
+                  >
+                    <span>
+                      {d.amount.toLocaleString()} {currency} ({d.count} {language === 'ar' ? 'طلب' : 'orders'})
+                    </span>
+                    <div className="w-1.5 h-1.5 bg-slate-900 rotate-45 -mb-1 mt-0.5" />
+                  </div>
+
+                  {/* Column Track & Bar */}
+                  <div className="w-full max-w-[42px] bg-slate-100/90 rounded-t-xl overflow-hidden flex items-end h-full relative">
+                    {d.hasSales ? (
+                      <div 
+                        className="w-full rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-xs"
+                        style={{ 
+                          height: d.height,
+                          backgroundColor: theme.hex
+                        }}
+                      />
+                    ) : (
+                      // Subtle clean baseline for days with zero sales
+                      <div className="w-full h-1 bg-slate-200/80 rounded-full mb-0.5" />
+                    )}
+                  </div>
+
+                  <span className={`text-[11px] font-bold ${d.hasSales ? 'text-slate-700' : 'text-slate-400'} group-hover:text-slate-950 transition-colors truncate max-w-full text-center`}>
+                    {d.day}
+                  </span>
                 </div>
-                <span className="text-[11px] font-bold text-slate-500 group-hover:text-slate-900 truncate max-w-full text-center">
-                  {d.day}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
