@@ -725,11 +725,11 @@ export const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-10 sm:h-11 gap-2 text-xs sm:text-sm font-semibold">
             
-            {/* All Categories Button (Sample: = جميع الفئات) */}
+            {/* All Categories Link */}
             <div className="flex items-center gap-1 shrink-0">
-              <button
+              <a
+                href={getPagePath('shop', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('shop');
                   setSelectedCategory('All');
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold ${
@@ -740,7 +740,7 @@ export const Header: React.FC = () => {
               >
                 <Menu className="w-4 h-4" />
                 <span>{language === 'ar' ? 'جميع الفئات' : 'All Categories'}</span>
-              </button>
+              </a>
               <span className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block mx-1" />
             </div>
 

@@ -2097,8 +2097,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const matchedStore = remoteStores.find((rs) => rs.slug.toLowerCase() === requestedSlug);
             if (matchedStore) {
               setActiveStoreId(matchedStore._id || matchedStore.id || `store-${matchedStore.slug}`);
-              const isStoreAdmin = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin') || window.location.pathname.includes('/admin') || window.location.search.includes('admin=true');
-              setCurrentPage(isStoreAdmin ? 'admin' : 'home');
+              const currentRouting = detectInitialRouting(remoteStores);
+              setCurrentPage(currentRouting.page);
+              if (currentRouting.productId) {
+                setSelectedProductId(currentRouting.productId);
+              }
             }
           }
         }
@@ -2184,8 +2187,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const matchedStore = remoteStores.find((rs) => rs.slug.toLowerCase() === requestedSlug);
             if (matchedStore) {
               setActiveStoreId(matchedStore._id || matchedStore.id || `store-${matchedStore.slug}`);
-              const isStoreAdmin = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin') || window.location.pathname.includes('/admin') || window.location.search.includes('admin=true');
-              setCurrentPage(isStoreAdmin ? 'admin' : 'home');
+              const currentRouting = detectInitialRouting(remoteStores);
+              setCurrentPage(currentRouting.page);
+              if (currentRouting.productId) {
+                setSelectedProductId(currentRouting.productId);
+              }
             }
           }
         }
@@ -2321,7 +2327,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
         return;
       }
-      if (anchor.target === '_blank' || anchor.getAttribute('rel')?.includes('external')) {
+      if (
+        anchor.getAttribute('data-reload') === 'true' ||
+        anchor.getAttribute('data-no-intercept') === 'true' ||
+        anchor.target === '_blank' ||
+        anchor.getAttribute('rel')?.includes('external')
+      ) {
         return;
       }
 
