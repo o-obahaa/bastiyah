@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Globe,
   Crown,
@@ -29,7 +29,9 @@ import {
   Package,
   Compass,
   CheckCircle,
-  ShoppingBasket
+  ShoppingBasket,
+  Menu,
+  X
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
@@ -51,6 +53,87 @@ export const BastiyahLandingPage: React.FC = () => {
   } = useStore();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Active Navigation Tab & Mobile Menu State
+  const [activeSection, setActiveSection] = useState<string>('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navTabs = [
+    { id: 'services', labelAr: 'خدماتنا', labelEn: 'Services' },
+    { id: 'features', labelAr: 'المميزات', labelEn: 'Features' },
+    { id: 'how-it-works', labelAr: 'كيف يعمل', labelEn: 'How It Works' },
+    { id: 'pricing', labelAr: 'الأسعار', labelEn: 'Pricing' },
+    { id: 'about', labelAr: 'من نحن', labelEn: 'About Us' },
+    { id: 'faq', labelAr: 'الأسئلة الشائعة', labelEn: 'FAQ' },
+    { id: 'contact', labelAr: 'اتصل بنا', labelEn: 'Contact Us' },
+    { id: 'hosted-stores-directory', labelAr: 'المتاجر', labelEn: 'Stores', isStore: true },
+  ];
+
+  const handleTabClick = (e: React.MouseEvent, targetId: string) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      try {
+        window.history.pushState(null, '', `#${targetId}`);
+      } catch (err) {}
+      setActiveSection(targetId);
+    }
+  };
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      window.history.pushState(null, '', window.location.pathname);
+    } catch (err) {}
+    setActiveSection('');
+  };
+
+  // Scroll Spy to highlight the active tab dynamically
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 130;
+      const ids = ['services', 'features', 'how-it-works', 'pricing', 'about', 'faq', 'contact', 'hosted-stores-directory'];
+      
+      for (let i = ids.length - 1; i >= 0; i--) {
+        const id = ids[i];
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPos >= top) {
+            setActiveSection(id);
+            return;
+          }
+        }
+      }
+      if (window.scrollY < 200) {
+        setActiveSection('');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Jump smoothly to hash if present in URL on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const targetId = window.location.hash.replace('#', '');
+      if (targetId) {
+        setTimeout(() => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+            setActiveSection(targetId);
+          }
+        }, 150);
+      }
+    }
+  }, []);
 
   // Application Box Form State
   const [appName, setAppName] = useState('');
@@ -231,12 +314,12 @@ export const BastiyahLandingPage: React.FC = () => {
         Links: ( services ) ( features ) ( pricing ) ( about us ) ( contact us )
         ========================================================================
       */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-200/80 transition-all shadow-2xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 transition-all shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
           
           {/* Platform Brand (Cropped Logo + BASTIYAH | بسطية) */}
           <div 
-            onClick={() => setCurrentPage('bastiyah-landing')}
+            onClick={handleHomeClick}
             className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
           >
             {/* Cropped Official Bastiyah Emblem */}
@@ -258,59 +341,32 @@ export const BastiyahLandingPage: React.FC = () => {
           </div>
 
           {/* Navigation Links (Upper Banner Links) */}
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs sm:text-sm font-semibold text-stone-600">
-            <a 
-              href="#services" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'خدماتنا' : 'Services'}
-            </a>
-            <a 
-              href="#features" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'المميزات' : 'Features'}
-            </a>
-            <a 
-              href="#how-it-works" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'كيف يعمل' : 'How It Works'}
-            </a>
-            <a 
-              href="#pricing" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'الأسعار' : 'Pricing'}
-            </a>
-            <a 
-              href="#about" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'من نحن' : 'About Us'}
-            </a>
-            <a 
-              href="#faq" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'الأسئلة الشائعة' : 'FAQ'}
-            </a>
-            <a 
-              href="#contact" 
-              className="hover:text-stone-950 transition-colors font-medium py-1"
-            >
-              {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
-            </a>
-            <a 
-              href="#hosted-stores-directory" 
-              className="hover:text-stone-950 transition-colors font-medium py-1 flex items-center gap-1.5 text-stone-700"
-            >
-              <Store className="w-3.5 h-3.5 text-stone-500" />
-              <span>{language === 'ar' ? 'المتاجر' : 'Stores'}</span>
-              <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded-full font-bold">
-                {stores.length}
-              </span>
-            </a>
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs sm:text-sm font-semibold text-stone-600">
+            {navTabs.map((tab) => {
+              const isActive = activeSection === tab.id;
+              return (
+                <a
+                  key={tab.id}
+                  href={`#${tab.id}`}
+                  onClick={(e) => handleTabClick(e, tab.id)}
+                  className={`px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 ${
+                    isActive
+                      ? 'text-stone-950 font-bold bg-stone-100 shadow-2xs'
+                      : 'hover:text-stone-950 hover:bg-stone-50 text-stone-600 font-medium'
+                  }`}
+                >
+                  {tab.isStore && <Store className="w-3.5 h-3.5 text-stone-500" />}
+                  <span>{language === 'ar' ? tab.labelAr : tab.labelEn}</span>
+                  {tab.isStore && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                      isActive ? 'bg-stone-200 text-stone-800' : 'bg-stone-100 text-stone-600'
+                    }`}>
+                      {stores.length}
+                    </span>
+                  )}
+                </a>
+              );
+            })}
           </nav>
 
           {/* Platform Actions */}
@@ -318,6 +374,7 @@ export const BastiyahLandingPage: React.FC = () => {
             {/* CTA Button: Jump to Application Box */}
             <a
               href="#apply-store"
+              onClick={(e) => handleTabClick(e, 'apply-store')}
               className="px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-stone-900 hover:bg-stone-800 text-white transition-all shadow-sm hover:shadow flex items-center gap-1.5"
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -333,8 +390,58 @@ export const BastiyahLandingPage: React.FC = () => {
               <Globe className="w-3.5 h-3.5 text-stone-500" />
               <span>{language === 'en' ? 'العربية' : 'EN'}</span>
             </button>
+
+            {/* Mobile Menu Toggle Button (Visible on screens < lg) */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden flex items-center justify-center p-2 rounded-xl text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+              aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer / Dropdown */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-white/98 backdrop-blur-md border-b border-stone-200 shadow-xl px-4 py-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
+            <div className="grid grid-cols-2 gap-2 pb-2 border-b border-stone-100">
+              {navTabs.map((tab) => {
+                const isActive = activeSection === tab.id;
+                return (
+                  <a
+                    key={tab.id}
+                    href={`#${tab.id}`}
+                    onClick={(e) => handleTabClick(e, tab.id)}
+                    className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all ${
+                      isActive
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    {tab.isStore && <Store className="w-3.5 h-3.5" />}
+                    <span>{language === 'ar' ? tab.labelAr : tab.labelEn}</span>
+                    {tab.isStore && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                        isActive ? 'bg-stone-800 text-white' : 'bg-stone-200 text-stone-700'
+                      }`}>
+                        {stores.length}
+                      </span>
+                    )}
+                  </a>
+                );
+              })}
+            </div>
+            <a
+              href="#apply-store"
+              onClick={(e) => handleTabClick(e, 'apply-store')}
+              className="w-full py-3 rounded-xl text-xs font-bold bg-stone-900 hover:bg-stone-800 text-white transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>{language === 'ar' ? 'أنشئ متجرك الإلكتروني الآن' : 'Create Your Store Now'}</span>
+            </a>
+          </div>
+        )}
       </header>
 
       {/* Main Content Area */}
@@ -385,6 +492,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
               <a
                 href="#apply-store"
+                onClick={(e) => handleTabClick(e, 'apply-store')}
                 className="px-7 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
@@ -393,6 +501,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
               <a
                 href="#how-it-works"
+                onClick={(e) => handleTabClick(e, 'how-it-works')}
                 className="px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400 leading-normal"
               >
                 <Compass className="w-4 h-4 text-stone-600" />
@@ -555,6 +664,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <div className="mt-8">
               <a
                 href="#apply-store"
+                onClick={(e) => handleTabClick(e, 'apply-store')}
                 className="px-8 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg flex items-center gap-2 transition-all hover:-translate-y-0.5"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
@@ -1133,6 +1243,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <div className="mt-8">
               <a
                 href="#apply-store"
+                onClick={(e) => handleTabClick(e, 'apply-store')}
                 className="px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-sm sm:text-base shadow-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2 leading-normal"
               >
                 <Zap className="w-4 h-4 text-stone-950" />
@@ -1195,6 +1306,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
                 <a
                   href="#apply-store"
+                  onClick={(e) => handleTabClick(e, 'apply-store')}
                   className="mt-8 w-full py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs text-center transition-colors"
                 >
                   {language === 'ar' ? 'ابدأ مجاناً' : 'Get Started Free'}
@@ -1241,6 +1353,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
                 <a
                   href="#apply-store"
+                  onClick={(e) => handleTabClick(e, 'apply-store')}
                   className="mt-8 w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs text-center transition-colors shadow-sm"
                 >
                   {language === 'ar' ? 'انضم للباقة الآن' : 'Choose Growth Plan'}
@@ -1279,6 +1392,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
                 <a
                   href="#apply-store"
+                  onClick={(e) => handleTabClick(e, 'apply-store')}
                   className="mt-8 w-full py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs text-center transition-colors"
                 >
                   {language === 'ar' ? 'تواصل معنا' : 'Contact Enterprise'}
@@ -1371,6 +1485,7 @@ export const BastiyahLandingPage: React.FC = () => {
             <div className="mt-8">
               <a
                 href="#apply-store"
+                onClick={(e) => handleTabClick(e, 'apply-store')}
                 className="px-9 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
@@ -1497,6 +1612,7 @@ export const BastiyahLandingPage: React.FC = () => {
 
             <a
               href="#apply-store"
+              onClick={(e) => handleTabClick(e, 'apply-store')}
               className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 self-start sm:self-auto transition-all shadow-sm"
             >
               <Zap className="w-4 h-4 text-amber-400" />
@@ -1690,22 +1806,22 @@ export const BastiyahLandingPage: React.FC = () => {
               </h4>
               <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
                 <li>
-                  <a href="#" className="hover:text-stone-950 transition-colors">
+                  <a href="#" onClick={handleHomeClick} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'الرئيسية' : 'Home'}
                   </a>
                 </li>
                 <li>
-                  <a href="#features" className="hover:text-stone-950 transition-colors">
+                  <a href="#features" onClick={(e) => handleTabClick(e, 'features')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'المميزات' : 'Features'}
                   </a>
                 </li>
                 <li>
-                  <a href="#how-it-works" className="hover:text-stone-950 transition-colors">
+                  <a href="#how-it-works" onClick={(e) => handleTabClick(e, 'how-it-works')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'كيف يعمل' : 'How It Works'}
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="hover:text-stone-950 transition-colors">
+                  <a href="#faq" onClick={(e) => handleTabClick(e, 'faq')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
                   </a>
                 </li>
@@ -1719,17 +1835,17 @@ export const BastiyahLandingPage: React.FC = () => {
               </h4>
               <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
                 <li>
-                  <a href="#apply-store" className="hover:text-stone-950 transition-colors">
+                  <a href="#apply-store" onClick={(e) => handleTabClick(e, 'apply-store')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}
                   </a>
                 </li>
                 <li>
-                  <a href="#hosted-stores-directory" className="hover:text-stone-950 transition-colors">
-                    {language === 'ar' ? 'إدارة منتجاتك' : 'Manage Your Products'}
+                  <a href="#hosted-stores-directory" onClick={(e) => handleTabClick(e, 'hosted-stores-directory')} className="hover:text-stone-950 transition-colors">
+                    {language === 'ar' ? 'المتاجر والمنتجات' : 'Stores & Catalog'}
                   </a>
                 </li>
                 <li>
-                  <a href="#contact" className="hover:text-stone-950 transition-colors">
+                  <a href="#contact" onClick={(e) => handleTabClick(e, 'contact')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'الدعم الفني' : 'Contact Support'}
                   </a>
                 </li>
