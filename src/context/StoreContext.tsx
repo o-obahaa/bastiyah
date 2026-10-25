@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Product, 
   CartItem, 
@@ -170,6 +170,7 @@ interface StoreContextType {
   // Navigation & UI State
   currentPage: ActivePage;
   setCurrentPage: (page: ActivePage) => void;
+  navigate: (pathOrUrl: string, e?: React.MouseEvent) => void;
   adminTab: AdminTab;
   setAdminTab: (tab: AdminTab) => void;
   selectedCategory: ProductCategory;
@@ -325,6 +326,7 @@ export const hydrateCustomStore = (s: any): HostedStore => {
 
 export const KNOWN_STORE_SUBPAGES: Record<string, ActivePage> = {
   shop: 'shop',
+  products: 'shop',
   checkout: 'checkout',
   'order-success': 'order-success',
   orders: 'orders',
@@ -332,6 +334,22 @@ export const KNOWN_STORE_SUBPAGES: Record<string, ActivePage> = {
   admin: 'admin',
   home: 'home',
   cart: 'cart',
+};
+
+export const KNOWN_PLATFORM_PAGES: Record<string, ActivePage> = {
+  about: 'bastiyah-about',
+  contact: 'bastiyah-contact',
+  services: 'bastiyah-services',
+  features: 'bastiyah-features',
+  'how-it-works': 'bastiyah-how-it-works',
+  pricing: 'bastiyah-pricing',
+  faq: 'bastiyah-faq',
+  stores: 'bastiyah-stores',
+  apply: 'bastiyah-apply',
+  products: 'bastiyah-products',
+  legal: 'bastiyah-legal',
+  terms: 'bastiyah-legal',
+  privacy: 'bastiyah-legal',
 };
 
 export const detectInitialRouting = (allStores: HostedStore[]): { storeId: string; page: ActivePage; productId?: string } => {
@@ -498,7 +516,7 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
   const directSlug = segments[0]?.toLowerCase();
 
   // Check if first segment is a known store
-  if (directSlug && directSlug !== 'store' && directSlug !== 'owner' && !(directSlug in KNOWN_STORE_SUBPAGES)) {
+  if (directSlug && directSlug !== 'store' && directSlug !== 'owner' && !(directSlug in KNOWN_STORE_SUBPAGES) && !(directSlug in KNOWN_PLATFORM_PAGES)) {
     const found = findStoreBySlugOrId(directSlug);
     if (found) {
       const subRoute = segments[1]?.toLowerCase();
@@ -518,7 +536,15 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     }
   }
 
-  // 7. Standalone routes (e.g. /shop, /checkout, /orders, /wishlist, /admin, /product/:id)
+  // 7. Platform Distinct Pages (e.g. /about, /contact, /services, /features, /how-it-works, /pricing, /faq, /stores, /apply, /products, /legal)
+  if (directSlug && directSlug in KNOWN_PLATFORM_PAGES) {
+    return {
+      storeId: allStores[0]?.id || 'store-panda',
+      page: KNOWN_PLATFORM_PAGES[directSlug],
+    };
+  }
+
+  // 8. Standalone routes (e.g. /shop, /checkout, /orders, /wishlist, /admin, /product/:id)
   // on localhost or preview when accessed directly
   if (directSlug && directSlug in KNOWN_STORE_SUBPAGES) {
     const fallbackStore = getFallbackStore();
@@ -539,7 +565,7 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     };
   }
 
-  // 8. Query param specifies store (?store=panda)
+  // 9. Query param specifies store (?store=panda)
   const storeQuery = searchParams.get('store');
   if (storeQuery) {
     const found = findStoreBySlugOrId(storeQuery);
@@ -556,7 +582,7 @@ export const detectInitialRouting = (allStores: HostedStore[]): { storeId: strin
     }
   }
 
-  // 9. Default: Bastiyah Platform Landing Page!
+  // 10. Default: Bastiyah Platform Landing Page!
   return {
     storeId: allStores[0]?.id || 'store-panda',
     page: 'bastiyah-landing',
@@ -1868,6 +1894,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       pageTitle = language === 'ar'
         ? 'بسطية | BASTIYAH — احجز متجرك الإلكتروني ببساطة'
         : 'Bastiyah | بسطية — Your Business Deserves to Be Online';
+    } else if (currentPage === 'bastiyah-services') {
+      pageTitle = language === 'ar' ? 'خدمات المنصة | بسطية' : 'Platform Services | Bastiyah';
+    } else if (currentPage === 'bastiyah-features') {
+      pageTitle = language === 'ar' ? 'المميزات والحلول | بسطية' : 'Features & Capabilities | Bastiyah';
+    } else if (currentPage === 'bastiyah-how-it-works') {
+      pageTitle = language === 'ar' ? 'كيف تعمل بسطية | خطوات إطلاق متجرك' : 'How It Works | Bastiyah';
+    } else if (currentPage === 'bastiyah-pricing') {
+      pageTitle = language === 'ar' ? 'خطط الأسعار والاشتراكات | بسطية' : 'Pricing Plans | Bastiyah';
+    } else if (currentPage === 'bastiyah-about') {
+      pageTitle = language === 'ar' ? 'من نحن | رؤيتنا وقصتنا — بسطية' : 'About Us | Our Story — Bastiyah';
+    } else if (currentPage === 'bastiyah-faq') {
+      pageTitle = language === 'ar' ? 'الأسئلة الشائعة والدعم | بسطية' : 'Frequently Asked Questions | Bastiyah';
+    } else if (currentPage === 'bastiyah-contact') {
+      pageTitle = language === 'ar' ? 'اتصل بنا وتواصل معنا | بسطية' : 'Contact Us & Support | Bastiyah';
+    } else if (currentPage === 'bastiyah-stores') {
+      pageTitle = language === 'ar' ? 'دليل المتاجر المستضافة | بسطية' : 'Hosted Stores Directory | Bastiyah';
+    } else if (currentPage === 'bastiyah-apply') {
+      pageTitle = language === 'ar' ? 'أنشئ متجرك الإلكتروني الآن | بسطية' : 'Create Your Online Store | Bastiyah';
+    } else if (currentPage === 'bastiyah-products') {
+      pageTitle = language === 'ar' ? 'معرض المنتجات | بسطية' : 'Products Directory | Bastiyah';
+    } else if (currentPage === 'bastiyah-legal') {
+      pageTitle = language === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية | بسطية' : 'Terms & Privacy Policy | Bastiyah';
     } else if (currentPage === 'bastiyah-admin') {
       pageTitle = language === 'ar'
         ? 'لوحة تحكم المنصة | بسطية'
@@ -2200,26 +2248,134 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [currentPage, selectedProductId, activeStore?.id, activeStore?.slug]);
 
+  const navigate = useCallback((pathOrUrl: string, e?: React.MouseEvent) => {
+    if (e) {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+        return;
+      }
+      e.preventDefault();
+    }
+
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+        const targetUrl = new URL(pathOrUrl);
+        if (targetUrl.origin !== window.location.origin) {
+          window.location.href = pathOrUrl;
+          return;
+        }
+        pathOrUrl = targetUrl.pathname + targetUrl.search + targetUrl.hash;
+      }
+
+      if (pathOrUrl.startsWith('#')) {
+        const id = pathOrUrl.slice(1);
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          try {
+            window.history.pushState(null, '', pathOrUrl);
+          } catch {}
+        }
+        return;
+      }
+
+      window.history.pushState({}, '', pathOrUrl);
+
+      const routing = detectInitialRouting(stores);
+      if (routing.storeId && routing.storeId !== activeStoreId) {
+        setActiveStoreId(routing.storeId);
+      }
+      setCurrentPage(routing.page);
+      setSelectedProductId(routing.productId || null);
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const catParam = searchParams.get('category');
+      if (catParam) {
+        setSelectedCategory(catParam as ProductCategory);
+      }
+      const qParam = searchParams.get('q') || searchParams.get('search');
+      if (qParam !== null) {
+        setSearchQuery(qParam);
+      }
+
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {
+      window.location.href = pathOrUrl;
+    }
+  }, [stores, activeStoreId]);
+
+  // Global document click listener for internal standard <a> anchor elements
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) {
+        return;
+      }
+
+      const anchor = (e.target as HTMLElement)?.closest('a');
+      if (!anchor) return;
+
+      const href = anchor.getAttribute('href');
+      if (!href) return;
+
+      if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
+        return;
+      }
+      if (anchor.target === '_blank' || anchor.getAttribute('rel')?.includes('external')) {
+        return;
+      }
+
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        try {
+          const url = new URL(href);
+          if (url.origin !== window.location.origin) return;
+        } catch {
+          return;
+        }
+      }
+
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        const id = href.slice(1);
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          try {
+            window.history.pushState(null, '', href);
+          } catch {}
+        }
+        return;
+      }
+
+      e.preventDefault();
+      navigate(href);
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, [navigate]);
+
   // Support browser back/forward buttons
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       isPopStateRef.current = true;
-      const state = event.state;
-      if (state && state.page) {
-        if (state.storeId) {
-          setActiveStoreId(state.storeId);
-        } else if (state.storeSlug) {
-          const match = stores.find((s) => s.slug.toLowerCase() === state.storeSlug.toLowerCase());
-          if (match) setActiveStoreId(match.id);
-        }
-        setCurrentPage(state.page);
-        setSelectedProductId(state.productId || null);
-      } else {
-        const routing = detectInitialRouting(stores);
+      const routing = detectInitialRouting(stores);
+      if (routing.storeId) {
         setActiveStoreId(routing.storeId);
-        setCurrentPage(routing.page);
-        setSelectedProductId(routing.productId || null);
       }
+      setCurrentPage(routing.page);
+      setSelectedProductId(routing.productId || null);
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const catParam = searchParams.get('category');
+      if (catParam) {
+        setSelectedCategory(catParam as ProductCategory);
+      }
+      const qParam = searchParams.get('q') || searchParams.get('search');
+      if (qParam !== null) {
+        setSearchQuery(qParam);
+      }
+
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     };
 
@@ -3489,6 +3645,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deleteProduct,
         currentPage,
         setCurrentPage,
+        navigate,
         adminTab,
         setAdminTab,
         selectedCategory,

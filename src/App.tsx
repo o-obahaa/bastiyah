@@ -22,7 +22,7 @@ import { CustomerOrdersPage } from './components/store/CustomerOrdersPage';
 import { WishlistPage } from './components/store/WishlistPage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
-import { getStorePathLabel } from './utils/urlUtils';
+import { getStorePathLabel, getPagePath } from './utils/urlUtils';
 import { filterProductsBySearch } from './utils/searchUtils';
 import { getProductGridClasses } from './utils/gridUtils';
 
@@ -106,8 +106,21 @@ export function App() {
     );
   }
 
-  // 2. Bastiyah Public Platform Landing Page (bastiyah.com)
-  if (currentPage === 'bastiyah-landing') {
+  // 2. Bastiyah Public Platform Pages (bastiyah.com/*)
+  if (
+    currentPage === 'bastiyah-landing' ||
+    currentPage === 'bastiyah-services' ||
+    currentPage === 'bastiyah-features' ||
+    currentPage === 'bastiyah-how-it-works' ||
+    currentPage === 'bastiyah-pricing' ||
+    currentPage === 'bastiyah-about' ||
+    currentPage === 'bastiyah-faq' ||
+    currentPage === 'bastiyah-contact' ||
+    currentPage === 'bastiyah-stores' ||
+    currentPage === 'bastiyah-apply' ||
+    currentPage === 'bastiyah-products' ||
+    currentPage === 'bastiyah-legal'
+  ) {
     return (
       <div className={language === 'ar' ? 'font-arabic' : ''}>
         <BastiyahLandingPage />
@@ -160,9 +173,9 @@ export function App() {
                     {displayDesc}
                   </p>
                 </div>
-                <button
+                <a
+                  href={getPagePath('shop', activeStore.slug)}
                   onClick={() => {
-                    setCurrentPage('shop');
                     setSelectedCategory('All');
                   }}
                   className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold transition-colors"
@@ -170,7 +183,7 @@ export function App() {
                 >
                   <span>{t.navShopAll} ({products.length})</span>
                   <ArrowIcon className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </div>
 
               {/* Category Filter and Sorting */}
@@ -215,16 +228,16 @@ export function App() {
                       ? `شحن سريع ومجاني للطلبات فوق ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} مع ضمان استبدال واسترجاع لمدة 30 يوماً عبر منصة بسطية.`
                       : `Complimentary express dispatch on orders over ${activeStore.settings.currency}${activeStore.settings.freeShippingThreshold} and our 30-day satisfaction guarantee powered by Bastiyah.`}
                   </p>
-                  <button
+                  <a
+                    href={getPagePath('shop', activeStore.slug)}
                     onClick={() => {
-                      setCurrentPage('shop');
                       setSelectedCategory('All');
                     }}
-                    className="px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm shadow-lg transition-transform hover:scale-102"
+                    className="px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm shadow-lg transition-transform hover:scale-102 inline-block"
                     style={{ backgroundColor: theme.hex }}
                   >
                     {t.heroBrowseCatalog}
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>

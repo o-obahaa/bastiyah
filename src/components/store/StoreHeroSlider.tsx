@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { HeroSectionConfig, HeroSlide, HeroHeight } from '../../types';
 import { ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
+import { getPagePath } from '../../utils/urlUtils';
 
 interface StoreHeroSliderProps {
   config: HeroSectionConfig;
@@ -9,7 +10,7 @@ interface StoreHeroSliderProps {
 }
 
 export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPreview = false }) => {
-  const { theme, setCurrentPage, setSelectedCategory, language } = useStore();
+  const { theme, setCurrentPage, setSelectedCategory, language, activeStore, navigate } = useStore();
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartXRef = useRef<number | null>(null);
@@ -94,16 +95,18 @@ export const StoreHeroSlider: React.FC<StoreHeroSliderProps> = ({ config, isPrev
     if (!url) return;
 
     if (url === 'shop' || url === '/shop') {
-      setCurrentPage('shop');
       setSelectedCategory('All');
+      navigate(getPagePath('shop', activeStore?.slug));
     } else if (url.startsWith('category:')) {
       const cat = url.replace('category:', '');
       setSelectedCategory(cat as any);
-      setCurrentPage('shop');
+      navigate(`${getPagePath('shop', activeStore?.slug)}?category=${encodeURIComponent(cat)}`);
     } else if (url.startsWith('http://') || url.startsWith('https://')) {
       window.open(url, '_blank', 'noopener,noreferrer');
+    } else if (url.startsWith('/')) {
+      navigate(url);
     } else {
-      setCurrentPage('shop');
+      navigate(getPagePath('shop', activeStore?.slug));
     }
   };
 

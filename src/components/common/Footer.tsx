@@ -2,6 +2,7 @@ import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { renderBadgeIcon, getDefaultTrustBadges } from '../admin/TrustBadgesEditor';
 import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
+import { getPagePath } from '../../utils/urlUtils';
 
 export const Footer: React.FC = () => {
   const { 
@@ -86,21 +87,23 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <button
-                  onClick={() => { setCurrentPage('shop'); setSelectedCategory('All'); }}
+                <a
+                  href={getPagePath('shop', activeStore.slug)}
+                  onClick={() => { setSelectedCategory('All'); }}
                   className="hover:text-white transition-colors"
                 >
                   {t.catAll}
-                </button>
+                </a>
               </li>
               {storeCategories.map((cat) => (
                 <li key={cat}>
-                  <button
-                    onClick={() => { setCurrentPage('shop'); setSelectedCategory(cat); }}
+                  <a
+                    href={`${getPagePath('shop', activeStore.slug)}?category=${encodeURIComponent(cat)}`}
+                    onClick={() => { setSelectedCategory(cat); }}
                     className="hover:text-white transition-colors"
                   >
                     {getCategoryName(cat)}
-                  </button>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -113,20 +116,20 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <button
-                  onClick={() => setCurrentPage('orders')}
+                <a
+                  href={getPagePath('orders', activeStore.slug)}
                   className="hover:text-white transition-colors"
                 >
                   {t.navMyOrders}
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => setCurrentPage('wishlist')}
+                <a
+                  href={getPagePath('wishlist', activeStore.slug)}
                   className="hover:text-white transition-colors"
                 >
                   {t.navWishlist}
-                </button>
+                </a>
               </li>
             </ul>
           </div>
@@ -135,7 +138,7 @@ export const Footer: React.FC = () => {
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-slate-900 flex items-center justify-center text-xs text-slate-400">
           <p className="tracking-wide text-center font-medium">
-            Powered by <span className="font-bold text-white">Bastiyah</span>
+            Powered by <a href="/" className="font-bold text-white hover:underline">Bastiyah</a>
           </p>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ArrowRight, Sparkles, Star, Globe, Palette } from 'lucide-react';
-import { getStorePathLabel } from '../../utils/urlUtils';
+import { getStorePathLabel, getPagePath } from '../../utils/urlUtils';
 import { StoreHeroSlider } from './StoreHeroSlider';
 import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
 
@@ -71,9 +71,9 @@ export const HeroBanner: React.FC = () => {
           </p>
 
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-            <button
+            <a
+              href={getPagePath('shop', activeStore.slug)}
               onClick={() => {
-                setCurrentPage('shop');
                 setSelectedCategory('All');
               }}
               className="px-8 py-4 rounded-full text-white font-black text-sm sm:text-base flex items-center gap-2 shadow-xl transition-transform hover:scale-105"
@@ -81,19 +81,19 @@ export const HeroBanner: React.FC = () => {
             >
               <span>{t.heroBrowseCatalog}</span>
               <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-            </button>
+            </a>
           </div>
 
           {/* Featured Trio Showcase */}
           <div className="pt-12 grid grid-cols-1 sm:grid-cols-3 gap-5 text-start">
             {products.slice(0, 3).map((item) => (
-              <div
+              <a
                 key={item.id}
+                href={getPagePath('product-detail', activeStore.slug, item.id)}
                 onClick={() => {
                   setSelectedProductId(item.id);
-                  setCurrentPage('product-detail');
                 }}
-                className="cursor-pointer group rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-600 p-4 flex items-center gap-4 transition-all"
+                className="cursor-pointer group rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-600 p-4 flex items-center gap-4 transition-all block"
               >
                 <img
                   src={item.images[0]}
@@ -111,7 +111,7 @@ export const HeroBanner: React.FC = () => {
                     {activeStore.settings.currency}{item.price}
                   </p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -144,27 +144,27 @@ export const HeroBanner: React.FC = () => {
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
+                <a
+                  href={getPagePath('shop', activeStore.slug)}
                   onClick={() => {
-                    setCurrentPage('shop');
                     setSelectedCategory('All');
                   }}
                   className="px-8 py-4 bg-slate-950 hover:bg-slate-800 text-white font-bold text-sm uppercase tracking-wider flex items-center gap-2 transition-all"
                 >
                   <span>{t.heroBrowseCatalog}</span>
                   <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-                </button>
+                </a>
               </div>
             </div>
 
             {featuredProduct && (
               <div className="lg:col-span-6">
-                <div
+                <a
+                  href={getPagePath('product-detail', activeStore.slug, featuredProduct.id)}
                   onClick={() => {
                     setSelectedProductId(featuredProduct.id);
-                    setCurrentPage('product-detail');
                   }}
-                  className="cursor-pointer group relative overflow-hidden border border-slate-200 bg-slate-50 p-4 sm:p-6"
+                  className="cursor-pointer group relative overflow-hidden border border-slate-200 bg-slate-50 p-4 sm:p-6 block"
                 >
                   <div className="aspect-[16/10] overflow-hidden bg-slate-100">
                     <img
@@ -186,7 +186,7 @@ export const HeroBanner: React.FC = () => {
                       {activeStore.settings.currency}{featuredProduct.price}
                     </span>
                   </div>
-                </div>
+                </a>
               </div>
             )}
           </div>
@@ -224,16 +224,16 @@ export const HeroBanner: React.FC = () => {
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2">
-              <button
+              <a
+                href={getPagePath('shop', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('shop');
                   setSelectedCategory('All');
                 }}
                 className="px-7 py-3.5 rounded-2xl bg-white text-slate-950 font-black text-sm sm:text-base shadow-xl hover:scale-105 transition-transform flex items-center gap-2"
               >
                 <span>{t.heroBrowseCatalog}</span>
                 <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -277,9 +277,9 @@ export const HeroBanner: React.FC = () => {
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-4 pt-2">
-              <button
+              <a
+                href={getPagePath('shop', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('shop');
                   setSelectedCategory('All');
                 }}
                 className="px-7 py-3.5 rounded-xl text-white font-bold text-sm sm:text-base flex items-center gap-2 shadow-lg transition-all hover:scale-102 active:scale-98"
@@ -287,7 +287,7 @@ export const HeroBanner: React.FC = () => {
               >
                 <span>{t.heroBrowseCatalog}</span>
                 <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-              </button>
+              </a>
             </div>
 
             {/* Social proof metrics */}
@@ -360,17 +360,17 @@ export const HeroBanner: React.FC = () => {
                       )}
                     </div>
 
-                    <button
+                    <a
+                      href={getPagePath('product-detail', activeStore.slug, featuredProduct.id)}
                       onClick={() => {
                         setSelectedProductId(featuredProduct.id);
-                        setCurrentPage('product-detail');
                       }}
                       className="px-4 py-2 rounded-lg text-white text-xs font-bold transition-all flex items-center gap-1.5"
                       style={{ backgroundColor: theme.hex }}
                     >
                       <span>{t.heroExplore}</span>
                       <ArrowRight className={`w-3.5 h-3.5 ${language === 'ar' ? 'rotate-180' : ''}`} />
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>

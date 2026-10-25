@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from './ProductCard';
 import { getProductGridClasses } from '../../utils/gridUtils';
+import { getPagePath } from '../../utils/urlUtils';
 import { 
   Star, 
   ShoppingBag, 
@@ -265,26 +266,28 @@ export const ProductDetailPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 mb-8 overflow-x-auto whitespace-nowrap">
-        <button 
-          onClick={() => setCurrentPage('home')}
+        <a 
+          href={getPagePath('home', activeStore.slug)}
           className="hover:text-emerald-600 transition-colors"
         >
           {t.home}
-        </button>
+        </a>
         <BreadcrumbArrow className="w-3.5 h-3.5" />
-        <button 
-          onClick={() => { setCurrentPage('shop'); setSelectedCategory('All'); }}
+        <a 
+          href={getPagePath('shop', activeStore.slug)}
+          onClick={() => { setSelectedCategory('All'); }}
           className="hover:text-emerald-600 transition-colors"
         >
           {t.shop}
-        </button>
+        </a>
         <BreadcrumbArrow className="w-3.5 h-3.5" />
-        <button 
-          onClick={() => { setCurrentPage('shop'); setSelectedCategory(product.category); }}
+        <a 
+          href={`${getPagePath('shop', activeStore.slug)}?category=${encodeURIComponent(product.category)}`}
+          onClick={() => { setSelectedCategory(product.category); }}
           className="hover:text-emerald-600 transition-colors"
         >
           {categoryName}
-        </button>
+        </a>
         <BreadcrumbArrow className="w-3.5 h-3.5" />
         <span className="text-slate-900 font-semibold truncate max-w-xs">{productName}</span>
       </nav>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
+import { getPagePath } from '../../utils/urlUtils';
 
 export const WishlistPage: React.FC = () => {
   const { 
@@ -59,12 +60,12 @@ export const WishlistPage: React.FC = () => {
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {t.wishlistEmptyDesc}
           </p>
-          <button
-            onClick={() => setCurrentPage('shop')}
-            className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+          <a
+            href={getPagePath('shop', activeStore.slug)}
+            className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors inline-block"
           >
             {t.navShopAll}
-          </button>
+          </a>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -76,18 +77,20 @@ export const WishlistPage: React.FC = () => {
                 key={product.id}
                 className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
               >
-                <div 
-                  className="relative aspect-square cursor-pointer bg-slate-100"
-                  onClick={() => {
-                    setSelectedProductId(product.id);
-                    setCurrentPage('product-detail');
-                  }}
-                >
-                  <img
-                    src={product.images[0]}
-                    alt={productName}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="relative aspect-square bg-slate-100">
+                  <a 
+                    href={getPagePath('product-detail', activeStore.slug, product.id)}
+                    className="block w-full h-full cursor-pointer"
+                    onClick={() => {
+                      setSelectedProductId(product.id);
+                    }}
+                  >
+                    <img
+                      src={product.images[0]}
+                      alt={productName}
+                      className="w-full h-full object-cover"
+                    />
+                  </a>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -106,13 +109,16 @@ export const WishlistPage: React.FC = () => {
                       {categoryName}
                     </span>
                     <h3
-                      onClick={() => {
-                        setSelectedProductId(product.id);
-                        setCurrentPage('product-detail');
-                      }}
                       className="font-bold text-sm text-slate-900 truncate hover:text-emerald-600 cursor-pointer mt-0.5"
                     >
-                      {productName}
+                      <a
+                        href={getPagePath('product-detail', activeStore.slug, product.id)}
+                        onClick={() => {
+                          setSelectedProductId(product.id);
+                        }}
+                      >
+                        {productName}
+                      </a>
                     </h3>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="font-black text-slate-900 text-base">

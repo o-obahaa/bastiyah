@@ -2,6 +2,7 @@ import React from 'react';
 import { Product } from '../../types';
 import { useStore } from '../../context/StoreContext';
 import { Star, ShoppingBag, Eye, Heart } from 'lucide-react';
+import { getPagePath } from '../../utils/urlUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -78,7 +79,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       className={`group bg-white ${radiusClass} border border-slate-200/90 hover:border-slate-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden relative`}
     >
       {/* Product Image Area */}
-      <div className="relative aspect-square overflow-hidden bg-slate-100 cursor-pointer" onClick={handleCardClick}>
+      <a
+        href={getPagePath('product-detail', activeStore.slug, product.id)}
+        className="relative aspect-square overflow-hidden bg-slate-100 cursor-pointer block"
+        onClick={() => setSelectedProductId(product.id)}
+      >
         <img
           src={product.images[0]}
           alt={productName}
@@ -139,7 +144,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span>{t.quickView}</span>
           </button>
         </div>
-      </div>
+      </a>
 
       {/* Product Content Details */}
       <div className={`${isCompact ? 'p-3 sm:p-3.5' : isLargeOrSpacious ? 'p-4 sm:p-5' : 'p-3.5 sm:p-4'} flex flex-col flex-1 justify-between`}>
@@ -165,7 +170,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Product Name (Properly sized so full text appears clearly) */}
           <h3
-            onClick={handleCardClick}
             className={`font-bold ${
               isCompact 
                 ? 'text-xs sm:text-[13px] line-clamp-2 sm:line-clamp-3 leading-snug' 
@@ -175,7 +179,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             } text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer`}
             title={productName}
           >
-            {productName}
+            <a
+              href={getPagePath('product-detail', activeStore.slug, product.id)}
+              onClick={() => setSelectedProductId(product.id)}
+            >
+              {productName}
+            </a>
           </h3>
 
           {/* Product Tagline / Short description */}

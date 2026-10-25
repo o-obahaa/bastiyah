@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import confetti from 'canvas-confetti';
+import { getPagePath } from '../../utils/urlUtils';
 import { 
   CheckCircle2, 
   Package, 
@@ -81,12 +82,12 @@ export const OrderSuccessPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto my-20 p-8 bg-white rounded-3xl border border-slate-200 text-center space-y-4">
         <h2 className="text-xl font-bold text-slate-900">{language === 'ar' ? 'لا يوجد طلب حديث' : 'No recent order found'}</h2>
-        <button
-          onClick={() => setCurrentPage('home')}
-          className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold"
+        <a
+          href={getPagePath('home', activeStore.slug)}
+          className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold inline-block"
         >
           {t.home}
-        </button>
+        </a>
       </div>
     );
   }
@@ -255,21 +256,21 @@ export const OrderSuccessPage: React.FC = () => {
 
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
-          <button
-            onClick={() => setCurrentPage('orders')}
+          <a
+            href={getPagePath('orders', activeStore.slug)}
             className="flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all"
           >
             <Package className="w-4 h-4" />
             <span>{t.trackInOrders}</span>
-          </button>
+          </a>
 
-          <button
-            onClick={() => setCurrentPage('shop')}
+          <a
+            href={getPagePath('shop', activeStore.slug)}
             className="flex-1 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
           >
             <span>{t.continueShopping}</span>
             <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-          </button>
+          </a>
 
           <button
             onClick={handlePrint}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ShippingAddress, Order } from '../../types';
+import { getPagePath } from '../../utils/urlUtils';
 import { 
   Truck, 
   Lock, 
@@ -146,12 +147,12 @@ export const CheckoutPage: React.FC = () => {
         <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
         <h2 className="text-xl font-bold text-slate-900">{t.bagEmpty}</h2>
         <p className="text-sm text-slate-500">{t.bagEmptyDesc}</p>
-        <button
-          onClick={() => setCurrentPage('shop')}
-          className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-slate-800 transition-colors"
+        <a
+          href={getPagePath('shop', activeStore.slug)}
+          className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-slate-800 transition-colors inline-block"
         >
           {t.continueShopping}
-        </button>
+        </a>
       </div>
     );
   }
@@ -174,13 +175,13 @@ export const CheckoutPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Back to cart header */}
       <div className="mb-8 flex items-center justify-between">
-        <button
-          onClick={() => setCurrentPage('shop')}
+        <a
+          href={getPagePath('shop', activeStore.slug)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
         >
           <BackArrow className="w-4 h-4" />
           <span>{t.continueShopping}</span>
-        </button>
+        </a>
 
         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
           <Lock className="w-3.5 h-3.5 text-emerald-600" />

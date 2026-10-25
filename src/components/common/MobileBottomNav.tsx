@@ -2,9 +2,11 @@ import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react';
 import { ANONYMOUS_USER_AVATAR } from '../../types';
+import { getPagePath } from '../../utils/urlUtils';
 
 export const MobileBottomNav: React.FC = () => {
   const {
+    activeStore,
     currentPage,
     setCurrentPage,
     setSelectedCategory,
@@ -16,17 +18,6 @@ export const MobileBottomNav: React.FC = () => {
     language,
     theme,
   } = useStore();
-
-  const handleHomeClick = () => {
-    setCurrentPage('home');
-    setSelectedCategory('All');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleShopClick = () => {
-    setCurrentPage('shop');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const handleAccountClick = () => {
     if (currentCustomer) {
@@ -43,9 +34,11 @@ export const MobileBottomNav: React.FC = () => {
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] select-none">
       <div className="grid grid-cols-4 h-16 max-w-lg mx-auto">
         {/* 1. Home */}
-        <button
-          type="button"
-          onClick={handleHomeClick}
+        <a
+          href={getPagePath('home', activeStore.slug)}
+          onClick={() => {
+            setSelectedCategory('All');
+          }}
           className={`flex flex-col items-center justify-center gap-1 transition-colors relative ${
             isHomeActive ? 'font-bold' : 'text-slate-500 hover:text-slate-800'
           }`}
@@ -59,12 +52,11 @@ export const MobileBottomNav: React.FC = () => {
           )}
           <Home className={`w-5 h-5 ${isHomeActive ? 'stroke-[2.5]' : ''}`} />
           <span className="text-[11px] leading-none">{language === 'ar' ? 'الرئيسة' : 'Home'}</span>
-        </button>
+        </a>
 
         {/* 2. Categories */}
-        <button
-          type="button"
-          onClick={handleShopClick}
+        <a
+          href={getPagePath('shop', activeStore.slug)}
           className={`flex flex-col items-center justify-center gap-1 transition-colors relative ${
             isShopActive ? 'font-bold' : 'text-slate-500 hover:text-slate-800'
           }`}
@@ -78,7 +70,7 @@ export const MobileBottomNav: React.FC = () => {
           )}
           <LayoutGrid className={`w-5 h-5 ${isShopActive ? 'stroke-[2.5]' : ''}`} />
           <span className="text-[11px] leading-none">{language === 'ar' ? 'التصنيفات' : 'Categories'}</span>
-        </button>
+        </a>
 
         {/* 3. Shopping Cart */}
         <button

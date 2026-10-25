@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore, phonesMatch } from '../../context/StoreContext';
+import { getPagePath } from '../../utils/urlUtils';
 import { 
   Package, 
   Truck, 
@@ -215,12 +216,12 @@ export const CustomerOrdersPage: React.FC = () => {
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {language === 'ar' ? 'لم تقم بإجراء أي طلبات حتى الآن في هذا المتجر.' : 'You have not placed any orders in this store yet.'}
           </p>
-          <button
-            onClick={() => setCurrentPage('shop')}
-            className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+          <a
+            href={getPagePath('shop', activeStore.slug)}
+            className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors inline-block"
           >
             {t.shopNow}
-          </button>
+          </a>
         </div>
       ) : filteredOrders.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3">

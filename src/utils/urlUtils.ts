@@ -103,13 +103,22 @@ export const getPagePath = (
   const isLocalOrVercel = hostname.includes('localhost') || hostname.includes('127.0.0.1') || hostname.endsWith('.vercel.app');
   const isStoreSubdomain = !isLocalOrVercel && hostParts.length >= 3 && storeSlug && hostParts[0] === storeSlug.toLowerCase();
 
-  // 1. Platform Landing
-  if (page === 'bastiyah-landing') {
-    return '/';
-  }
+  // 1. Platform Distinct Pages
+  if (page === 'bastiyah-landing') return '/';
+  if (page === 'bastiyah-about') return '/about';
+  if (page === 'bastiyah-contact') return '/contact';
+  if (page === 'bastiyah-services') return '/services';
+  if (page === 'bastiyah-features') return '/features';
+  if (page === 'bastiyah-how-it-works') return '/how-it-works';
+  if (page === 'bastiyah-pricing') return '/pricing';
+  if (page === 'bastiyah-faq') return '/faq';
+  if (page === 'bastiyah-stores') return '/stores';
+  if (page === 'bastiyah-apply') return '/apply';
+  if (page === 'bastiyah-products') return '/products';
+  if (page === 'bastiyah-legal') return '/legal';
 
   // 2. Platform Owner Admin
-  if (page === 'bastiyah-admin') {
+  if (page === 'bastiyah-admin' || page === 'owner-portal') {
     return '/owner';
   }
 

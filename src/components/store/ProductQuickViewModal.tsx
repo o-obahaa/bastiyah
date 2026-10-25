@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { X, Star, ShoppingBag, ArrowRight, ShieldCheck, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getPagePath } from '../../utils/urlUtils';
 
 export const ProductQuickViewModal: React.FC = () => {
   const { 
@@ -278,13 +279,14 @@ export const ProductQuickViewModal: React.FC = () => {
                 </button>
               </div>
 
-              <button
+              <a
+                href={getPagePath('product-detail', activeStore.slug, quickViewProduct.id)}
                 onClick={handleGoToFullPage}
                 className="w-full text-center text-xs text-emerald-700 hover:text-emerald-900 font-bold flex items-center justify-center gap-1 py-1"
               >
                 <span>{t.productOverview}</span>
                 <ArrowRight className={`w-3.5 h-3.5 ${language === 'ar' ? 'rotate-180' : ''}`} />
-              </button>
+              </a>
             </div>
           </div>
         </div>

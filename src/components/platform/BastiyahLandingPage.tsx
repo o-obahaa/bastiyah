@@ -34,16 +34,23 @@ import {
   X
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
+import { ActivePage } from '../../types';
 import { BLANK_STORE_LOGO_URL } from '../../constants/blankLogo';
 import { THEME_CONFIGS } from '../../utils/themeUtils';
 import { getStoreDisplayUrl, getStorePathLabel } from '../../utils/urlUtils';
 import { DynamicLogo } from '../common/DynamicLogo';
 
-export const BastiyahLandingPage: React.FC = () => {
+interface BastiyahLandingPageProps {
+  page?: ActivePage;
+}
+
+export const BastiyahLandingPage: React.FC<BastiyahLandingPageProps> = ({ page }) => {
   const {
     stores,
     switchStore,
+    currentPage,
     setCurrentPage,
+    navigate,
     setAdminTab,
     createHostedStore,
     language,
@@ -52,6 +59,7 @@ export const BastiyahLandingPage: React.FC = () => {
     addToast,
   } = useStore();
 
+  const activePage = page || currentPage || 'bastiyah-landing';
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Active Navigation Tab & Mobile Menu State
@@ -59,36 +67,43 @@ export const BastiyahLandingPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navTabs = [
-    { id: 'services', labelAr: 'خدماتنا', labelEn: 'Services' },
-    { id: 'features', labelAr: 'المميزات', labelEn: 'Features' },
-    { id: 'how-it-works', labelAr: 'كيف يعمل', labelEn: 'How It Works' },
-    { id: 'pricing', labelAr: 'الأسعار', labelEn: 'Pricing' },
-    { id: 'about', labelAr: 'من نحن', labelEn: 'About Us' },
-    { id: 'faq', labelAr: 'الأسئلة الشائعة', labelEn: 'FAQ' },
-    { id: 'contact', labelAr: 'اتصل بنا', labelEn: 'Contact Us' },
-    { id: 'hosted-stores-directory', labelAr: 'المتاجر', labelEn: 'Stores', isStore: true },
+    { id: 'services', path: '/services', page: 'bastiyah-services' as ActivePage, labelAr: 'خدماتنا', labelEn: 'Services' },
+    { id: 'features', path: '/features', page: 'bastiyah-features' as ActivePage, labelAr: 'المميزات', labelEn: 'Features' },
+    { id: 'how-it-works', path: '/how-it-works', page: 'bastiyah-how-it-works' as ActivePage, labelAr: 'كيف يعمل', labelEn: 'How It Works' },
+    { id: 'pricing', path: '/pricing', page: 'bastiyah-pricing' as ActivePage, labelAr: 'الأسعار', labelEn: 'Pricing' },
+    { id: 'about', path: '/about', page: 'bastiyah-about' as ActivePage, labelAr: 'من نحن', labelEn: 'About Us' },
+    { id: 'faq', path: '/faq', page: 'bastiyah-faq' as ActivePage, labelAr: 'الأسئلة الشائعة', labelEn: 'FAQ' },
+    { id: 'contact', path: '/contact', page: 'bastiyah-contact' as ActivePage, labelAr: 'اتصل بنا', labelEn: 'Contact Us' },
+    { id: 'hosted-stores-directory', path: '/stores', page: 'bastiyah-stores' as ActivePage, labelAr: 'المتاجر', labelEn: 'Stores', isStore: true },
   ];
 
-  const handleTabClick = (e: React.MouseEvent, targetId: string) => {
-    e.preventDefault();
+  const isTabActive = (tab: typeof navTabs[0]) => {
+    if (activePage === tab.page) return true;
+    if (activePage === 'bastiyah-landing' && activeSection === tab.id) return true;
+    return false;
+  };
+
+  const handleTabClick = (e: React.MouseEvent, targetPathOrId: string) => {
     setMobileMenuOpen(false);
-    const element = document.getElementById(targetId);
+    if (targetPathOrId.startsWith('/')) {
+      navigate(targetPathOrId, e);
+      return;
+    }
+    const cleanId = targetPathOrId.replace(/^#/, '');
+    const element = document.getElementById(cleanId);
     if (element) {
+      e.preventDefault();
       element.scrollIntoView({ behavior: 'smooth' });
       try {
-        window.history.pushState(null, '', `#${targetId}`);
-      } catch (err) {}
-      setActiveSection(targetId);
+        window.history.pushState(null, '', `#${cleanId}`);
+      } catch {}
+      setActiveSection(cleanId);
     }
   };
 
   const handleHomeClick = (e: React.MouseEvent) => {
-    e.preventDefault();
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    try {
-      window.history.pushState(null, '', window.location.pathname);
-    } catch (err) {}
+    navigate('/', e);
     setActiveSection('');
   };
 
@@ -302,6 +317,199 @@ export const BastiyahLandingPage: React.FC = () => {
     }
   ];
 
+  const getPageInfo = () => {
+    switch (activePage) {
+      case 'bastiyah-services':
+        return { labelAr: 'خدماتنا', labelEn: 'Services', titleAr: 'خدمات بسطية المتكاملة', titleEn: 'Platform Services' };
+      case 'bastiyah-features':
+        return { labelAr: 'المميزات', labelEn: 'Features', titleAr: 'المميزات والحلول التقنية', titleEn: 'Platform Features' };
+      case 'bastiyah-how-it-works':
+        return { labelAr: 'كيف يعمل', labelEn: 'How It Works', titleAr: 'كيف تطلق متجرك في 4 خطوات', titleEn: 'How It Works' };
+      case 'bastiyah-pricing':
+        return { labelAr: 'الأسعار', labelEn: 'Pricing', titleAr: 'خطط الأسعار والاشتراكات', titleEn: 'Pricing Plans' };
+      case 'bastiyah-about':
+        return { labelAr: 'من نحن', labelEn: 'About Us', titleAr: 'قصة بسطية ورؤيتنا', titleEn: 'About Us' };
+      case 'bastiyah-faq':
+        return { labelAr: 'الأسئلة الشائعة', labelEn: 'FAQ', titleAr: 'الأسئلة الشائعة والدعم الفني', titleEn: 'Frequently Asked Questions' };
+      case 'bastiyah-contact':
+        return { labelAr: 'اتصل بنا', labelEn: 'Contact Us', titleAr: 'تواصل مع فريق بسطية', titleEn: 'Contact Us' };
+      case 'bastiyah-stores':
+        return { labelAr: 'المتاجر', labelEn: 'Stores', titleAr: 'دليل المتاجر المستضافة', titleEn: 'Hosted Stores Directory' };
+      case 'bastiyah-apply':
+        return { labelAr: 'أنشئ متجرك', labelEn: 'Create Store', titleAr: 'احجز متجرك الإلكتروني الآن', titleEn: 'Create Your Store' };
+      case 'bastiyah-products':
+        return { labelAr: 'معرض المنتجات', labelEn: 'Products', titleAr: 'معرض منتجات المتاجر', titleEn: 'Products Showcase' };
+      case 'bastiyah-legal':
+        return { labelAr: 'قانوني', labelEn: 'Legal', titleAr: 'الشروط والأحكام وسياسة الخصوصية', titleEn: 'Legal & Privacy Policy' };
+      default:
+        return null;
+    }
+  };
+  const pageInfo = getPageInfo();
+
+  const showHero = activePage === 'bastiyah-landing';
+  const showServices = activePage === 'bastiyah-landing' || activePage === 'bastiyah-services' || activePage === 'bastiyah-about';
+  const showAbout = activePage === 'bastiyah-landing' || activePage === 'bastiyah-about';
+  const showApply = activePage === 'bastiyah-landing' || activePage === 'bastiyah-apply';
+  const showHowItWorks = activePage === 'bastiyah-landing' || activePage === 'bastiyah-how-it-works';
+  const showBenefits = activePage === 'bastiyah-landing' || activePage === 'bastiyah-services' || activePage === 'bastiyah-features' || activePage === 'bastiyah-how-it-works';
+  const showFeatures = activePage === 'bastiyah-landing' || activePage === 'bastiyah-features';
+  const showInfrastructure = activePage === 'bastiyah-landing' || activePage === 'bastiyah-services' || activePage === 'bastiyah-features';
+  const showPricing = activePage === 'bastiyah-landing' || activePage === 'bastiyah-pricing';
+  const showFaq = activePage === 'bastiyah-landing' || activePage === 'bastiyah-faq' || activePage === 'bastiyah-pricing' || activePage === 'bastiyah-how-it-works' || activePage === 'bastiyah-apply';
+  const showSupportCta = activePage === 'bastiyah-landing' || activePage === 'bastiyah-faq';
+  const showContact = activePage === 'bastiyah-landing' || activePage === 'bastiyah-contact' || activePage === 'bastiyah-faq';
+  const showStores = activePage === 'bastiyah-landing' || activePage === 'bastiyah-stores';
+  const showProducts = activePage === 'bastiyah-products';
+  const showLegal = activePage === 'bastiyah-legal';
+  const showCtaCard = activePage !== 'bastiyah-landing' && activePage !== 'bastiyah-apply';
+
+  const renderProductsSection = () => {
+    const allStoreProducts = stores.flatMap((s) =>
+      s.products.map((p) => ({
+        ...p,
+        storeSlug: s.slug,
+        storeName: language === 'ar' ? s.nameAr || s.name : s.name,
+      }))
+    );
+    return (
+      <section id="platform-products-directory" className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+            {language === 'ar' ? 'كتالوج المنتجات المشترك' : 'Curated Store Products'}
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.3] tracking-normal">
+            {language === 'ar' ? 'معرض منتجات المتاجر المستضافة' : 'Showcase of Hosted Store Products'}
+          </h2>
+          <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed">
+            {language === 'ar'
+              ? 'تصفح أحدث وأبرز المنتجات المعروضة للبيع عبر المتاجر المستضافة في بسطية'
+              : 'Discover products created and curated by independent stores powered by Bastiyah.'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {allStoreProducts.slice(0, 16).map((prod) => {
+            const pName = language === 'ar' ? prod.nameAr || prod.name : prod.name;
+            return (
+              <div key={prod.id} className="bg-white rounded-3xl border border-stone-200/90 hover:border-stone-400 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+                <a href={`/store/${prod.storeSlug}/product/${prod.id}`} className="block relative aspect-square overflow-hidden bg-stone-100">
+                  <img src={prod.images[0]} alt={pName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  <span className="absolute top-3 end-3 px-2.5 py-1 rounded-full bg-stone-900/80 backdrop-blur-xs text-white text-[11px] font-bold">
+                    {prod.storeName}
+                  </span>
+                </a>
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                  <div>
+                    <span className="text-[11px] font-bold text-stone-400 block">{prod.category}</span>
+                    <a href={`/store/${prod.storeSlug}/product/${prod.id}`} className="text-sm font-bold text-stone-900 hover:text-stone-700 line-clamp-1 mt-0.5">
+                      {pName}
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+                    <span className="font-black text-stone-900 font-mono text-sm">
+                      {prod.price.toLocaleString()} د.ع
+                    </span>
+                    <a
+                      href={`/store/${prod.storeSlug}/product/${prod.id}`}
+                      className="px-3 py-1.5 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800 transition-colors flex items-center gap-1"
+                    >
+                      <span>{language === 'ar' ? 'عرض المنتج' : 'View Product'}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  const renderLegalSection = () => (
+    <section id="legal" className="py-16 sm:py-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-12">
+        <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+          {language === 'ar' ? 'الوثائق القانونية وسياسات الاستخدام' : 'Legal & Policies'}
+        </span>
+        <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand">
+          {language === 'ar' ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms of Service & Privacy Policy'}
+        </h2>
+        <p className="text-stone-500 text-xs sm:text-sm mt-2">
+          {language === 'ar' ? 'آخر تحديث: 2026' : 'Last updated: 2026'}
+        </p>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-stone-200/90 p-8 sm:p-12 shadow-sm space-y-8 text-stone-700 leading-relaxed text-sm">
+        <div>
+          <h3 className="text-lg font-bold text-stone-900 mb-2">1. مقدمة حول منصة بسطية (Bastiyah Platform)</h3>
+          <p className="text-stone-600">
+            منصة بسطية توفر بنية تحتية رقمية تتيح للتجار ورواد الأعمال في العراق إنشاء متاجر إلكترونية مستقلة بروابط وهوية خاصة بهم، وإدارة المنتجات والطلبات والتواصل المباشر مع العملاء عبر قنوات متعددة تشمل واتساب.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-bold text-stone-900 mb-2">2. استقلالية المتاجر وحماية البيانات</h3>
+          <p className="text-stone-600">
+            كل متجر مستضاف عبر المنصة يعد كياناً رقمياً مستقلاً. بيانات العملاء والطلبات والكتالوجات مشفرة ومحمية بمعايير أمان عالية، ولا يتم مشاركة أي بيانات حساسة مع أطراف خارجية غير مصرح لها.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-bold text-stone-900 mb-2">3. سياسة الخصوصية واستخدام ملفات التعريف (Cookies)</h3>
+          <p className="text-stone-600">
+            تلتزم المنصة بأقصى درجات الشفافية فيما يتعلق بملفات التعريف الضرورية لتسجيل دخول التجار وحفظ سلة التسوق الخاصة بالعملاء. لا نستخدم أي ملفات تجسس أو تتبع إعلاني غير ضروري.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-bold text-stone-900 mb-2">4. حقوق التاجر والمستهلك</h3>
+          <p className="text-stone-600">
+            يتحمل صاحب كل متجر مسؤولية المنتجات والأسعار والتوصيل والضمانات المعلنة في متجره. تضمن المنصة استقرار الخدمة وتوفير الدعم الفني اللازم لضمان تجربة تسوق سلسة وآمنة لكافة الأطراف.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderCtaCard = () => (
+    <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="rounded-3xl bg-gradient-to-r from-stone-900 via-stone-850 to-stone-950 p-8 sm:p-12 text-white relative overflow-hidden shadow-xl border border-stone-800 text-center">
+        <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+          <span className="px-3.5 py-1 rounded-full text-white text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block font-mono">
+            {language === 'ar' ? 'جاهز للانطلاق؟' : 'Ready to start?'}
+          </span>
+          <h3 className="text-2xl sm:text-4xl font-black font-brand">
+            {language === 'ar' ? 'احجز متجرك الإلكتروني الآن وانطلق في دقيقتين' : 'Book Your Online Store Now & Launch in 2 Minutes'}
+          </h3>
+          <p className="text-xs sm:text-sm text-stone-300 max-w-lg mx-auto leading-relaxed">
+            {language === 'ar'
+              ? 'ابدأ مجاناً مع خطة الانطلاق وجرّب واجهتك الخاصة ولوحة التحكم المتطورة مع دعم واتساب مباشر.'
+              : 'Start free with the Starter plan and test your branded storefront and dashboard with direct WhatsApp support.'}
+          </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/apply"
+              onClick={(e) => handleTabClick(e, '/apply')}
+              className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs sm:text-sm shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
+            >
+              <Zap className="w-4 h-4 text-stone-950" />
+              <span>{language === 'ar' ? 'أنشئ متجرك الآن' : 'Create Store Now'}</span>
+            </a>
+            <a
+              href="/stores"
+              onClick={(e) => handleTabClick(e, '/stores')}
+              className="px-6 py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs sm:text-sm border border-stone-700 transition-colors"
+            >
+              <span>{language === 'ar' ? 'تصفح المتاجر المستضافة' : 'Browse Hosted Stores'}</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div className="min-h-screen bg-[#fafaf9] text-stone-900 relative selection:bg-stone-900 selection:text-white">
       {/* Minimalist Background Pattern Overlay (Subtle dot grid fading radially) */}
@@ -318,7 +526,8 @@ export const BastiyahLandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
           
           {/* Platform Brand (Cropped Logo + BASTIYAH | بسطية) */}
-          <div 
+          <a 
+            href="/"
             onClick={handleHomeClick}
             className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
           >
@@ -338,17 +547,17 @@ export const BastiyahLandingPage: React.FC = () => {
                 BASTIYAH
               </span>
             </div>
-          </div>
+          </a>
 
           {/* Navigation Links (Upper Banner Links) */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs sm:text-sm font-semibold text-stone-600">
             {navTabs.map((tab) => {
-              const isActive = activeSection === tab.id;
+              const isActive = isTabActive(tab);
               return (
                 <a
                   key={tab.id}
-                  href={`#${tab.id}`}
-                  onClick={(e) => handleTabClick(e, tab.id)}
+                  href={tab.path}
+                  onClick={(e) => handleTabClick(e, tab.path)}
                   className={`px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 ${
                     isActive
                       ? 'text-stone-950 font-bold bg-stone-100 shadow-2xs'
@@ -373,8 +582,8 @@ export const BastiyahLandingPage: React.FC = () => {
           <div className="flex items-center gap-2 sm:gap-2.5">
             {/* CTA Button: Jump to Application Box */}
             <a
-              href="#apply-store"
-              onClick={(e) => handleTabClick(e, 'apply-store')}
+              href="/apply"
+              onClick={(e) => handleTabClick(e, '/apply')}
               className="px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-stone-900 hover:bg-stone-800 text-white transition-all shadow-sm hover:shadow flex items-center gap-1.5"
             >
               <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -407,12 +616,12 @@ export const BastiyahLandingPage: React.FC = () => {
           <div className="lg:hidden bg-white/98 backdrop-blur-md border-b border-stone-200 shadow-xl px-4 py-4 space-y-2 animate-in slide-in-from-top-2 duration-200">
             <div className="grid grid-cols-2 gap-2 pb-2 border-b border-stone-100">
               {navTabs.map((tab) => {
-                const isActive = activeSection === tab.id;
+                const isActive = isTabActive(tab);
                 return (
                   <a
                     key={tab.id}
-                    href={`#${tab.id}`}
-                    onClick={(e) => handleTabClick(e, tab.id)}
+                    href={tab.path}
+                    onClick={(e) => handleTabClick(e, tab.path)}
                     className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all ${
                       isActive
                         ? 'bg-stone-900 text-white shadow-xs'
@@ -433,8 +642,8 @@ export const BastiyahLandingPage: React.FC = () => {
               })}
             </div>
             <a
-              href="#apply-store"
-              onClick={(e) => handleTabClick(e, 'apply-store')}
+              href="/apply"
+              onClick={(e) => handleTabClick(e, '/apply')}
               className="w-full py-3 rounded-xl text-xs font-bold bg-stone-900 hover:bg-stone-800 text-white transition-all shadow-sm flex items-center justify-center gap-2"
             >
               <Zap className="w-4 h-4 text-amber-400" />
@@ -443,6 +652,24 @@ export const BastiyahLandingPage: React.FC = () => {
           </div>
         )}
       </header>
+
+      {/* Dedicated Page Breadcrumbs Header */}
+      {pageInfo && (
+        <div className="bg-stone-100/80 border-b border-stone-200/80 py-3 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+            <nav className="flex items-center gap-2 text-xs font-semibold text-stone-500">
+              <a href="/" onClick={handleHomeClick} className="hover:text-stone-900 transition-colors">
+                {language === 'ar' ? 'الرئيسية' : 'Home'}
+              </a>
+              <span className="text-stone-300">/</span>
+              <span className="text-stone-900 font-bold">{language === 'ar' ? pageInfo.labelAr : pageInfo.labelEn}</span>
+            </nav>
+            <div className="text-xs text-stone-500 font-medium hidden sm:block">
+              {language === 'ar' ? pageInfo.titleAr : pageInfo.titleEn}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="relative z-10">
@@ -459,64 +686,66 @@ export const BastiyahLandingPage: React.FC = () => {
           No complicated setup. Just a simpler way to sell online.
           ========================================================================
         */}
-        <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-stone-200/80">
-          <div className="absolute top-10 start-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-emerald-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
+        {showHero && (
+          <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-stone-200/80">
+            <div className="absolute top-10 start-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-amber-100/40 via-rose-100/30 to-emerald-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            
-            {/* Centerpiece: Emblem with Centered Typography (Clean logo without English text or long description) */}
-            <div className="mb-6 animate-in fade-in zoom-in-95 duration-500">
-              <DynamicLogo
-                size="hero"
-                layout="vertical"
-                showText={true}
-                showEnglishText={false}
-              />
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+              
+              {/* Centerpiece: Emblem with Centered Typography (Clean logo without English text or long description) */}
+              <div className="mb-6 animate-in fade-in zoom-in-95 duration-500">
+                <DynamicLogo
+                  size="hero"
+                  layout="vertical"
+                  showText={true}
+                  showEnglishText={false}
+                />
+              </div>
+
+              {/* Hero Main Headline with generous line-height to prevent overlap */}
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-normal text-stone-900 max-w-4xl mx-auto leading-[1.35] sm:leading-[1.28] font-brand mb-4">
+                {language === 'ar' 
+                  ? 'احجز متجرك الإلكتروني ببساطة' 
+                  : 'Book Your Online Store, Simply.'}
+              </h1>
+
+              {/* Hero Subtitle with generous line-height */}
+              <p className="text-stone-600 text-base sm:text-xl max-w-3xl mx-auto mt-4 leading-relaxed sm:leading-[1.8] font-normal">
+                {language === 'ar'
+                  ? 'احصل على رابط خاص بمتجرك وحوّل منتجاتك إلى متجر إلكتروني متكامل مع بسطية. أنشئ واجهتك الرقمية الخاصة، واعرض منتجاتك، وامنح عملاءك تجربة تسوق أسهل — كل ذلك برابط مخصص وعلامة تجارية مستقلة.'
+                  : 'Get a specific link for your store and turn your products into an online store with Bastiyah. Create your own digital storefront, showcase your products, and give your customers a simpler way to shop — all under your own brand.'}
+              </p>
+
+              {/* Hero Action Buttons */}
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
+                <a
+                  href="/apply"
+                  onClick={(e) => handleTabClick(e, '/apply')}
+                  className="px-7 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
+                >
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
+                </a>
+
+                <a
+                  href="/how-it-works"
+                  onClick={(e) => handleTabClick(e, '/how-it-works')}
+                  className="px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400 leading-normal"
+                >
+                  <Compass className="w-4 h-4 text-stone-600" />
+                  <span>{language === 'ar' ? 'اكتشف كيف يعمل' : 'Explore How It Works'}</span>
+                </a>
+              </div>
+
+              {/* Micro-copy */}
+              <p className="text-xs sm:text-sm text-stone-500 mt-5 font-medium leading-normal">
+                {language === 'ar' 
+                  ? 'بدون تعقيدات تقنية. فقط طريقة أسهل للبيع عبر الإنترنت.' 
+                  : 'No complicated setup. Just a simpler way to sell online.'}
+              </p>
             </div>
-
-            {/* Hero Main Headline with generous line-height to prevent overlap */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-normal text-stone-900 max-w-4xl mx-auto leading-[1.35] sm:leading-[1.28] font-brand mb-4">
-              {language === 'ar' 
-                ? 'احجز متجرك الإلكتروني ببساطة' 
-                : 'Book Your Online Store, Simply.'}
-            </h1>
-
-            {/* Hero Subtitle with generous line-height */}
-            <p className="text-stone-600 text-base sm:text-xl max-w-3xl mx-auto mt-4 leading-relaxed sm:leading-[1.8] font-normal">
-              {language === 'ar'
-                ? 'احصل على رابط خاص بمتجرك وحوّل منتجاتك إلى متجر إلكتروني متكامل مع بسطية. أنشئ واجهتك الرقمية الخاصة، واعرض منتجاتك، وامنح عملاءك تجربة تسوق أسهل — كل ذلك برابط مخصص وعلامة تجارية مستقلة.'
-                : 'Get a specific link for your store and turn your products into an online store with Bastiyah. Create your own digital storefront, showcase your products, and give your customers a simpler way to shop — all under your own brand.'}
-            </p>
-
-            {/* Hero Action Buttons */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
-              <a
-                href="#apply-store"
-                onClick={(e) => handleTabClick(e, 'apply-store')}
-                className="px-7 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
-              >
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
-              </a>
-
-              <a
-                href="#how-it-works"
-                onClick={(e) => handleTabClick(e, 'how-it-works')}
-                className="px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm sm:text-base flex items-center gap-2 transition-all shadow-sm hover:border-stone-400 leading-normal"
-              >
-                <Compass className="w-4 h-4 text-stone-600" />
-                <span>{language === 'ar' ? 'اكتشف كيف يعمل' : 'Explore How It Works'}</span>
-              </a>
-            </div>
-
-            {/* Micro-copy */}
-            <p className="text-xs sm:text-sm text-stone-500 mt-5 font-medium leading-normal">
-              {language === 'ar' 
-                ? 'بدون تعقيدات تقنية. فقط طريقة أسهل للبيع عبر الإنترنت.' 
-                : 'No complicated setup. Just a simpler way to sell online.'}
-            </p>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 
           ========================================================================
@@ -525,87 +754,89 @@ export const BastiyahLandingPage: React.FC = () => {
           the tools to bring your business online without starting from scratch.
           ========================================================================
         */}
-        <section id="services" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                {language === 'ar' ? 'خدمات بسطية المتكاملة' : 'Platform Services'}
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
-                {language === 'ar' 
-                  ? 'كل ما تحتاجه لبدء البيع عبر الإنترنت' 
-                  : 'Everything You Need to Start Selling Online'}
-              </h2>
-              <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.75]">
-                {language === 'ar'
-                  ? 'بناء متجر إلكتروني لا ينبغي أن يكون معقداً. تمنحك بسطية الأدوات لنقل تجارتك إلى الإنترنت دون البدء من الصفر.'
-                  : "Building an online store shouldn't be complicated. Bastiyah gives you the tools to bring your business online without starting from scratch."}
-              </p>
-            </div>
+        {showServices && (
+          <section id="services" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                  {language === 'ar' ? 'خدمات بسطية المتكاملة' : 'Platform Services'}
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
+                  {language === 'ar' 
+                    ? 'كل ما تحتاجه لبدء البيع عبر الإنترنت' 
+                    : 'Everything You Need to Start Selling Online'}
+                </h2>
+                <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.75]">
+                  {language === 'ar'
+                    ? 'بناء متجر إلكتروني لا ينبغي أن يكون معقداً. تمنحك بسطية الأدوات لنقل تجارتك إلى الإنترنت دون البدء من الصفر.'
+                    : "Building an online store shouldn't be complicated. Bastiyah gives you the tools to bring your business online without starting from scratch."}
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {[
-                {
-                  icon: <Store className="w-6 h-6 text-stone-900" />,
-                  titleEn: 'Your Own Online Store',
-                  titleAr: 'متجرك الإلكتروني المستقل',
-                  descEn: 'Get a dedicated storefront for your business where customers can browse your products, discover your brand, and shop with ease.',
-                  descAr: 'احصل على واجهة متجر مخصصة لمشروعك، حيث يمكن للعملاء تصفح منتجاتك، واستكشاف علامتك التجارية، والتسوق بكل سهولة.'
-                },
-                {
-                  icon: <Package className="w-6 h-6 text-stone-900" />,
-                  titleEn: 'Showcase Your Products',
-                  titleAr: 'اعرض منتجاتك باحترافية',
-                  descEn: "Present your products with photos, descriptions, and prices to help customers find exactly what they're looking for.",
-                  descAr: 'اعرض منتجاتك مع الصور الواضحة والأوصاف الدقيقة والأسعار لمساعدة العملاء في العثور على ما يبحثون عنه تماماً.'
-                },
-                {
-                  icon: <Palette className="w-6 h-6 text-stone-900" />,
-                  titleEn: 'Your Brand, Your Identity',
-                  titleAr: 'علامتك التجارية وهويتك الخاصة',
-                  descEn: 'Create an online presence that represents your business and gives your customers a familiar place to shop.',
-                  descAr: 'أنشئ حضوراً رقمياً يعبر عن نشاطك التجاري بدقة، ويمنح عملاءك تجربة تسوق مألوفة تعزز الثقة والولاء.'
-                },
-                {
-                  icon: <LayoutDashboard className="w-6 h-6 text-stone-900" />,
-                  titleEn: 'Simple Store Management',
-                  titleAr: 'إدارة بسيطة للمتجر',
-                  descEn: 'Manage your products and keep your store organized through a straightforward experience designed for business owners.',
-                  descAr: 'أدِر منتجاتك وحافظ على تنظيم متجرك من خلال تجربة إدارة مباشرة وسلسة صُممت خصيصاً لأصحاب الأعمال.'
-                },
-                {
-                  icon: <Share2 className="w-6 h-6 text-stone-900" />,
-                  titleEn: 'Share Your Store Anywhere',
-                  titleAr: 'شارك متجرك في أي مكان',
-                  descEn: 'Make it easy for customers to find your store by sharing its link through social media, messaging apps, and other channels.',
-                  descAr: 'سهّل على العملاء الوصول لمتجرك بمشاركة رابطه المباشر عبر وسائل التواصل الاجتماعي، وتطبيقات المراسلة، وكافة القنوات.'
-                },
-                {
-                  icon: <TrendingUp className="w-6 h-6 text-stone-900" />,
-                  titleEn: 'Built for Growing Businesses',
-                  titleAr: 'مصمم للمشاريع المتنامية',
-                  descEn: "Whether you're starting a small business or bringing an established shop online, Bastiyah helps you take the next step.",
-                  descAr: 'سواء كنت تبدأ مشروعاً صغيراً أو تنقل محلاً قائماً إلى الإنترنت، تساعدك بسطية على اتخاذ الخطوة التالية بثقة.'
-                }
-              ].map((item, idx) => (
-                <div 
-                  key={idx} 
-                  className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md hover:border-stone-300 transition-all flex flex-col"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mb-5 shrink-0">
-                    {item.icon}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {[
+                  {
+                    icon: <Store className="w-6 h-6 text-stone-900" />,
+                    titleEn: 'Your Own Online Store',
+                    titleAr: 'متجرك الإلكتروني المستقل',
+                    descEn: 'Get a dedicated storefront for your business where customers can browse your products, discover your brand, and shop with ease.',
+                    descAr: 'احصل على واجهة متجر مخصصة لمشروعك، حيث يمكن للعملاء تصفح منتجاتك، واستكشاف علامتك التجارية، والتسوق بكل سهولة.'
+                  },
+                  {
+                    icon: <Package className="w-6 h-6 text-stone-900" />,
+                    titleEn: 'Showcase Your Products',
+                    titleAr: 'اعرض منتجاتك باحترافية',
+                    descEn: "Present your products with photos, descriptions, and prices to help customers find exactly what they're looking for.",
+                    descAr: 'اعرض منتجاتك مع الصور الواضحة والأوصاف الدقيقة والأسعار لمساعدة العملاء في العثور على ما يبحثون عنه تماماً.'
+                  },
+                  {
+                    icon: <Palette className="w-6 h-6 text-stone-900" />,
+                    titleEn: 'Your Brand, Your Identity',
+                    titleAr: 'علامتك التجارية وهويتك الخاصة',
+                    descEn: 'Create an online presence that represents your business and gives your customers a familiar place to shop.',
+                    descAr: 'أنشئ حضوراً رقمياً يعبر عن نشاطك التجاري بدقة، ويمنح عملاءك تجربة تسوق مألوفة تعزز الثقة والولاء.'
+                  },
+                  {
+                    icon: <LayoutDashboard className="w-6 h-6 text-stone-900" />,
+                    titleEn: 'Simple Store Management',
+                    titleAr: 'إدارة بسيطة للمتجر',
+                    descEn: 'Manage your products and keep your store organized through a straightforward experience designed for business owners.',
+                    descAr: 'أدِر منتجاتك وحافظ على تنظيم متجرك من خلال تجربة إدارة مباشرة وسلسة صُممت خصيصاً لأصحاب الأعمال.'
+                  },
+                  {
+                    icon: <Share2 className="w-6 h-6 text-stone-900" />,
+                    titleEn: 'Share Your Store Anywhere',
+                    titleAr: 'شارك متجرك في أي مكان',
+                    descEn: 'Make it easy for customers to find your store by sharing its link through social media, messaging apps, and other channels.',
+                    descAr: 'سهّل على العملاء الوصول لمتجرك بمشاركة رابطه المباشر عبر وسائل التواصل الاجتماعي، وتطبيقات المراسلة، وكافة القنوات.'
+                  },
+                  {
+                    icon: <TrendingUp className="w-6 h-6 text-stone-900" />,
+                    titleEn: 'Built for Growing Businesses',
+                    titleAr: 'مصمم للمشاريع المتنامية',
+                    descEn: "Whether you're starting a small business or bringing an established shop online, Bastiyah helps you take the next step.",
+                    descAr: 'سواء كنت تبدأ مشروعاً صغيراً أو تنقل محلاً قائماً إلى الإنترنت، تساعدك بسطية على اتخاذ الخطوة التالية بثقة.'
+                  }
+                ].map((item, idx) => (
+                  <div 
+                    key={idx} 
+                    className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-md hover:border-stone-300 transition-all flex flex-col"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mb-5 shrink-0">
+                      {item.icon}
+                    </div>
+                    <h3 className="font-brand font-bold text-lg text-stone-900 mb-2.5">
+                      {language === 'ar' ? item.titleAr : item.titleEn}
+                    </h3>
+                    <p className="text-sm text-stone-600 leading-relaxed font-normal">
+                      {language === 'ar' ? item.descAr : item.descEn}
+                    </p>
                   </div>
-                  <h3 className="font-brand font-bold text-lg text-stone-900 mb-2.5">
-                    {language === 'ar' ? item.titleAr : item.titleEn}
-                  </h3>
-                  <p className="text-sm text-stone-600 leading-relaxed font-normal">
-                    {language === 'ar' ? item.descAr : item.descEn}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 
           ========================================================================
@@ -618,340 +849,344 @@ export const BastiyahLandingPage: React.FC = () => {
           [Get Started with Bastiyah]
           ========================================================================
         */}
-        <section id="about" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            {/* Cropped Emblem */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-6">
-              <img 
-                src="/bastiyah-emblem.png" 
-                alt="BASTIYAH | بسطية" 
-                className="w-full h-full object-contain pointer-events-none" 
-              />
-            </div>
+        {showAbout && (
+          <section id="about" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+              {/* Cropped Emblem */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mb-6">
+                <img 
+                  src="/bastiyah-emblem.png" 
+                  alt="BASTIYAH | بسطية" 
+                  className="w-full h-full object-contain pointer-events-none" 
+                />
+              </div>
 
-            <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-              {language === 'ar' ? 'من متجرك إلى العالم الرقمي' : 'From Your Shop to the Online World'}
-            </span>
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                {language === 'ar' ? 'من متجرك إلى العالم الرقمي' : 'From Your Shop to the Online World'}
+              </span>
 
-            <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
-              {language === 'ar' 
-                ? 'منتجاتك تستحق الوصول إلى جمهور أكبر' 
-                : 'From Your Shop to the Online World'}
-            </h2>
+              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
+                {language === 'ar' 
+                  ? 'منتجاتك تستحق الوصول إلى جمهور أكبر' 
+                  : 'From Your Shop to the Online World'}
+              </h2>
 
-            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
-              {language === 'ar'
-                ? 'تستحق منتجاتك أن تصل إلى عدد أكبر من الناس. تساعدك بسطية على تجاوز حدود البيع التقليدي وتأسيس متجرك على الإنترنت بكل ثقة.'
-                : 'Your products deserve to reach more people. Bastiyah helps you move beyond traditional selling and establish your business online.'}
-            </p>
-
-            <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
-              {language === 'ar'
-                ? 'مع واجهتك الرقمية المستقلة، تمنح عملاءك وسيلة مريحة لاستكشاف منتجاتك والتسوق منها في أي وقت ومن أي مكان.'
-                : 'With your own digital storefront, you can give customers a convenient way to explore your products whenever they want.'}
-            </p>
-
-            {/* Punchy Brand Statement */}
-            <div className="mt-8 px-6 py-4 rounded-2xl bg-stone-100 border border-stone-200/80">
-              <p className="text-sm sm:text-base font-bold text-stone-900 font-brand leading-[1.4] tracking-normal">
+              <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
                 {language === 'ar'
-                  ? 'متجرك. منتجاتك. علامتك التجارية. وجهة رقمية واحدة.'
-                  : 'Your shop. Your products. Your brand. One online destination.'}
+                  ? 'تستحق منتجاتك أن تصل إلى عدد أكبر من الناس. تساعدك بسطية على تجاوز حدود البيع التقليدي وتأسيس متجرك على الإنترنت بكل ثقة.'
+                  : 'Your products deserve to reach more people. Bastiyah helps you move beyond traditional selling and establish your business online.'}
               </p>
-            </div>
 
-            {/* CTA */}
-            <div className="mt-8">
-              <a
-                href="#apply-store"
-                onClick={(e) => handleTabClick(e, 'apply-store')}
-                className="px-8 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg flex items-center gap-2 transition-all hover:-translate-y-0.5"
-              >
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>{language === 'ar' ? 'ابدأ الآن مع بسطية' : 'Get Started with Bastiyah'}</span>
-              </a>
+              <p className="text-stone-600 text-sm sm:text-base mt-3 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
+                {language === 'ar'
+                  ? 'مع واجهتك الرقمية المستقلة، تمنح عملاءك وسيلة مريحة لاستكشاف منتجاتك والتسوق منها في أي وقت ومن أي مكان.'
+                  : 'With your own digital storefront, you can give customers a convenient way to explore your products whenever they want.'}
+              </p>
+
+              {/* Punchy Brand Statement */}
+              <div className="mt-8 px-6 py-4 rounded-2xl bg-stone-100 border border-stone-200/80">
+                <p className="text-sm sm:text-base font-bold text-stone-900 font-brand leading-[1.4] tracking-normal">
+                  {language === 'ar'
+                    ? 'متجرك. منتجاتك. علامتك التجارية. وجهة رقمية واحدة.'
+                    : 'Your shop. Your products. Your brand. One online destination.'}
+                </p>
+              </div>
+
+              {/* CTA */}
+              <div className="mt-8">
+                <a
+                  href="/apply"
+                  onClick={(e) => handleTabClick(e, '/apply')}
+                  className="px-8 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                >
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>{language === 'ar' ? 'ابدأ الآن مع بسطية' : 'Get Started with Bastiyah'}</span>
+                </a>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 
           ========================================================================
           5. THE BOX FOR NEW STORES APPLYING (With logo and name of site)
           ========================================================================
         */}
-        <section id="apply-store" className="py-20 sm:py-24 border-b border-stone-200/80 bg-stone-50/50 scroll-mt-20">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            {/* The Application Box Container */}
-            <div className="bg-white rounded-3xl border border-stone-200/90 shadow-xl shadow-stone-200/50 p-6 sm:p-10 relative overflow-hidden">
-              {/* Subtle Ambient Decorative Gradient */}
-              <div className="absolute top-0 end-0 w-80 h-80 bg-gradient-to-bl from-amber-100/50 via-rose-100/30 to-transparent rounded-full blur-2xl pointer-events-none -z-0" />
+        {showApply && (
+          <section id="apply-store" className="py-20 sm:py-24 border-b border-stone-200/80 bg-stone-50/50 scroll-mt-20">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+              
+              {/* The Application Box Container */}
+              <div className="bg-white rounded-3xl border border-stone-200/90 shadow-xl shadow-stone-200/50 p-6 sm:p-10 relative overflow-hidden">
+                {/* Subtle Ambient Decorative Gradient */}
+                <div className="absolute top-0 end-0 w-80 h-80 bg-gradient-to-bl from-amber-100/50 via-rose-100/30 to-transparent rounded-full blur-2xl pointer-events-none -z-0" />
 
-              {/* Box Header: Contains the Logo and Name of the Site */}
-              <div className="relative z-10 flex flex-col items-center text-center pb-8 border-b border-stone-100">
-                {/* Stall Emblem */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex items-center justify-center mb-3">
-                  <img
-                    src="/bastiyah-emblem.png"
-                    alt="BASTIYAH | بسطية"
-                    className="w-full h-full object-contain pointer-events-none"
-                  />
-                </div>
-
-                {/* Name of the Site with Vintage Artisanal Contrast */}
-                <div className="flex items-center gap-2">
-                  <h2 className="font-brand font-black text-2xl sm:text-3xl tracking-normal text-[#842a12] bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent leading-[1.3] py-1 px-2 inline-block">
-                    بسطية
-                  </h2>
-                  <span className="text-stone-300 font-light select-none">|</span>
-                  <span className="text-xs font-bold tracking-widest text-[#8a2f14]/80 uppercase font-sans">
-                    BASTIYAH
-                  </span>
-                </div>
-
-                {/* Box Title & Description */}
-                <h3 className="text-lg sm:text-xl font-bold text-stone-800 mt-2 font-brand">
-                  {language === 'ar' ? 'طلب انضمام وإطلاق متجر جديد' : 'Create Your Online Store Today'}
-                </h3>
-                <p className="text-sm text-stone-500 max-w-lg mt-1 font-normal leading-relaxed">
-                  {language === 'ar'
-                    ? 'املأ بيانات متجرك للانضمام إلى منصة بسطية؛ يتم اعتماد وإضافة مدراء المتاجر حصرياً عبر رقم الهاتف من قِبل إدارة المنصة.'
-                    : 'Submit your store details to join Bastiyah; store admins are onboarded and authorized exclusively via mobile phone.'}
-                </p>
-              </div>
-
-              {/* Success Confirmation Card */}
-              {appSuccess ? (
-                <div className="relative z-10 py-10 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-300">
-                  <div className="w-16 h-16 rounded-3xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 mb-4 shadow-sm">
-                    <CheckCircle2 className="w-8 h-8" />
+                {/* Box Header: Contains the Logo and Name of the Site */}
+                <div className="relative z-10 flex flex-col items-center text-center pb-8 border-b border-stone-100">
+                  {/* Stall Emblem */}
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex items-center justify-center mb-3">
+                    <img
+                      src="/bastiyah-emblem.png"
+                      alt="BASTIYAH | بسطية"
+                      className="w-full h-full object-contain pointer-events-none"
+                    />
                   </div>
 
-                  <h4 className="text-2xl font-black text-stone-900 font-brand">
-                    {language === 'ar' ? `تهانينا! متجر (${appSuccess.name}) جاهز الآن` : `Congratulations! (${appSuccess.name}) is Live`}
-                  </h4>
+                  {/* Name of the Site with Vintage Artisanal Contrast */}
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-brand font-black text-2xl sm:text-3xl tracking-normal text-[#842a12] bg-gradient-to-b from-[#8f3216] via-[#6d240d] to-[#3a1105] bg-clip-text text-transparent leading-[1.3] py-1 px-2 inline-block">
+                      بسطية
+                    </h2>
+                    <span className="text-stone-300 font-light select-none">|</span>
+                    <span className="text-xs font-bold tracking-widest text-[#8a2f14]/80 uppercase font-sans">
+                      BASTIYAH
+                    </span>
+                  </div>
 
-                  <p className="text-sm text-stone-600 mt-2 max-w-md">
+                  {/* Box Title & Description */}
+                  <h3 className="text-lg sm:text-xl font-bold text-stone-800 mt-2 font-brand">
+                    {language === 'ar' ? 'طلب انضمام وإطلاق متجر جديد' : 'Create Your Online Store Today'}
+                  </h3>
+                  <p className="text-sm text-stone-500 max-w-lg mt-1 font-normal leading-relaxed">
                     {language === 'ar'
-                      ? 'تم قبول طلبك وإطلاق متجرك بنجاح على منصة بسطية السحابية.'
-                      : 'Your application has been processed and your store is now live on Bastiyah.'}
+                      ? 'املأ بيانات متجرك للانضمام إلى منصة بسطية؛ يتم اعتماد وإضافة مدراء المتاجر حصرياً عبر رقم الهاتف من قِبل إدارة المنصة.'
+                      : 'Submit your store details to join Bastiyah; store admins are onboarded and authorized exclusively via mobile phone.'}
                   </p>
-
-                  <div className="mt-5 px-5 py-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center gap-2 text-stone-800 font-mono text-sm">
-                    <span className="text-emerald-600 font-bold">https://</span>
-                    <span className="font-black text-stone-900">{appSuccess.slug}.bastiyah.com</span>
-                  </div>
-
-                  <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                    <button
-                      onClick={() => {
-                        switchStore(appSuccess.storeId, 'home');
-                      }}
-                      className="px-6 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm flex items-center gap-2 shadow-sm"
-                    >
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span>{t.visitStore}</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        switchStore(appSuccess.storeId, 'admin');
-                        setAdminTab('dashboard');
-                      }}
-                      className="px-6 py-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm flex items-center gap-2 shadow-2xs"
-                    >
-                      <Layers className="w-4 h-4 text-stone-600" />
-                      <span>{t.manageStore}</span>
-                    </button>
-
-                    <button
-                      onClick={() => setAppSuccess(null)}
-                      className="px-4 py-3 rounded-xl text-stone-500 hover:text-stone-800 text-xs font-semibold"
-                    >
-                      {language === 'ar' ? 'تقديم طلب متجر آخر' : 'Submit Another Store'}
-                    </button>
-                  </div>
                 </div>
-              ) : (
-                /* The Interactive Application Form */
-                <form onSubmit={handleApplyStore} className="relative z-10 pt-8 space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Store Name (English / Primary) */}
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                        {language === 'ar' ? 'اسم المتجر بالإنجليزية *' : 'Store Name (English) *'}
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={appName}
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        placeholder="e.g. Silk & Stone"
-                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all"
-                      />
+
+                {/* Success Confirmation Card */}
+                {appSuccess ? (
+                  <div className="relative z-10 py-10 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-16 h-16 rounded-3xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 mb-4 shadow-sm">
+                      <CheckCircle2 className="w-8 h-8" />
                     </div>
 
-                    {/* Store Name (Arabic) */}
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                        {language === 'ar' ? 'اسم المتجر بالعربية' : 'Store Name (Arabic)'}
-                      </label>
-                      <input
-                        type="text"
-                        value={appNameAr}
-                        onChange={(e) => setAppNameAr(e.target.value)}
-                        placeholder="مثال: حرير وحجر"
-                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all font-brand"
-                      />
-                    </div>
-                  </div>
+                    <h4 className="text-2xl font-black text-stone-900 font-brand">
+                      {language === 'ar' ? `تهانينا! متجر (${appSuccess.name}) جاهز الآن` : `Congratulations! (${appSuccess.name}) is Live`}
+                    </h4>
 
-                  {/* Subdomain Slug Live Preview */}
-                  <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      {language === 'ar' ? 'رابط المتجر المخصص على بسطية *' : 'Dedicated Store Link Slug *'}
-                    </label>
-                    <div className="flex items-center rounded-xl bg-stone-50 border border-stone-200 overflow-hidden px-4 py-2.5 focus-within:border-stone-400 focus-within:ring-2 focus-within:ring-stone-900/10 transition-all" dir="ltr">
-                      <span className="font-mono text-xs text-stone-400 select-none">https://</span>
-                      <input
-                        type="text"
-                        required
-                        value={appSlug}
-                        onChange={(e) => setAppSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                        placeholder="store-name"
-                        className="bg-transparent border-0 px-1 font-mono text-xs sm:text-sm font-bold text-stone-900 focus:outline-none flex-1 min-w-0"
-                      />
-                      <span className="font-mono text-xs text-stone-500 font-bold select-none">.bastiyah.com</span>
-                    </div>
-                  </div>
-
-                  {/* Merchant / Owner Name & Contact Info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                        {language === 'ar' ? 'اسم صاحب المتجر *' : 'Merchant / Owner Name *'}
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={appOwnerName}
-                        onChange={(e) => setAppOwnerName(e.target.value)}
-                        placeholder={language === 'ar' ? 'مثال: أحمد العراقي' : 'e.g. Sarah Miller'}
-                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2 flex items-center justify-between">
-                        <span>{language === 'ar' ? 'رقم الهاتف المحمول (وسيلة التسجيل والاعتماد) *' : 'Mobile Phone (Registration Method) *'}</span>
-                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          {language === 'ar' ? 'اعتماد المالك' : 'Owner Approved'}
-                        </span>
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        dir="ltr"
-                        value={appContact}
-                        onChange={(e) => setAppContact(e.target.value)}
-                        placeholder="+964 770 123 4567"
-                        className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all font-mono font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Category Selection */}
-                  <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      {language === 'ar' ? 'نوع النشاط التجاري' : 'Business Category'}
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
-                      {[
-                        { id: 'fashion', labelAr: 'أزياء وملابس', labelEn: 'Fashion', icon: '👗' },
-                        { id: 'beauty', labelAr: 'تجميل وعناية', labelEn: 'Beauty', icon: '✨' },
-                        { id: 'home', labelAr: 'منزل وديكور', labelEn: 'Home Decor', icon: '🕯️' },
-                        { id: 'handmade', labelAr: 'حرف وإبداع', labelEn: 'Handmade', icon: '🎨' },
-                        { id: 'tech', labelAr: 'إلكترونيات', labelEn: 'Electronics', icon: '⚡' },
-                        { id: 'local', labelAr: 'متاجر محلية', labelEn: 'Local Shops', icon: '🏪' },
-                      ].map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => setAppCategory(cat.id as any)}
-                          className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                            appCategory === cat.id
-                              ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
-                              : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
-                          }`}
-                        >
-                          <span className="text-xl">{cat.icon}</span>
-                          <span className="text-[11px] font-bold">
-                            {language === 'ar' ? cat.labelAr : cat.labelEn}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Plan Selection */}
-                  <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      {language === 'ar' ? 'الباقة المختارة' : 'Selected Hosting Plan'}
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        { id: 'Starter', nameAr: 'البداية (Starter)', descAr: 'مجاناً للتجربة وإطلاق أول متجر', price: '$0' },
-                        { id: 'Growth', nameAr: 'النمو (Growth)', descAr: 'للمتاجر النشطة مع دومين خاص', price: '$29/mo' },
-                        { id: 'Enterprise', nameAr: 'المؤسسات (Enterprise)', descAr: 'بنية متكاملة ودعم مخصص', price: '$99/mo' },
-                      ].map((plan) => (
-                        <div
-                          key={plan.id}
-                          onClick={() => setAppPlan(plan.id as any)}
-                          className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                            appPlan === plan.id
-                              ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
-                              : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-xs">{language === 'ar' ? plan.nameAr : plan.id}</span>
-                            <span className={`text-xs font-black ${appPlan === plan.id ? 'text-amber-400' : 'text-stone-900'}`}>
-                              {plan.price}
-                            </span>
-                          </div>
-                          <p className={`text-[11px] ${appPlan === plan.id ? 'text-stone-300' : 'text-stone-500'}`}>
-                            {language === 'ar' ? plan.descAr : 'Hosting plan'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="pt-4">
-                    <button
-                      type="submit"
-                      disabled={appSubmitting}
-                      className="w-full py-4 px-6 rounded-2xl bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-base shadow-lg shadow-stone-900/10 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
-                    >
-                      <Zap className="w-5 h-5 text-amber-400" />
-                      <span>
-                        {appSubmitting
-                          ? (language === 'ar' ? 'جارٍ معالجة طلبك...' : 'Processing application...')
-                          : (language === 'ar' ? 'إرسال طلب إطلاق المتجر على بسطية' : 'Create Your Store Today')}
-                      </span>
-                    </button>
-                    <p className="text-center text-[11px] text-stone-400 mt-2.5">
-                      {language === 'ar' 
-                        ? '🔒 يتم تفعيل متجرك فوراً مع شهادة أمان SSL ورابط فرعي مستقل' 
-                        : '🔒 Your store is activated immediately with dedicated SSL and isolated dashboard.'}
+                    <p className="text-sm text-stone-600 mt-2 max-w-md">
+                      {language === 'ar'
+                        ? 'تم قبول طلبك وإطلاق متجرك بنجاح على منصة بسطية السحابية.'
+                        : 'Your application has been processed and your store is now live on Bastiyah.'}
                     </p>
+
+                    <div className="mt-5 px-5 py-3 rounded-2xl bg-stone-50 border border-stone-200 flex items-center gap-2 text-stone-800 font-mono text-sm">
+                      <span className="text-emerald-600 font-bold">https://</span>
+                      <span className="font-black text-stone-900">{appSuccess.slug}.bastiyah.com</span>
+                    </div>
+
+                    <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          switchStore(appSuccess.storeId, 'home');
+                        }}
+                        className="px-6 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm flex items-center gap-2 shadow-sm"
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                        <span>{t.visitStore}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          switchStore(appSuccess.storeId, 'admin');
+                          setAdminTab('dashboard');
+                        }}
+                        className="px-6 py-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 font-bold text-sm flex items-center gap-2 shadow-2xs"
+                      >
+                        <Layers className="w-4 h-4 text-stone-600" />
+                        <span>{t.manageStore}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setAppSuccess(null)}
+                        className="px-4 py-3 rounded-xl text-stone-500 hover:text-stone-800 text-xs font-semibold"
+                      >
+                        {language === 'ar' ? 'تقديم طلب متجر آخر' : 'Submit Another Store'}
+                      </button>
+                    </div>
                   </div>
-                </form>
-              )}
+                ) : (
+                  /* The Interactive Application Form */
+                  <form onSubmit={handleApplyStore} className="relative z-10 pt-8 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {/* Store Name (English / Primary) */}
+                      <div>
+                        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                          {language === 'ar' ? 'اسم المتجر بالإنجليزية *' : 'Store Name (English) *'}
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={appName}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                          placeholder="e.g. Silk & Stone"
+                          className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all"
+                        />
+                      </div>
+
+                      {/* Store Name (Arabic) */}
+                      <div>
+                        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                          {language === 'ar' ? 'اسم المتجر بالعربية' : 'Store Name (Arabic)'}
+                        </label>
+                        <input
+                          type="text"
+                          value={appNameAr}
+                          onChange={(e) => setAppNameAr(e.target.value)}
+                          placeholder="مثال: حرير وحجر"
+                          className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all font-brand"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subdomain Slug Live Preview */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                        {language === 'ar' ? 'رابط المتجر المخصص على بسطية *' : 'Dedicated Store Link Slug *'}
+                      </label>
+                      <div className="flex items-center rounded-xl bg-stone-50 border border-stone-200 overflow-hidden px-4 py-2.5 focus-within:border-stone-400 focus-within:ring-2 focus-within:ring-stone-900/10 transition-all" dir="ltr">
+                        <span className="font-mono text-xs text-stone-400 select-none">https://</span>
+                        <input
+                          type="text"
+                          required
+                          value={appSlug}
+                          onChange={(e) => setAppSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                          placeholder="store-name"
+                          className="bg-transparent border-0 px-1 font-mono text-xs sm:text-sm font-bold text-stone-900 focus:outline-none flex-1 min-w-0"
+                        />
+                        <span className="font-mono text-xs text-stone-500 font-bold select-none">.bastiyah.com</span>
+                      </div>
+                    </div>
+
+                    {/* Merchant / Owner Name & Contact Info */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                          {language === 'ar' ? 'اسم صاحب المتجر *' : 'Merchant / Owner Name *'}
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={appOwnerName}
+                          onChange={(e) => setAppOwnerName(e.target.value)}
+                          placeholder={language === 'ar' ? 'مثال: أحمد العراقي' : 'e.g. Sarah Miller'}
+                          className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                          <span>{language === 'ar' ? 'رقم الهاتف المحمول (وسيلة التسجيل والاعتماد) *' : 'Mobile Phone (Registration Method) *'}</span>
+                          <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            {language === 'ar' ? 'اعتماد المالك' : 'Owner Approved'}
+                          </span>
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          dir="ltr"
+                          value={appContact}
+                          onChange={(e) => setAppContact(e.target.value)}
+                          placeholder="+964 770 123 4567"
+                          className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all font-mono font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Category Selection */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                        {language === 'ar' ? 'نوع النشاط التجاري' : 'Business Category'}
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                        {[
+                          { id: 'fashion', labelAr: 'أزياء وملابس', labelEn: 'Fashion', icon: '👗' },
+                          { id: 'beauty', labelAr: 'تجميل وعناية', labelEn: 'Beauty', icon: '✨' },
+                          { id: 'home', labelAr: 'منزل وديكور', labelEn: 'Home Decor', icon: '🕯️' },
+                          { id: 'handmade', labelAr: 'حرف وإبداع', labelEn: 'Handmade', icon: '🎨' },
+                          { id: 'tech', labelAr: 'إلكترونيات', labelEn: 'Electronics', icon: '⚡' },
+                          { id: 'local', labelAr: 'متاجر محلية', labelEn: 'Local Shops', icon: '🏪' },
+                        ].map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setAppCategory(cat.id as any)}
+                            className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
+                              appCategory === cat.id
+                                ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
+                                : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
+                            }`}
+                          >
+                            <span className="text-xl">{cat.icon}</span>
+                            <span className="text-[11px] font-bold">
+                              {language === 'ar' ? cat.labelAr : cat.labelEn}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Plan Selection */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                        {language === 'ar' ? 'الباقة المختارة' : 'Selected Hosting Plan'}
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {[
+                          { id: 'Starter', nameAr: 'البداية (Starter)', descAr: 'مجاناً للتجربة وإطلاق أول متجر', price: '$0' },
+                          { id: 'Growth', nameAr: 'النمو (Growth)', descAr: 'للمتاجر النشطة مع دومين خاص', price: '$29/mo' },
+                          { id: 'Enterprise', nameAr: 'المؤسسات (Enterprise)', descAr: 'بنية متكاملة ودعم مخصص', price: '$99/mo' },
+                        ].map((plan) => (
+                          <div
+                            key={plan.id}
+                            onClick={() => setAppPlan(plan.id as any)}
+                            className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                              appPlan === plan.id
+                                ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
+                                : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-bold text-xs">{language === 'ar' ? plan.nameAr : plan.id}</span>
+                              <span className={`text-xs font-black ${appPlan === plan.id ? 'text-amber-400' : 'text-stone-900'}`}>
+                                {plan.price}
+                              </span>
+                            </div>
+                            <p className={`text-[11px] ${appPlan === plan.id ? 'text-stone-300' : 'text-stone-500'}`}>
+                              {language === 'ar' ? plan.descAr : 'Hosting plan'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={appSubmitting}
+                        className="w-full py-4 px-6 rounded-2xl bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-base shadow-lg shadow-stone-900/10 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
+                      >
+                        <Zap className="w-5 h-5 text-amber-400" />
+                        <span>
+                          {appSubmitting
+                            ? (language === 'ar' ? 'جارٍ معالجة طلبك...' : 'Processing application...')
+                            : (language === 'ar' ? 'إرسال طلب إطلاق المتجر على بسطية' : 'Create Your Store Today')}
+                        </span>
+                      </button>
+                      <p className="text-center text-[11px] text-stone-400 mt-2.5">
+                        {language === 'ar' 
+                          ? '🔒 يتم تفعيل متجرك فوراً مع شهادة أمان SSL ورابط فرعي مستقل' 
+                          : '🔒 Your store is activated immediately with dedicated SSL and isolated dashboard.'}
+                      </p>
+                    </div>
+                  </form>
+                )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 
           ========================================================================
@@ -962,73 +1197,75 @@ export const BastiyahLandingPage: React.FC = () => {
           04. Grow Your Business
           ========================================================================
         */}
-        <section id="how-it-works" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                {language === 'ar' ? 'خطوات بسيطة' : 'Simple Steps'}
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
-                {language === 'ar' ? 'كيف يعمل؟' : 'How It Works'}
-              </h2>
-              <p className="text-stone-500 text-sm sm:text-base mt-2 leading-relaxed sm:leading-[1.75]">
-                {language === 'ar'
-                  ? 'أربع خطوات واضحة ومباشرة تفصلك عن إطلاق متجرك الرقمي والوصول لعملائك.'
-                  : 'Four straightforward steps to set up your store and introduce your business to the online world.'}
-              </p>
-            </div>
+        {showHowItWorks && (
+          <section id="how-it-works" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-2xl mx-auto mb-16">
+                <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                  {language === 'ar' ? 'خطوات بسيطة' : 'Simple Steps'}
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 font-brand leading-[1.35] sm:leading-[1.3] tracking-normal">
+                  {language === 'ar' ? 'كيف يعمل؟' : 'How It Works'}
+                </h2>
+                <p className="text-stone-500 text-sm sm:text-base mt-2 leading-relaxed sm:leading-[1.75]">
+                  {language === 'ar'
+                    ? 'أربع خطوات واضحة ومباشرة تفصلك عن إطلاق متجرك الرقمي والوصول لعملائك.'
+                    : 'Four straightforward steps to set up your store and introduce your business to the online world.'}
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-              {[
-                {
-                  step: '01',
-                  titleEn: 'Create Your Store',
-                  titleAr: 'أنشئ متجرك',
-                  descEn: 'Start your journey by setting up your store and introducing your business to the online world.',
-                  descAr: 'ابدأ رحلتك بإعداد متجرك الإلكتروني وتقديم نشاطك التجاري للعالم الرقمي.'
-                },
-                {
-                  step: '02',
-                  titleEn: 'Add Your Products',
-                  titleAr: 'أضف منتجاتك',
-                  descEn: 'Upload product photos, write descriptions, and set your prices so customers know what you offer.',
-                  descAr: 'ارفع صور المنتجات، واكتب الأوصاف، وحدد أسعارك ليعرف العملاء ما تقدمه بدقة.'
-                },
-                {
-                  step: '03',
-                  titleEn: 'Share Your Store',
-                  titleAr: 'شارك متجرك',
-                  descEn: 'Share your store link with your audience and make it easier for potential customers to discover your products.',
-                  descAr: 'شارك رابط متجرك مع جمهورك واجعل من السهل على العملاء المحتملين اكتشاف منتجاتك.'
-                },
-                {
-                  step: '04',
-                  titleEn: 'Grow Your Business',
-                  titleAr: 'طوّر تجارتك',
-                  descEn: 'Keep your store updated, showcase new products, and build your online presence as your business grows.',
-                  descAr: 'حافظ على تحديث متجرك، واعرض منتجات جديدة، وعزز حضورك الرقمي مع نمو أعمالك.'
-                }
-              ].map((item, idx) => (
-                <div 
-                  key={idx}
-                  className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                  <div className="text-3xl sm:text-4xl font-black text-stone-300 font-mono mb-4 leading-none">
-                    {item.step}.
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+                {[
+                  {
+                    step: '01',
+                    titleEn: 'Create Your Store',
+                    titleAr: 'أنشئ متجرك',
+                    descEn: 'Start your journey by setting up your store and introducing your business to the online world.',
+                    descAr: 'ابدأ رحلتك بإعداد متجرك الإلكتروني وتقديم نشاطك التجاري للعالم الرقمي.'
+                  },
+                  {
+                    step: '02',
+                    titleEn: 'Add Your Products',
+                    titleAr: 'أضف منتجاتك',
+                    descEn: 'Upload product photos, write descriptions, and set your prices so customers know what you offer.',
+                    descAr: 'ارفع صور المنتجات، واكتب الأوصاف، وحدد أسعارك ليعرف العملاء ما تقدمه بدقة.'
+                  },
+                  {
+                    step: '03',
+                    titleEn: 'Share Your Store',
+                    titleAr: 'شارك متجرك',
+                    descEn: 'Share your store link with your audience and make it easier for potential customers to discover your products.',
+                    descAr: 'شارك رابط متجرك مع جمهورك واجعل من السهل على العملاء المحتملين اكتشاف منتجاتك.'
+                  },
+                  {
+                    step: '04',
+                    titleEn: 'Grow Your Business',
+                    titleAr: 'طوّر تجارتك',
+                    descEn: 'Keep your store updated, showcase new products, and build your online presence as your business grows.',
+                    descAr: 'حافظ على تحديث متجرك، واعرض منتجات جديدة، وعزز حضورك الرقمي مع نمو أعمالك.'
+                  }
+                ].map((item, idx) => (
+                  <div 
+                    key={idx}
+                    className="p-8 rounded-3xl bg-white border border-stone-200/90 shadow-sm relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
+                  >
+                    <div className="text-3xl sm:text-4xl font-black text-stone-300 font-mono mb-4 leading-none">
+                      {item.step}.
+                    </div>
+                    <div>
+                      <h3 className="font-brand font-bold text-lg text-stone-900 mb-2 leading-[1.4] tracking-normal">
+                        {language === 'ar' ? item.titleAr : item.titleEn}
+                      </h3>
+                      <p className="text-sm text-stone-600 leading-relaxed sm:leading-[1.7] font-normal">
+                        {language === 'ar' ? item.descAr : item.descEn}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-brand font-bold text-lg text-stone-900 mb-2 leading-[1.4] tracking-normal">
-                      {language === 'ar' ? item.titleAr : item.titleEn}
-                    </h3>
-                    <p className="text-sm text-stone-600 leading-relaxed sm:leading-[1.7] font-normal">
-                      {language === 'ar' ? item.descAr : item.descEn}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 
           ========================================================================
@@ -1039,7 +1276,8 @@ export const BastiyahLandingPage: React.FC = () => {
           Whatever you sell, Bastiyah helps you build your place in the digital marketplace.
           ========================================================================
         */}
-        <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60">
+        {showBenefits && (
+          <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
@@ -1126,6 +1364,7 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* 
           ========================================================================
@@ -1134,7 +1373,8 @@ export const BastiyahLandingPage: React.FC = () => {
           Room to Grow / Focus on Your Business
           ========================================================================
         */}
-        <section id="features" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
+        {showFeatures && (
+          <section id="features" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-16">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
@@ -1201,6 +1441,7 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* 
           ========================================================================
@@ -1213,7 +1454,8 @@ export const BastiyahLandingPage: React.FC = () => {
           [Create Your Store Today]
           ========================================================================
         */}
-        <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-stone-900 text-white relative overflow-hidden">
+        {showInfrastructure && (
+          <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-stone-900 text-white relative overflow-hidden">
           {/* Subtle Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-tr from-amber-500/10 via-rose-500/10 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -1242,8 +1484,8 @@ export const BastiyahLandingPage: React.FC = () => {
 
             <div className="mt-8">
               <a
-                href="#apply-store"
-                onClick={(e) => handleTabClick(e, 'apply-store')}
+                href="/apply"
+                onClick={(e) => handleTabClick(e, '/apply')}
                 className="px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-sm sm:text-base shadow-xl transition-all hover:-translate-y-0.5 inline-flex items-center gap-2 leading-normal"
               >
                 <Zap className="w-4 h-4 text-stone-950" />
@@ -1252,13 +1494,15 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* 
           ========================================================================
           10. PRICING SECTION (#pricing)
           ========================================================================
         */}
-        <section id="pricing" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
+        {showPricing && (
+          <section id="pricing" className="py-20 sm:py-24 border-b border-stone-200/80 scroll-mt-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
@@ -1305,8 +1549,8 @@ export const BastiyahLandingPage: React.FC = () => {
                 </div>
 
                 <a
-                  href="#apply-store"
-                  onClick={(e) => handleTabClick(e, 'apply-store')}
+                  href="/apply"
+                  onClick={(e) => handleTabClick(e, '/apply')}
                   className="mt-8 w-full py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs text-center transition-colors"
                 >
                   {language === 'ar' ? 'ابدأ مجاناً' : 'Get Started Free'}
@@ -1352,8 +1596,8 @@ export const BastiyahLandingPage: React.FC = () => {
                 </div>
 
                 <a
-                  href="#apply-store"
-                  onClick={(e) => handleTabClick(e, 'apply-store')}
+                  href="/apply"
+                  onClick={(e) => handleTabClick(e, '/apply')}
                   className="mt-8 w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs text-center transition-colors shadow-sm"
                 >
                   {language === 'ar' ? 'انضم للباقة الآن' : 'Choose Growth Plan'}
@@ -1391,8 +1635,8 @@ export const BastiyahLandingPage: React.FC = () => {
                 </div>
 
                 <a
-                  href="#apply-store"
-                  onClick={(e) => handleTabClick(e, 'apply-store')}
+                  href="/apply"
+                  onClick={(e) => handleTabClick(e, '/apply')}
                   className="mt-8 w-full py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs text-center transition-colors"
                 >
                   {language === 'ar' ? 'تواصل معنا' : 'Contact Enterprise'}
@@ -1401,6 +1645,7 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* 
           ========================================================================
@@ -1411,7 +1656,8 @@ export const BastiyahLandingPage: React.FC = () => {
           How do I get started?
           ========================================================================
         */}
-        <section id="faq" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
+        {showFaq && (
+          <section id="faq" className="py-20 sm:py-24 border-b border-stone-200/80 bg-white/60 scroll-mt-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
@@ -1453,6 +1699,7 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* 
           ========================================================================
@@ -1462,45 +1709,48 @@ export const BastiyahLandingPage: React.FC = () => {
           [Get Started]
           ========================================================================
         */}
-        <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-stone-900 font-brand tracking-normal leading-[1.3] sm:leading-[1.28]">
-              {language === 'ar'
-                ? 'جاهز لنقل مشروعك إلى الإنترنت؟'
-                : 'Ready to Take Your Business Online?'}
-            </h2>
+        {showSupportCta && (
+          <section className="py-20 sm:py-24 border-b border-stone-200/80 bg-white">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-stone-900 font-brand tracking-normal leading-[1.3] sm:leading-[1.28]">
+                {language === 'ar'
+                  ? 'جاهز لنقل مشروعك إلى الإنترنت؟'
+                  : 'Ready to Take Your Business Online?'}
+              </h2>
 
-            <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
-              {language === 'ar'
-                ? 'منتجاتك لها قصة. ومشروعك يمتلك إمكانات حقيقية. امنح كليهما مكاناً ينموان فيه.'
-                : 'Your products have a story. Your business has potential. Give both a place to grow.'}
-            </p>
+              <p className="text-stone-600 text-base sm:text-lg mt-5 leading-relaxed sm:leading-[1.8] max-w-2xl font-normal">
+                {language === 'ar'
+                  ? 'منتجاتك لها قصة. ومشروعك يمتلك إمكانات حقيقية. امنح كليهما مكاناً ينموان فيه.'
+                  : 'Your products have a story. Your business has potential. Give both a place to grow.'}
+              </p>
 
-            <div className="mt-5 text-lg sm:text-xl font-black text-stone-900 font-brand leading-[1.4] tracking-normal">
-              {language === 'ar'
-                ? 'بسطية — متجرك، علامتك التجارية، بطريقتك.'
-                : 'Bastiyah — Your Store, Your Brand, Your Way.'}
+              <div className="mt-5 text-lg sm:text-xl font-black text-stone-900 font-brand leading-[1.4] tracking-normal">
+                {language === 'ar'
+                  ? 'بسطية — متجرك، علامتك التجارية، بطريقتك.'
+                  : 'Bastiyah — Your Store, Your Brand, Your Way.'}
+              </div>
+
+              <div className="mt-8">
+                <a
+                  href="/apply"
+                  onClick={(e) => handleTabClick(e, '/apply')}
+                  className="px-9 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
+                >
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>{language === 'ar' ? 'ابدأ الآن' : 'Get Started'}</span>
+                </a>
+              </div>
             </div>
-
-            <div className="mt-8">
-              <a
-                href="#apply-store"
-                onClick={(e) => handleTabClick(e, 'apply-store')}
-                className="px-9 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm sm:text-base shadow-lg shadow-stone-900/10 inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 leading-normal"
-              >
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>{language === 'ar' ? 'ابدأ الآن' : 'Get Started'}</span>
-              </a>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 
           ========================================================================
           13. CONTACT US SECTION (#contact)
           ========================================================================
         */}
-        <section id="contact" className="py-20 border-b border-stone-200/80 scroll-mt-20">
+        {showContact && (
+          <section id="contact" className="py-20 border-b border-stone-200/80 scroll-mt-20">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
               <span className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
@@ -1586,38 +1836,40 @@ export const BastiyahLandingPage: React.FC = () => {
             </div>
           </div>
         </section>
+        )}
 
         {/* 
           ========================================================================
           14. LIVE HOSTED STORES DIRECTORY (#hosted-stores-directory)
           ========================================================================
         */}
-        <section id="hosted-stores-directory" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-stone-500 font-mono mb-1">
-                <span>*.bastiyah.com</span>
-                <span>•</span>
-                <span className="font-brand">دليل بسطية</span>
+        {showStores && (
+          <section id="hosted-stores-directory" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-stone-500 font-mono mb-1">
+                  <span>*.bastiyah.com</span>
+                  <span>•</span>
+                  <span className="font-brand">دليل بسطية</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-stone-900 font-brand">
+                  {language === 'ar' ? 'المتاجر المستضافة على منصة بسطية' : t.hostedStoresTitle}
+                </h2>
+                <p className="text-stone-600 text-sm mt-1 font-normal">
+                  {language === 'ar'
+                    ? 'تصفح المتاجر المستقلة النشطة التي تم إنشاؤها وتخصيصها عبر منصة بسطية'
+                    : t.hostedStoresSubtitle}
+                </p>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 font-brand">
-                {language === 'ar' ? 'المتاجر المستضافة على منصة بسطية' : t.hostedStoresTitle}
-              </h2>
-              <p className="text-stone-600 text-sm mt-1 font-normal">
-                {language === 'ar'
-                  ? 'تصفح المتاجر المستقلة النشطة التي تم إنشاؤها وتخصيصها عبر منصة بسطية'
-                  : t.hostedStoresSubtitle}
-              </p>
-            </div>
 
-            <a
-              href="#apply-store"
-              onClick={(e) => handleTabClick(e, 'apply-store')}
-              className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 self-start sm:self-auto transition-all shadow-sm"
-            >
-              <Zap className="w-4 h-4 text-amber-400" />
-              <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
-            </a>
+              <a
+                href="/apply"
+                onClick={(e) => handleTabClick(e, '/apply')}
+                className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 self-start sm:self-auto transition-all shadow-sm"
+              >
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>{language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}</span>
+              </a>
           </div>
 
           {/* Store Grid */}
@@ -1672,8 +1924,8 @@ export const BastiyahLandingPage: React.FC = () => {
                         className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-stone-50 border border-stone-200 hover:border-stone-400 transition-colors mb-4 group/pill"
                         dir="ltr"
                       >
-                        <button
-                          onClick={() => switchStore(store.id, 'home')}
+                        <a
+                          href={`/store/${store.slug}`}
                           className="flex items-center gap-2 truncate text-start hover:opacity-90"
                           title={language === 'ar' ? `زيارة متجر ${store.name}` : `Visit ${store.name}`}
                         >
@@ -1681,7 +1933,7 @@ export const BastiyahLandingPage: React.FC = () => {
                           <span className="font-mono text-xs font-semibold text-stone-700 truncate">
                             {getStorePathLabel(store.slug)}
                           </span>
-                        </button>
+                        </a>
 
                         <div className="flex items-center gap-1 shrink-0">
                           <button
@@ -1695,13 +1947,13 @@ export const BastiyahLandingPage: React.FC = () => {
                               <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
-                          <button
-                            onClick={() => switchStore(store.id, 'home')}
+                          <a
+                            href={`/store/${store.slug}`}
                             className="p-1 rounded-lg hover:bg-stone-200 text-stone-500 hover:text-stone-800 transition-colors"
                             title="Open Store"
                           >
                             <ArrowUpRight className="w-3.5 h-3.5" />
-                          </button>
+                          </a>
                         </div>
                       </div>
 
@@ -1730,31 +1982,37 @@ export const BastiyahLandingPage: React.FC = () => {
 
                   {/* Card Footer Actions */}
                   <div className="px-6 pb-6 pt-3 border-t border-stone-100 flex items-center gap-2.5">
-                    <button
-                      onClick={() => switchStore(store.id, 'home')}
+                    <a
+                      href={`/store/${store.slug}`}
                       className="flex-1 py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-opacity hover:opacity-95"
                       style={{ backgroundColor: storeTheme.hex }}
                     >
                       <span>{t.visitStore}</span>
                       <ArrowUpRight className="w-4 h-4" />
-                    </button>
+                    </a>
 
-                    <button
+                    <a
+                      href={`/store/${store.slug}/admin`}
                       onClick={() => {
-                        switchStore(store.id, 'admin');
                         setAdminTab('dashboard');
                       }}
                       className="py-2.5 px-3.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-colors border border-stone-200"
                     >
                       <Layers className="w-3.5 h-3.5 text-stone-600" />
                       <span>{t.manageStore}</span>
-                    </button>
+                    </a>
                   </div>
                 </div>
               );
             })}
           </div>
         </section>
+        )}
+
+        {/* Dedicated Sections for Specific URLs */}
+        {showProducts && renderProductsSection()}
+        {showLegal && renderLegalSection()}
+        {showCtaCard && renderCtaCard()}
       </main>
 
       {/* 
@@ -1806,22 +2064,22 @@ export const BastiyahLandingPage: React.FC = () => {
               </h4>
               <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
                 <li>
-                  <a href="#" onClick={handleHomeClick} className="hover:text-stone-950 transition-colors">
+                  <a href="/" onClick={handleHomeClick} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'الرئيسية' : 'Home'}
                   </a>
                 </li>
                 <li>
-                  <a href="#features" onClick={(e) => handleTabClick(e, 'features')} className="hover:text-stone-950 transition-colors">
+                  <a href="/features" onClick={(e) => handleTabClick(e, '/features')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'المميزات' : 'Features'}
                   </a>
                 </li>
                 <li>
-                  <a href="#how-it-works" onClick={(e) => handleTabClick(e, 'how-it-works')} className="hover:text-stone-950 transition-colors">
+                  <a href="/how-it-works" onClick={(e) => handleTabClick(e, '/how-it-works')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'كيف يعمل' : 'How It Works'}
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" onClick={(e) => handleTabClick(e, 'faq')} className="hover:text-stone-950 transition-colors">
+                  <a href="/faq" onClick={(e) => handleTabClick(e, '/faq')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
                   </a>
                 </li>
@@ -1835,17 +2093,17 @@ export const BastiyahLandingPage: React.FC = () => {
               </h4>
               <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
                 <li>
-                  <a href="#apply-store" onClick={(e) => handleTabClick(e, 'apply-store')} className="hover:text-stone-950 transition-colors">
+                  <a href="/apply" onClick={(e) => handleTabClick(e, '/apply')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'أنشئ متجرك' : 'Create Your Store'}
                   </a>
                 </li>
                 <li>
-                  <a href="#hosted-stores-directory" onClick={(e) => handleTabClick(e, 'hosted-stores-directory')} className="hover:text-stone-950 transition-colors">
+                  <a href="/stores" onClick={(e) => handleTabClick(e, '/stores')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'المتاجر والمنتجات' : 'Stores & Catalog'}
                   </a>
                 </li>
                 <li>
-                  <a href="#contact" onClick={(e) => handleTabClick(e, 'contact')} className="hover:text-stone-950 transition-colors">
+                  <a href="/contact" onClick={(e) => handleTabClick(e, '/contact')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'الدعم الفني' : 'Contact Support'}
                   </a>
                 </li>
@@ -1859,12 +2117,12 @@ export const BastiyahLandingPage: React.FC = () => {
               </h4>
               <ul className="space-y-2.5 text-stone-600 text-xs sm:text-sm">
                 <li>
-                  <a href="#legal" className="hover:text-stone-950 transition-colors">
+                  <a href="/legal" onClick={(e) => handleTabClick(e, '/legal')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
                   </a>
                 </li>
                 <li>
-                  <a href="#legal" className="hover:text-stone-950 transition-colors">
+                  <a href="/legal" onClick={(e) => handleTabClick(e, '/legal')} className="hover:text-stone-950 transition-colors">
                     {language === 'ar' ? 'شروط الخدمة' : 'Terms of Service'}
                   </a>
                 </li>

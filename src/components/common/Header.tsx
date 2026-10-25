@@ -3,6 +3,7 @@ import { useStore } from '../../context/StoreContext';
 import { ProductCategory, ANONYMOUS_USER_AVATAR } from '../../types';
 import { filterProductsBySearch, matchCategorySearch } from '../../utils/searchUtils';
 import { BLANK_STORE_LOGO_URL, getStoreLogo } from '../../constants/blankLogo';
+import { getPagePath } from '../../utils/urlUtils';
 import { 
   ShoppingBag, 
   Heart, 
@@ -447,9 +448,9 @@ export const Header: React.FC = () => {
             {/* Right side (RTL): Store Logo + Delivery Location */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Store Logo & Title */}
-              <button
+              <a
+                href={getPagePath('home', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('home');
                   setSelectedCategory('All');
                 }}
                 className="flex items-center gap-2 group text-start shrink-0"
@@ -476,7 +477,7 @@ export const Header: React.FC = () => {
                     {displayStoreName}
                   </span>
                 </div>
-              </button>
+              </a>
 
               {/* Delivery / Shipping Location Pill (Sample: الاستلام أو التوصيل؟ توصيل إلى Salah ad-Din) */}
               <button
@@ -609,28 +610,28 @@ export const Header: React.FC = () => {
                               <span>{language === 'ar' ? 'بيانات الحساب وموقع التوصيل' : 'Account & Shipping Details'}</span>
                             </button>
 
-                            <button
+                            <a
+                              href={getPagePath('orders', activeStore.slug)}
                               onClick={() => {
-                                setCurrentPage('orders');
                                 setUserMenuOpen(false);
                               }}
                               className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
                             >
                               <ShoppingBag className="w-4 h-4 text-slate-500" />
                               <span>{t.navMyOrders}</span>
-                            </button>
+                            </a>
 
                             {isFeatureEnabled('wishlist') && (
-                              <button
+                              <a
+                                href={getPagePath('wishlist', activeStore.slug)}
                                 onClick={() => {
-                                  setCurrentPage('wishlist');
                                   setUserMenuOpen(false);
                                 }}
                                 className="w-full px-4 py-2 text-start hover:bg-slate-50 flex items-center gap-2.5 text-slate-700 font-semibold"
                               >
                                 <Heart className="w-4 h-4 text-rose-500" />
                                 <span>{t.navWishlist}</span>
-                              </button>
+                              </a>
                             )}
                           </div>
 
@@ -687,8 +688,8 @@ export const Header: React.FC = () => {
 
               {/* Wishlist Button */}
               {isFeatureEnabled('wishlist') && (
-                <button
-                  onClick={() => setCurrentPage('wishlist')}
+                <a
+                  href={getPagePath('wishlist', activeStore.slug)}
                   className="relative p-2 rounded-full text-white hover:bg-white/10 transition-colors hidden sm:flex shrink-0"
                   title={t.navWishlist}
                 >
@@ -698,7 +699,7 @@ export const Header: React.FC = () => {
                       {wishlist.length}
                     </span>
                   )}
-                </button>
+                </a>
               )}
 
               {/* Mobile menu hamburger */}
@@ -746,9 +747,9 @@ export const Header: React.FC = () => {
             {/* Horizontal Scrollable Categories */}
             <div className="flex-1 flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none py-1 min-w-0">
               {/* Home */}
-              <button
+              <a
+                href={getPagePath('home', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('home');
                   setSelectedCategory('All');
                 }}
                 className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
@@ -758,14 +759,14 @@ export const Header: React.FC = () => {
                 }`}
               >
                 {language === 'ar' ? 'الرئيسية' : 'Home'}
-              </button>
+              </a>
 
               {/* Dynamic store categories */}
               {storeCategories.map((cat) => (
-                <button
+                <a
                   key={cat}
+                  href={`${getPagePath('shop', activeStore.slug)}?category=${encodeURIComponent(cat)}`}
                   onClick={() => {
-                    setCurrentPage('shop');
                     setSelectedCategory(cat);
                   }}
                   className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 ${
@@ -775,14 +776,14 @@ export const Header: React.FC = () => {
                   }`}
                 >
                   {getCategoryName(cat)}
-                </button>
+                </a>
               ))}
             </div>
 
             {/* Right/End Side of Bottom Bar: My Orders & Featured Deals */}
             <div className="flex items-center gap-1.5 shrink-0 hidden sm:flex">
-              <button
-                onClick={() => setCurrentPage('orders')}
+              <a
+                href={getPagePath('orders', activeStore.slug)}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                   currentPage === 'orders'
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold'
@@ -791,18 +792,18 @@ export const Header: React.FC = () => {
               >
                 <Package className="w-3.5 h-3.5 opacity-70" />
                 <span>{t.navMyOrders}</span>
-              </button>
+              </a>
 
-              <button
+              <a
+                href={getPagePath('shop', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('shop');
                   setSelectedCategory('All');
                 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>{language === 'ar' ? 'العروض المميزة' : 'Deals'}</span>
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -842,45 +843,45 @@ export const Header: React.FC = () => {
         }`}>
           {/* Main Navigation Links */}
           <div className="space-y-1">
-            <button
+            <a
+              href={getPagePath('shop', activeStore.slug)}
               onClick={() => {
-                setCurrentPage('shop');
                 setSelectedCategory('All');
                 setMobileMenuOpen(false);
               }}
               className="block w-full text-start py-2.5 px-3 text-base font-semibold rounded-xl hover:bg-slate-100/10 transition-colors"
             >
               {t.navShopAll}
-            </button>
+            </a>
             {storeCategories.map((cat) => (
-              <button
+              <a
                 key={cat}
+                href={`${getPagePath('shop', activeStore.slug)}?category=${encodeURIComponent(cat)}`}
                 onClick={() => {
-                  setCurrentPage('shop');
                   setSelectedCategory(cat);
                   setMobileMenuOpen(false);
                 }}
                 className="block w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 transition-colors"
               >
                 {getCategoryName(cat)}
-              </button>
+              </a>
             ))}
 
-            <button
+            <a
+              href={getPagePath('orders', activeStore.slug)}
               onClick={() => {
-                setCurrentPage('orders');
                 setMobileMenuOpen(false);
               }}
               className="w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 flex items-center gap-2.5 transition-colors"
             >
               <Package className="w-4 h-4 text-slate-400" />
               <span>{t.navMyOrders}</span>
-            </button>
+            </a>
 
             {isFeatureEnabled('wishlist') && (
-              <button
+              <a
+                href={getPagePath('wishlist', activeStore.slug)}
                 onClick={() => {
-                  setCurrentPage('wishlist');
                   setMobileMenuOpen(false);
                 }}
                 className="w-full text-start py-2 px-3 text-sm font-medium rounded-xl hover:bg-slate-100/10 flex items-center justify-between transition-colors"
@@ -894,7 +895,7 @@ export const Header: React.FC = () => {
                     {wishlist.length}
                   </span>
                 )}
-              </button>
+              </a>
             )}
           </div>
 

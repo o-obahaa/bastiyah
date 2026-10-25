@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { getPagePath } from '../../utils/urlUtils';
 import { 
   X, 
   Trash2, 
@@ -12,6 +13,7 @@ import {
 
 export const CartDrawer: React.FC = () => {
   const { 
+    activeStore,
     isCartDrawerOpen, 
     setIsCartDrawerOpen, 
     cart, 
@@ -115,15 +117,15 @@ export const CartDrawer: React.FC = () => {
                     {t.bagEmptyDesc}
                   </p>
                 </div>
-                <button
+                <a
+                  href={getPagePath('shop', activeStore.slug)}
                   onClick={() => {
                     setIsCartDrawerOpen(false);
-                    setCurrentPage('shop');
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors inline-block"
                 >
                   {t.navShopAll}
-                </button>
+                </a>
               </div>
             ) : (
               cart.map((item) => {
@@ -254,13 +256,14 @@ export const CartDrawer: React.FC = () => {
               </div>
 
               {/* Checkout Button */}
-              <button
+              <a
+                href={getPagePath('checkout', activeStore.slug)}
                 onClick={handleProceedToCheckout}
                 className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-102 active:scale-98"
               >
                 <span>{t.proceedToCheckout}</span>
                 <ArrowRight className={`w-4 h-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
-              </button>
+              </a>
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
